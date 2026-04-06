@@ -1,10 +1,16 @@
 /Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift
+/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift
 /Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift
 /Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift
 /Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift
 /Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift
 /Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift

@@ -134,6 +134,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift"
         },
         {
@@ -150,11 +154,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift"
         },
         {
           "kind" : "file",
@@ -194,12 +218,18 @@
       "moduleOutputPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobile.swiftmodule",
       "objects" : [
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingManager.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayConnection.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ANSIParser.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatusBadge.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalListView.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalView.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o",
@@ -270,6 +300,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o"
         },
         {
@@ -286,11 +320,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ANSIParser.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatusBadge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o"
         },
         {
           "kind" : "file",
@@ -324,12 +378,18 @@
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift",
         "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift",
@@ -452,6 +512,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift"
         },
         {
@@ -476,6 +544,8 @@
       "moduleOutputPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobileTests.swiftmodule",
       "objects" : [
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swift.o"
       ],
@@ -541,6 +611,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o"
         },
         {
@@ -555,6 +633,8 @@
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift",
+        "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift",
+        "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift",
         "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift",
         "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift"
       ],
@@ -574,12 +654,18 @@
       "cmux_mobile",
       "-c",
       "/Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift",
       "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift",
@@ -718,6 +804,8 @@
       "cmux_mobile",
       "-c",
       "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift",
+      "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift",
+      "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift",
       "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift",
       "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift",
       "-I",
@@ -909,7 +997,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o"
         },
         {
           "kind" : "file",
@@ -921,11 +1021,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o"
         },
         {
           "kind" : "file",
@@ -946,6 +1054,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/Surface.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o"
         },
         {
           "kind" : "file",
@@ -975,7 +1087,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o"
         },
         {
           "kind" : "file",
@@ -987,11 +1111,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o"
         },
         {
           "kind" : "file",
@@ -1015,6 +1147,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalListView.swift.o"
         },
         {
@@ -1028,6 +1164,14 @@
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o"
         },
         {
           "kind" : "file",
@@ -1053,6 +1197,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift"
         },
         {
@@ -1069,11 +1217,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift"
         },
         {
           "kind" : "file",
@@ -1126,6 +1294,14 @@
         {
           "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift"
         },
         {
           "kind" : "file",

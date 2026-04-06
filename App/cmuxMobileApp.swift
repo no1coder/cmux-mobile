@@ -40,13 +40,24 @@ struct cmuxMobileApp: App {
 
                 // 设置 Tab
                 NavigationStack {
-                    VStack(spacing: 16) {
-                        ConnectionStatusBadge(
-                            status: relayConnection.status,
-                            latencyMs: relayConnection.latencyMs
-                        )
-                        Text(String(localized: "tab.settings.relay", defaultValue: "Relay 连接"))
-                            .font(.title2)
+                    List {
+                        // Relay 连接状态部分
+                        Section(header: Text(String(localized: "tab.settings.relay", defaultValue: "Relay 连接"))) {
+                            ConnectionStatusBadge(
+                                status: relayConnection.status,
+                                latencyMs: relayConnection.latencyMs
+                            )
+                        }
+
+                        // 通知设置链接
+                        NavigationLink(
+                            destination: NotificationSettingsView()
+                        ) {
+                            Label(
+                                String(localized: "settings.notifications.nav_title", defaultValue: "通知设置"),
+                                systemImage: "bell.fill"
+                            )
+                        }
                     }
                     .navigationTitle(
                         String(localized: "tab.settings", defaultValue: "设置")
