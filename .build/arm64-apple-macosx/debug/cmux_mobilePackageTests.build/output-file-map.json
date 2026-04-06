@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/master.swiftdeps"
+  },
+  "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux-mobilePackageTests.derived/runner.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner.dia"
+  }
+}

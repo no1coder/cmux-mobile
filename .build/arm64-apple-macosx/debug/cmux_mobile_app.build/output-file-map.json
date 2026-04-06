@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/master.swiftdeps"
+  },
+  "/Users/jackie/code/cmux-mobile/App/cmuxMobileApp.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp.dia"
+  }
+}

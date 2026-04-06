@@ -1,0 +1,26 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/master.swiftdeps"
+  },
+  "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.dia"
+  },
+  "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.dia"
+  },
+  "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.dia"
+  }
+}

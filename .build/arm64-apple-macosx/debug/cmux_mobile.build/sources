@@ -1,0 +1,13 @@
+/Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift
+/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift
+/Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift
+/Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift
+/Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift
+/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift
+/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift
+/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift
+/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift

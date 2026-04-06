@@ -1,0 +1,3 @@
+module cmux_mobile {
+    header "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/include/cmux-mobile-Swift.h"
+}
