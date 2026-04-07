@@ -8,7 +8,9 @@ struct TerminalListView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if messageStore.surfaces.isEmpty {
+                if relayConnection.status != .connected {
+                    notConnectedView
+                } else if messageStore.surfaces.isEmpty {
                     emptyStateView
                 } else {
                     surfaceList
@@ -16,6 +18,22 @@ struct TerminalListView: View {
             }
             .navigationTitle("终端")
         }
+    }
+
+    /// 未连接提示
+    private var notConnectedView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text(String(localized: "terminal.not_connected", defaultValue: "未连接到设备"))
+                .font(.title3)
+                .fontWeight(.medium)
+            Text(String(localized: "terminal.not_connected_desc", defaultValue: "请先在设置中扫码配对 Mac"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - 路由

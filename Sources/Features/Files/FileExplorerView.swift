@@ -52,7 +52,10 @@ struct FileExplorerView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if isLoading {
+                if relayConnection.status != .connected {
+                    // 未连接时显示提示
+                    notConnectedView
+                } else if isLoading {
                     ProgressView(String(localized: "files.loading", defaultValue: "加载中…"))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = errorMessage {
@@ -68,8 +71,35 @@ struct FileExplorerView: View {
                 : (currentPath.last ?? "")
             )
             .toolbar { toolbarContent }
-            .onAppear { loadDirectory() }
+            .onAppear {
+                if relayConnection.status == .connected {
+                    loadDirectory()
+                }
+            }
+            .onChange(of: relayConnection.status) { _, newStatus in
+                if newStatus == .connected {
+                    loadDirectory()
+                }
+            }
         }
+    }
+
+    /// 未连接提示视图
+    private var notConnectedView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text(String(localized: "files.not_connected_title", defaultValue: "未连接到设备"))
+                .font(.title3)
+                .fontWeight(.medium)
+            Text(String(localized: "files.not_connected_desc", defaultValue: "请先在设置中扫码配对 Mac，连接成功后即可浏览文件"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - 子视图
