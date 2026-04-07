@@ -12,7 +12,7 @@ struct TerminalView: View {
     /// 加载错误信息
     @State private var errorMessage: String?
     /// 终端字体大小
-    @State private var fontSize: CGFloat = 11
+    @State private var fontSize: CGFloat = 9
     /// 自动刷新定时器
     @State private var refreshTask: Task<Void, Never>?
 
@@ -39,12 +39,12 @@ struct TerminalView: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // 字体缩小
-                Button { fontSize = max(8, fontSize - 1) } label: {
+                Button { fontSize = max(6, fontSize - 1) } label: {
                     Image(systemName: "textformat.size.smaller")
                         .font(.caption)
                 }
                 // 字体放大
-                Button { fontSize = min(18, fontSize + 1) } label: {
+                Button { fontSize = min(14, fontSize + 1) } label: {
                     Image(systemName: "textformat.size.larger")
                         .font(.caption)
                 }
