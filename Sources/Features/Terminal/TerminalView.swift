@@ -86,43 +86,23 @@ struct TerminalView: View {
         ]) { result in
             isLoading = false
 
-            // 解析 read_screen 响应
-            // Mac Bridge 会返回 V1 text 响应或 JSON result
-            if let resultDict = result["result"] as? [String: Any],
-               let text = resultDict["text"] as? String {
-                parseScreenText(text)
-            } else if let text = result["text"] as? String {
-                parseScreenText(text)
+            // Mac Bridge 返回 { "result": { "lines": [...], "surface_id": "..." } }
+            let resultDict = result["result"] as? [String: Any] ?? result
+
+            if let linesArray = resultDict["lines"] as? [String] {
+                let snapshot = ScreenSnapshot(
+                    surfaceID: surfaceID,
+                    lines: linesArray,
+                    dimensions: ScreenSnapshot.Dimensions(rows: linesArray.count, cols: 80),
+                    timestamp: Date()
+                )
+                var updated = messageStore.snapshots
+                updated[surfaceID] = snapshot
+                messageStore.snapshots = updated
+            } else if let error = resultDict["error"] {
+                print("[terminal] read_screen 失败: \(error)")
             }
         }
-    }
-
-    /// 解析 read_screen 返回的文本（base64 或纯文本）
-    private func parseScreenText(_ text: String) {
-        // read_screen 返回 "OK {base64}" 格式
-        let content: String
-        if text.hasPrefix("OK ") {
-            let base64 = String(text.dropFirst(3))
-            if let data = Data(base64Encoded: base64),
-               let decoded = String(data: data, encoding: .utf8) {
-                content = decoded
-            } else {
-                content = text
-            }
-        } else {
-            content = text
-        }
-
-        let lines = content.components(separatedBy: "\n")
-        let snapshot = ScreenSnapshot(
-            surfaceID: surfaceID,
-            lines: lines,
-            dimensions: ScreenSnapshot.Dimensions(rows: lines.count, cols: 80),
-            timestamp: Date()
-        )
-        var updated = messageStore.snapshots
-        updated[surfaceID] = snapshot
-        messageStore.snapshots = updated
     }
 
     // MARK: - 输入发送
