@@ -19,6 +19,9 @@ final class RelayConnection: NSObject, ObservableObject {
     /// 收到消息时的回调（在主线程调用）
     var onMessage: ((Data) -> Void)?
 
+    /// 远端解除配对时的回调（Mac 端解除配对）
+    var onRemoteUnpair: (() -> Void)?
+
     // MARK: - DisconnectRecovery 接入
 
     /// 断线恢复管理器，由外部注入（弱引用避免循环）
@@ -176,6 +179,10 @@ final class RelayConnection: NSObject, ObservableObject {
             case "auth_fail":
                 disconnect()
                 return
+            case "pair_deleted":
+                // Mac 端解除了配对，清除本地凭据并断开连接
+                handleRemoteUnpair()
+                return
             case "rpc_response":
                 // C4: 若消息携带 id 且有注册的回调，则调用回调并移除
                 if let msgID = json["id"] as? Int,
@@ -226,6 +233,23 @@ final class RelayConnection: NSObject, ObservableObject {
             "signature": signatureHex
         ]
         sendRaw(authResponse)
+    }
+
+    /// 处理远端解除配对：清除凭据并断开连接
+    private func handleRemoteUnpair() {
+        #if canImport(Security)
+        // 清除本地配对凭据
+        if let deviceID = KeychainHelper.load(key: "pairedDeviceID") {
+            KeychainHelper.delete(key: "pairSecret_\(deviceID)")
+            KeychainHelper.delete(key: "serverURL_\(deviceID)")
+            KeychainHelper.delete(key: "deviceName_\(deviceID)")
+        }
+        KeychainHelper.delete(key: "pairedDeviceID")
+        KeychainHelper.delete(key: "pairedServerURL")
+        #endif
+
+        disconnect()
+        onRemoteUnpair?()
     }
 
     /// 处理连接断开，触发自动重连
