@@ -218,9 +218,17 @@ struct FileExplorerView: View {
         relayConnection.sendWithResponse([
             "method": "file.list",
             "params": ["path": path]
-        ]) { [self] result in
-            DispatchQueue.main.async {
+        ]) { result in
+            DispatchQueue.main.async { [self] in
+                // 检查是否有错误
+                if let error = result["error"] as? [String: Any],
+                   let message = error["message"] as? String {
+                    isLoading = false
+                    errorMessage = message
+                    return
+                }
                 // 从响应中解析 result.entries
+                // Mac Bridge 返回格式: {"id": N, "result": {"entries": [...]}}
                 let resultDict = result["result"] as? [String: Any] ?? result
                 if let rawEntries = resultDict["entries"] as? [[String: Any]] {
                     handleResponse(rawEntries)
@@ -334,6 +342,19 @@ private struct _ChildFileExplorerView: View {
         Group {
             if isLoading {
                 ProgressView(String(localized: "files.loading", defaultValue: "加载中…"))
+            } else if let error = errorMessage {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                    Button(String(localized: "files.retry", defaultValue: "重试")) {
+                        loadDirectory()
+                    }
+                }
+                .padding()
             } else if entries.isEmpty {
                 Text(String(localized: "files.empty_title", defaultValue: "目录为空"))
                     .foregroundStyle(.secondary)
@@ -375,6 +396,7 @@ private struct _ChildFileExplorerView: View {
 
     private func loadDirectory() {
         isLoading = true
+        errorMessage = nil
         let path = "/" + currentPath.joined(separator: "/")
         // C4: 使用 sendWithResponse 注册响应回调
         connection.sendWithResponse([
@@ -382,8 +404,17 @@ private struct _ChildFileExplorerView: View {
             "params": ["path": path]
         ]) { result in
             DispatchQueue.main.async {
+                // 检查错误
+                if let error = result["error"] as? [String: Any],
+                   let message = error["message"] as? String {
+                    errorMessage = message
+                    isLoading = false
+                    return
+                }
+                // Mac Bridge 返回格式: {"id": N, "result": {"entries": [...]}}
                 let resultDict = result["result"] as? [String: Any] ?? result
                 guard let rawEntries = resultDict["entries"] as? [[String: Any]] else {
+                    errorMessage = String(localized: "files.error.empty_response", defaultValue: "响应数据格式错误")
                     isLoading = false
                     return
                 }

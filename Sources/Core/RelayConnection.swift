@@ -38,6 +38,8 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// C4: 响应回调注册表，key 为请求 id
     private var responseHandlers: [Int: ([String: Any]) -> Void] = [:]
+    /// 自增请求 ID 计数器，避免时间戳碰撞
+    private var nextRequestID: Int = 1
 
     // MARK: - 连接管理
 
@@ -95,7 +97,11 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// C4: 发送 RPC 请求并注册响应回调，响应到达时在主线程调用 handler
     func sendWithResponse(_ payload: [String: Any], handler: @escaping ([String: Any]) -> Void) {
-        let id = payload["id"] as? Int ?? Int(Date().timeIntervalSince1970 * 1000)
+        let id = payload["id"] as? Int ?? {
+            let current = nextRequestID
+            nextRequestID += 1
+            return current
+        }()
         responseHandlers[id] = handler
         var payloadWithID = payload
         payloadWithID["id"] = id
@@ -206,7 +212,14 @@ final class RelayConnection: NSObject, ObservableObject {
             case "rpc_response":
                 // 从 payload 中提取 id（Envelope 格式的 id 在 payload 内部）
                 let payloadDict = json["payload"] as? [String: Any]
-                let msgID = payloadDict?["id"] as? Int ?? json["id"] as? Int
+                // 支持 Int / Double / String 等多种 id 类型
+                let rawID = payloadDict?["id"] ?? json["id"]
+                let msgID: Int? = {
+                    if let intID = rawID as? Int { return intID }
+                    if let doubleID = rawID as? Double { return Int(doubleID) }
+                    if let strID = rawID as? String { return Int(strID) }
+                    return nil
+                }()
                 if let msgID, let handler = responseHandlers.removeValue(forKey: msgID) {
                     handler(payloadDict ?? json)
                     // 仍然转发给上层，供 MessageStore 更新状态

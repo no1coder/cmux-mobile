@@ -41,49 +41,55 @@ struct cmuxMobileApp: App {
     // MARK: - iPhone TabView 布局
 
     private var iPhoneTabView: some View {
-        TabView {
-            // Agent Tab（第一个）
-            AgentDashboard()
-                .environmentObject(approvalManager)
+        VStack(spacing: 0) {
+            // 连接状态指示条
+            ConnectionStatusBar()
                 .environmentObject(relayConnection)
-                .tabItem {
-                    Label(
-                        String(localized: "tab.agent", defaultValue: "Agent"),
-                        systemImage: "cpu"
-                    )
-                }
 
-            // 终端列表 Tab
-            TerminalListView()
-                .tabItem {
-                    Label(
-                        String(localized: "tab.terminal", defaultValue: "终端"),
-                        systemImage: "terminal"
-                    )
-                }
-                .environmentObject(messageStore)
-                .environmentObject(relayConnection)
-                .environmentObject(inputManager)
+            TabView {
+                // Agent Tab（第一个）
+                AgentDashboard()
+                    .environmentObject(approvalManager)
+                    .environmentObject(relayConnection)
+                    .tabItem {
+                        Label(
+                            String(localized: "tab.agent", defaultValue: "Agent"),
+                            systemImage: "cpu"
+                        )
+                    }
 
-            // 文件浏览器 Tab
-            FileExplorerView()
-                .environmentObject(relayConnection)
-                .tabItem {
-                    Label(
-                        String(localized: "tab.files", defaultValue: "文件"),
-                        systemImage: "folder"
-                    )
-                }
+                // 终端列表 Tab
+                TerminalListView()
+                    .tabItem {
+                        Label(
+                            String(localized: "tab.terminal", defaultValue: "终端"),
+                            systemImage: "terminal"
+                        )
+                    }
+                    .environmentObject(messageStore)
+                    .environmentObject(relayConnection)
+                    .environmentObject(inputManager)
 
-            // 设置 Tab
-            PairingSettingsView()
-                .environmentObject(relayConnection)
-                .tabItem {
-                    Label(
-                        String(localized: "tab.settings", defaultValue: "设置"),
-                        systemImage: "gear"
-                    )
-                }
+                // 文件浏览器 Tab
+                FileExplorerView()
+                    .environmentObject(relayConnection)
+                    .tabItem {
+                        Label(
+                            String(localized: "tab.files", defaultValue: "文件"),
+                            systemImage: "folder"
+                        )
+                    }
+
+                // 设置 Tab
+                PairingSettingsView()
+                    .environmentObject(relayConnection)
+                    .tabItem {
+                        Label(
+                            String(localized: "tab.settings", defaultValue: "设置"),
+                            systemImage: "gear"
+                        )
+                    }
+            }
         }
     }
 

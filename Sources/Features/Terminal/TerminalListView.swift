@@ -75,6 +75,9 @@ struct TerminalListView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .refreshable {
+            relayConnection.requestSurfaceList()
+        }
     }
 
     /// workspace 分组头部
@@ -115,11 +118,16 @@ struct TerminalListView: View {
         let workspaceName: String
         let surfaces: [Surface]
 
+        /// 显示名称：优先使用 workspaceName，其次使用第一个 surface 的标题，最后回退到默认名
         var displayName: String {
-            if workspaceName.isEmpty {
-                return "工作区"
+            if !workspaceName.isEmpty {
+                return workspaceName
             }
-            return workspaceName
+            // 使用第一个 surface 的标题作为分组名（通常是目录路径）
+            if let firstTitle = surfaces.first?.title, !firstTitle.isEmpty {
+                return firstTitle
+            }
+            return String(localized: "terminal.default_workspace", defaultValue: "工作区")
         }
     }
 
@@ -144,6 +152,14 @@ struct TerminalListView: View {
 private struct SurfaceRowView: View {
     let surface: Surface
 
+    /// 副标题：显示类型和引用标识
+    private var surfaceSubtitle: String {
+        let typeLabel = surface.type == .browser
+            ? String(localized: "terminal.type.browser", defaultValue: "浏览器")
+            : String(localized: "terminal.type.terminal", defaultValue: "终端")
+        return "\(typeLabel) - \(surface.ref)"
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             // 图标
@@ -166,10 +182,10 @@ private struct SurfaceRowView: View {
                     }
                 }
 
-                Text(surface.ref)
+                // 类型描述副标题
+                Text(surfaceSubtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .fontDesign(.monospaced)
             }
 
             Spacer()
