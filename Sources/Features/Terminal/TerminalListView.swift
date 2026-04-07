@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// 终端列表视图，显示所有可用的终端 surface
+/// 终端列表视图，显示所有可用的终端 surface（包括 browser 类型跳转到 BrowserPreviewView）
 struct TerminalListView: View {
     @EnvironmentObject var messageStore: MessageStore
+    @EnvironmentObject var relayConnection: RelayConnection
 
     var body: some View {
         NavigationStack {
@@ -17,11 +18,24 @@ struct TerminalListView: View {
         }
     }
 
+    // MARK: - 路由
+
+    /// 根据 surface 类型返回对应的目标视图
+    @ViewBuilder
+    private func destinationView(for surface: Surface) -> some View {
+        switch surface.type {
+        case .browser:
+            BrowserPreviewView(surfaceID: surface.id, connection: relayConnection)
+        case .terminal:
+            TerminalView(surfaceID: surface.id)
+        }
+    }
+
     // MARK: - 子视图
 
     private var surfaceList: some View {
         List(messageStore.surfaces) { surface in
-            NavigationLink(destination: TerminalView(surfaceID: surface.id)) {
+            NavigationLink(destination: destinationView(for: surface)) {
                 SurfaceRowView(surface: surface)
             }
         }

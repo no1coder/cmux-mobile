@@ -10,66 +10,59 @@ struct cmuxMobileApp: App {
 
     var body: some Scene {
         WindowGroup {
-            TabView {
-                // 将 approvalManager 注入 messageStore（通过 onAppear 确保 StateObject 已初始化）
-                let _ = {
-                    messageStore.approvalManager = approvalManager
-                }()
-                // Agent Dashboard Tab（第一个）
-                AgentDashboard()
-                    .environmentObject(approvalManager)
-                    .environmentObject(relayConnection)
-                    .tabItem {
-                        Label(
-                            String(localized: "tab.agent", defaultValue: "Agent"),
-                            systemImage: "cpu"
-                        )
-                    }
+            // 将 approvalManager 注入 messageStore（通过 let _ 确保 StateObject 已初始化）
+            let _ = {
+                messageStore.approvalManager = approvalManager
+            }()
+            iPhoneTabView
+        }
+    }
 
-                // 终端列表 Tab
-                TerminalListView()
-                    .tabItem {
-                        Label(
-                            String(localized: "tab.terminal", defaultValue: "终端"),
-                            systemImage: "terminal"
-                        )
-                    }
-                    .environmentObject(messageStore)
-                    .environmentObject(relayConnection)
-                    .environmentObject(inputManager)
+    // MARK: - iPhone TabView 布局
 
-                // 设置 Tab
-                NavigationStack {
-                    List {
-                        // Relay 连接状态部分
-                        Section(header: Text(String(localized: "tab.settings.relay", defaultValue: "Relay 连接"))) {
-                            ConnectionStatusBadge(
-                                status: relayConnection.status,
-                                latencyMs: relayConnection.latencyMs
-                            )
-                        }
-
-                        // 通知设置链接
-                        NavigationLink(
-                            destination: NotificationSettingsView()
-                        ) {
-                            Label(
-                                String(localized: "settings.notifications.nav_title", defaultValue: "通知设置"),
-                                systemImage: "bell.fill"
-                            )
-                        }
-                    }
-                    .navigationTitle(
-                        String(localized: "tab.settings", defaultValue: "设置")
+    private var iPhoneTabView: some View {
+        TabView {
+            // Agent Tab（第一个）
+            AgentDashboard()
+                .environmentObject(approvalManager)
+                .environmentObject(relayConnection)
+                .tabItem {
+                    Label(
+                        String(localized: "tab.agent", defaultValue: "Agent"),
+                        systemImage: "cpu"
                     )
                 }
+
+            // 终端列表 Tab
+            TerminalListView()
+                .tabItem {
+                    Label(
+                        String(localized: "tab.terminal", defaultValue: "终端"),
+                        systemImage: "terminal"
+                    )
+                }
+                .environmentObject(messageStore)
+                .environmentObject(relayConnection)
+                .environmentObject(inputManager)
+
+            // 文件浏览器 Tab
+            FileExplorerView()
+                .environmentObject(relayConnection)
+                .tabItem {
+                    Label(
+                        String(localized: "tab.files", defaultValue: "文件"),
+                        systemImage: "folder"
+                    )
+                }
+
+            // 设置 Tab
+            PairingSettingsView()
                 .tabItem {
                     Label(
                         String(localized: "tab.settings", defaultValue: "设置"),
                         systemImage: "gear"
                     )
                 }
-            }
         }
     }
 }
