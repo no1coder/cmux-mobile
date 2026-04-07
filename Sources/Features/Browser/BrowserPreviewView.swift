@@ -194,25 +194,34 @@ struct BrowserPreviewView: View {
 
     // MARK: - 命令发送
 
-    /// 发送 browser.screenshot 命令并异步处理截图
+    /// 发送 browser.screenshot 命令，使用回调接收响应
     func fetchScreenshot() {
         isLoading = true
         errorMessage = nil
-        connection.send([
+        // C4: 使用 sendWithResponse 注册响应回调
+        connection.sendWithResponse([
             "method": "browser.screenshot",
             "params": ["surface_id": surfaceID]
-        ])
-        // 截图响应通过 handleScreenshotResponse 注入
-        isLoading = false
+        ]) { result in
+            DispatchQueue.main.async {
+                let resultDict = result["result"] as? [String: Any] ?? result
+                handleScreenshotResponse(resultDict)
+            }
+        }
     }
 
-    /// 发送 browser.url.get 命令获取当前 URL
+    /// 发送 browser.url.get 命令，使用回调接收响应
     func fetchURL() {
-        connection.send([
+        // C4: 使用 sendWithResponse 注册响应回调
+        connection.sendWithResponse([
             "method": "browser.url.get",
             "params": ["surface_id": surfaceID]
-        ])
-        // URL 响应通过 handleURLResponse 注入
+        ]) { result in
+            DispatchQueue.main.async {
+                let resultDict = result["result"] as? [String: Any] ?? result
+                handleURLResponse(resultDict)
+            }
+        }
     }
 
     /// 发送 browser.back 命令

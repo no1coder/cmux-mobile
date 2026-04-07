@@ -15,11 +15,13 @@ enum KeychainHelper {
         // 先删除已有条目，确保覆盖写入
         delete(key: key)
 
+        // H11: 添加 kSecAttrAccessible，确保密钥在设备首次解锁后可读（本设备专属）
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
             kSecAttrAccount: key,
-            kSecValueData: data
+            kSecValueData: data,
+            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
 
         let status = SecItemAdd(query as CFDictionary, nil)

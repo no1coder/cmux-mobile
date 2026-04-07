@@ -11,6 +11,17 @@ final class MessageStore: ObservableObject {
     /// 关联的审批管理器，由外部注入（弱引用避免循环）
     weak var approvalManager: ApprovalManager?
 
+    /// C4: 关联的断线恢复管理器，由外部注入（弱引用避免循环）
+    weak var recovery: DisconnectRecovery?
+
+    // MARK: - file.list / browser.screenshot 响应数据
+
+    /// C4: 最近一次 file.list 响应条目
+    @Published var fileEntries: [[String: Any]] = []
+    /// C4: 最近一次 browser.screenshot 响应数据（content + encoding）
+    @Published var lastScreenshotContent: String?
+    @Published var lastScreenshotEncoding: String?
+
     // MARK: - 消息处理
 
     /// 解析原始 JSON 数据，更新 seq 并按类型分发
@@ -22,6 +33,8 @@ final class MessageStore: ObservableObject {
         // 更新最新序列号
         if envelope.seq > lastSeq {
             lastSeq = envelope.seq
+            // C4: 同步 lastSeq 到 DisconnectRecovery
+            recovery?.lastSeq = lastSeq
         }
 
         switch envelope.type {
@@ -138,19 +151,43 @@ final class MessageStore: ObservableObject {
 
     /// 处理 RPC 响应类型消息
     private func handleRPCResponse(_ payload: [String: AnyCodable]) {
-        guard case .object(let result) = payload["result"],
-              case .array(let surfacesArray) = result["surfaces"] else { return }
+        guard case .object(let result) = payload["result"] else { return }
 
-        // 将 AnyCodable 数组重新编码为 Surface 模型数组
-        let decoded = surfacesArray.compactMap { item -> Surface? in
-            guard case .object(let dict) = item else { return nil }
-            guard let data = try? JSONEncoder().encode(dict),
-                  let surface = try? JSONDecoder().decode(Surface.self, from: data) else {
-                return nil
+        // 处理 surface 列表响应
+        if case .array(let surfacesArray) = result["surfaces"] {
+            let decoded = surfacesArray.compactMap { item -> Surface? in
+                guard case .object(let dict) = item else { return nil }
+                guard let data = try? JSONEncoder().encode(dict),
+                      let surface = try? JSONDecoder().decode(Surface.self, from: data) else {
+                    return nil
+                }
+                return surface
             }
-            return surface
+            surfaces = decoded
+            return
         }
 
-        surfaces = decoded
+        // C4: 处理 file.list 响应
+        if case .array(let entriesArray) = result["entries"] {
+            let rawEntries: [[String: Any]] = entriesArray.compactMap { item -> [String: Any]? in
+                guard case .object(let dict) = item else { return nil }
+                return anyCodableToRawDict(dict)
+            }
+            fileEntries = rawEntries
+            return
+        }
+
+        // C4: 处理 browser.screenshot / file.read 响应
+        if case .string(let content) = result["content"] {
+            let encoding: String
+            if case .string(let enc) = result["encoding"] {
+                encoding = enc
+            } else {
+                encoding = "utf8"
+            }
+            lastScreenshotContent = content
+            lastScreenshotEncoding = encoding
+            return
+        }
     }
 }

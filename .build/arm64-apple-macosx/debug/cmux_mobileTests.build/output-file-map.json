@@ -16,6 +16,13 @@
     "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swiftdeps",
     "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.dia"
   },
+  "/Users/jackie/code/cmux-mobile/Tests/DisconnectRecoveryTests.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.dia"
+  },
   "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift": {
     "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.d",
     "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o",

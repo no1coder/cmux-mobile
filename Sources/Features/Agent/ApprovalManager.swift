@@ -62,6 +62,7 @@ struct ResolvedRequest: Identifiable {
 // MARK: - ApprovalManager
 
 /// 管理 Agent 审批流程，维护待处理和已解决的请求列表
+@MainActor
 final class ApprovalManager: ObservableObject {
 
     @Published var pendingRequests: [ApprovalRequest] = []

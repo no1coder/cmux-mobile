@@ -9,6 +9,13 @@
     "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.swiftdeps",
     "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.dia"
   },
+  "/Users/jackie/code/cmux-mobile/Sources/Core/DisconnectRecovery.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.dia"
+  },
   "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift": {
     "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.d",
     "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o",
@@ -65,12 +72,40 @@
     "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swiftdeps",
     "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.dia"
   },
+  "/Users/jackie/code/cmux-mobile/Sources/Features/Browser/BrowserPreviewView.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.dia"
+  },
+  "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FileExplorerView.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.dia"
+  },
+  "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FilePreviewView.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.dia"
+  },
   "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift": {
     "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.d",
     "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o",
     "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView~partial.swiftmodule",
     "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swiftdeps",
     "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.dia"
+  },
+  "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/PairingSettingsView.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.dia"
   },
   "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift": {
     "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ANSIParser.d",

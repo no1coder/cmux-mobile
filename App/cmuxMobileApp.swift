@@ -10,17 +10,18 @@ struct cmuxMobileApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // 将 approvalManager 注入 messageStore
-            let _ = {
+            Group {
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    // iPad：使用 NavigationSplitView 侧栏 + 详情
+                    iPadSplitView
+                } else {
+                    // iPhone：使用 TabView
+                    iPhoneTabView
+                }
+            }
+            // H14: 用 onAppear 替代 let _ = {} 注入 approvalManager，避免 SwiftUI 副作用
+            .onAppear {
                 messageStore.approvalManager = approvalManager
-            }()
-
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                // iPad：使用 NavigationSplitView 侧栏 + 详情
-                iPadSplitView
-            } else {
-                // iPhone：使用 TabView
-                iPhoneTabView
             }
         }
     }

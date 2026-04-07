@@ -3,13 +3,18 @@
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatusBadge.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingManager.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayConnection.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayMessage.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ScreenSnapshot.swift.o
@@ -20,6 +25,7 @@
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swift.o

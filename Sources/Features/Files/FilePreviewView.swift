@@ -112,14 +112,19 @@ struct FilePreviewView: View {
 
     // MARK: - 数据加载
 
-    /// 发送 file.read 命令
+    /// 发送 file.read 命令，使用回调接收响应
     private func loadFile() {
         previewState = .loading
-        connection.send([
+        // C4: 使用 sendWithResponse 注册响应回调
+        connection.sendWithResponse([
             "method": "file.read",
             "params": ["path": filePath]
-        ])
-        // 实际响应由 handleResponse 处理
+        ]) { result in
+            DispatchQueue.main.async {
+                let resultDict = result["result"] as? [String: Any] ?? result
+                handleResponse(resultDict)
+            }
+        }
     }
 
     /// 处理 file.read 响应：支持 base64 图片和 utf8 文本

@@ -3,6 +3,7 @@ import Foundation
 @testable import cmux_mobile
 
 @Suite("ApprovalManager Tests")
+@MainActor
 struct ApprovalManagerTests {
 
     // MARK: - 测试辅助方法

@@ -19,6 +19,11 @@ final class RelayConnection: NSObject, ObservableObject {
     /// 收到消息时的回调（在主线程调用）
     var onMessage: ((Data) -> Void)?
 
+    // MARK: - DisconnectRecovery 接入
+
+    /// 断线恢复管理器，由外部注入（弱引用避免循环）
+    var recovery: DisconnectRecovery?
+
     // MARK: - 私有状态
 
     private var webSocketTask: URLSessionWebSocketTask?
@@ -27,6 +32,9 @@ final class RelayConnection: NSObject, ObservableObject {
     private var reconnectTask: Task<Void, Never>?
     private var reconnectDelay: TimeInterval = 1
     private var pingStartTime: Date?
+
+    /// C4: 响应回调注册表，key 为请求 id
+    private var responseHandlers: [Int: ([String: Any]) -> Void] = [:]
 
     // MARK: - 连接管理
 
@@ -76,6 +84,15 @@ final class RelayConnection: NSObject, ObservableObject {
             "payload": payload
         ]
         sendRaw(envelope)
+    }
+
+    /// C4: 发送 RPC 请求并注册响应回调，响应到达时在主线程调用 handler
+    func sendWithResponse(_ payload: [String: Any], handler: @escaping ([String: Any]) -> Void) {
+        let id = payload["id"] as? Int ?? Int(Date().timeIntervalSince1970 * 1000)
+        responseHandlers[id] = handler
+        var payloadWithID = payload
+        payloadWithID["id"] = id
+        send(payloadWithID)
     }
 
     /// 发送断点续传恢复消息
@@ -136,7 +153,7 @@ final class RelayConnection: NSObject, ObservableObject {
 
         guard let data else { return }
 
-        // 尝试解析认证挑战
+        // 尝试解析认证挑战或 rpc_response
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let msgType = json["type"] as? String {
             switch msgType {
@@ -148,10 +165,28 @@ final class RelayConnection: NSObject, ObservableObject {
                 status = .connected
                 reconnectDelay = 1
                 startHeartbeat()
+                // C4: 通知 recovery 连接已恢复，并发送 resume（如有历史序列号）
+                if let r = recovery {
+                    r.markReconnected()
+                    if r.lastSeq > 0 {
+                        sendResume(lastSeq: r.lastSeq)
+                    }
+                }
                 return
             case "auth_fail":
                 disconnect()
                 return
+            case "rpc_response":
+                // C4: 若消息携带 id 且有注册的回调，则调用回调并移除
+                if let msgID = json["id"] as? Int,
+                   let handler = responseHandlers.removeValue(forKey: msgID) {
+                    if let payload = json["payload"] as? [String: Any] {
+                        handler(payload)
+                    } else {
+                        handler(json)
+                    }
+                    // 仍然转发给上层，供 MessageStore 更新状态
+                }
             default:
                 break
             }
@@ -163,28 +198,32 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// 处理认证挑战，计算 HMAC-SHA256 并回复
     private func handleAuthChallenge(_ json: [String: Any]) {
-        guard let nonce = json["nonce"] as? String,
-              let timestamp = json["timestamp"] as? String else { return }
+        // C1: 服务端 challenge 只含 nonce，不含 timestamp；timestamp 由客户端生成
+        guard let nonce = json["nonce"] as? String else { return }
 
-        // 计算 HMAC-SHA256(key=SHA256(pairSecret) hex, msg=phoneID+nonce+timestamp)
+        let timestamp = Int64(Date().timeIntervalSince1970 * 1000)
+
+        // 计算 HMAC-SHA256(key=SHA256(pairSecret) hex, msg=phoneID:nonce:timestamp)
+        // C7: 消息各字段用 ":" 分隔，避免拼接歧义
         let secretHex = SHA256.hash(data: Data(pairSecret.utf8))
             .compactMap { String(format: "%02x", $0) }
             .joined()
 
         guard let keyData = secretHex.data(using: .utf8) else { return }
-        let message = phoneID + nonce + timestamp
+        let message = phoneID + ":" + nonce + ":" + String(timestamp)
         let messageData = Data(message.utf8)
 
         let symmetricKey = SymmetricKey(data: keyData)
         let mac = HMAC<SHA256>.authenticationCode(for: messageData, using: symmetricKey)
-        let hmacHex = mac.compactMap { String(format: "%02x", $0) }.joined()
+        let signatureHex = mac.compactMap { String(format: "%02x", $0) }.joined()
 
+        // C1: 字段名用 "signature"（不是 "hmac"），类型用 "auth"（不是 "auth_response"）
         let authResponse: [String: Any] = [
             "type": "auth",
-            "phone_id": phoneID,
+            "device_id": phoneID,
             "nonce": nonce,
             "timestamp": timestamp,
-            "hmac": hmacHex
+            "signature": signatureHex
         ]
         sendRaw(authResponse)
     }
@@ -195,6 +234,8 @@ final class RelayConnection: NSObject, ObservableObject {
         status = .disconnected
         stopHeartbeat()
         webSocketTask = nil
+        // C4: 通知 recovery 连接已断开
+        recovery?.markDisconnected()
         scheduleReconnect()
     }
 

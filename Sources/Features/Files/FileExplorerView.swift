@@ -178,20 +178,28 @@ struct FileExplorerView: View {
 
     // MARK: - 数据加载
 
-    /// 发送 file.list 命令加载当前目录
+    /// 发送 file.list 命令加载当前目录，使用回调接收响应
     func loadDirectory() {
         isLoading = true
         errorMessage = nil
 
         let path = pathString()
-        relayConnection.send([
+        // C4: 使用 sendWithResponse 注册响应回调，避免响应丢失
+        relayConnection.sendWithResponse([
             "method": "file.list",
             "params": ["path": path]
-        ])
-
-        // 模拟接收：实际场景由 MessageStore 的回调更新条目
-        // 此处设计为外部通过 handleResponse 注入数据
-        isLoading = false
+        ]) { [self] result in
+            DispatchQueue.main.async {
+                // 从响应中解析 result.entries
+                let resultDict = result["result"] as? [String: Any] ?? result
+                if let rawEntries = resultDict["entries"] as? [[String: Any]] {
+                    handleResponse(rawEntries)
+                } else {
+                    isLoading = false
+                    errorMessage = String(localized: "files.error.empty_response", defaultValue: "响应数据格式错误")
+                }
+            }
+        }
     }
 
     /// 处理来自连接的 file.list 响应
@@ -338,10 +346,27 @@ private struct _ChildFileExplorerView: View {
     private func loadDirectory() {
         isLoading = true
         let path = "/" + currentPath.joined(separator: "/")
-        connection.send([
+        // C4: 使用 sendWithResponse 注册响应回调
+        connection.sendWithResponse([
             "method": "file.list",
             "params": ["path": path]
-        ])
-        isLoading = false
+        ]) { result in
+            DispatchQueue.main.async {
+                let resultDict = result["result"] as? [String: Any] ?? result
+                guard let rawEntries = resultDict["entries"] as? [[String: Any]] else {
+                    isLoading = false
+                    return
+                }
+                let decoder = JSONDecoder()
+                entries = rawEntries.compactMap { dict in
+                    guard let data = try? JSONSerialization.data(withJSONObject: dict),
+                          let entry = try? decoder.decode(FileEntry.self, from: data) else {
+                        return nil
+                    }
+                    return entry
+                }
+                isLoading = false
+            }
+        }
     }
 }

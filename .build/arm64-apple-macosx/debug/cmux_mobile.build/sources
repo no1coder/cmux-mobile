@@ -1,4 +1,5 @@
 /Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift
+/Users/jackie/code/cmux-mobile/Sources/Core/DisconnectRecovery.swift
 /Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift
 /Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift
 /Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift
@@ -7,7 +8,11 @@
 /Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Browser/BrowserPreviewView.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Files/FileExplorerView.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Files/FilePreviewView.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift
+/Users/jackie/code/cmux-mobile/Sources/Features/Settings/PairingSettingsView.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift
 /Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift
