@@ -11,6 +11,10 @@ struct TerminalInputBar: View {
 
     @State private var inputText: String = ""
 
+    // MARK: - 触觉反馈
+
+    private let hapticFeedback = UIImpactFeedbackGenerator(style: .light)
+
     // MARK: - 快捷键定义
 
     private struct ShortcutKey: Identifiable {
@@ -52,8 +56,27 @@ struct TerminalInputBar: View {
             // 快捷键水平滚动栏
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    // 清屏按钮（Ctrl+L）
+                    Button {
+                        hapticFeedback.impactOccurred()
+                        onSendKey("l", "ctrl")
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "eraser.line.dashed")
+                                .font(.system(size: 11))
+                            Text(String(localized: "input.clear", defaultValue: "清屏"))
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.orange.opacity(0.25))
+                        .foregroundStyle(Color.orange)
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                    }
+
                     // Ctrl 模式切换按钮
                     Button {
+                        hapticFeedback.impactOccurred()
                         inputManager.toggleCtrlMode()
                     } label: {
                         Text("Ctrl")
@@ -74,6 +97,7 @@ struct TerminalInputBar: View {
                     // 快捷键按钮
                     ForEach(shortcuts) { shortcut in
                         Button {
+                            hapticFeedback.impactOccurred()
                             handleShortcut(shortcut)
                         } label: {
                             Text(shortcut.label)

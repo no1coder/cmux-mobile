@@ -18,6 +18,7 @@ struct cmuxMobileApp: App {
                     iPhoneTabView
                 }
             }
+            .preferredColorScheme(.dark)
             .onAppear {
                 // 注册 Nerd Font
                 FontLoader.registerFonts()
@@ -40,13 +41,15 @@ struct cmuxMobileApp: App {
 
     // MARK: - iPhone TabView 布局
 
+    @State private var selectedTab: Int = 0
+
     private var iPhoneTabView: some View {
         VStack(spacing: 0) {
             // 连接状态指示条
             ConnectionStatusBar()
                 .environmentObject(relayConnection)
 
-            TabView {
+            TabView(selection: $selectedTab) {
                 // Agent Tab（第一个）
                 AgentDashboard()
                     .environmentObject(approvalManager)
@@ -57,6 +60,8 @@ struct cmuxMobileApp: App {
                             systemImage: "cpu"
                         )
                     }
+                    .badge(approvalManager.pendingRequests.count)
+                    .tag(0)
 
                 // 终端列表 Tab
                 TerminalListView()
@@ -69,6 +74,7 @@ struct cmuxMobileApp: App {
                     .environmentObject(messageStore)
                     .environmentObject(relayConnection)
                     .environmentObject(inputManager)
+                    .tag(1)
 
                 // 文件浏览器 Tab
                 FileExplorerView()
@@ -79,6 +85,7 @@ struct cmuxMobileApp: App {
                             systemImage: "folder"
                         )
                     }
+                    .tag(2)
 
                 // 设置 Tab
                 PairingSettingsView()
@@ -89,7 +96,9 @@ struct cmuxMobileApp: App {
                             systemImage: "gear"
                         )
                     }
+                    .tag(3)
             }
+            .animation(.easeInOut(duration: 0.2), value: selectedTab)
         }
     }
 

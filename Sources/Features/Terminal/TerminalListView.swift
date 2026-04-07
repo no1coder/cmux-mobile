@@ -54,8 +54,19 @@ struct TerminalListView: View {
         case .browser:
             BrowserPreviewView(surfaceID: surface.id, connection: relayConnection)
         case .terminal:
-            TerminalView(surfaceID: surface.id)
+            // 如果终端标题包含 Claude Code 相关关键词，使用聊天模式
+            if isClaudeSurface(surface) {
+                ClaudeChatView(surfaceID: surface.id)
+            } else {
+                TerminalView(surfaceID: surface.id)
+            }
         }
+    }
+
+    /// 判断 surface 是否运行 Claude Code
+    private func isClaudeSurface(_ surface: Surface) -> Bool {
+        let title = surface.title.lowercased()
+        return title.contains("claude") || title.contains("claude code")
     }
 
     // MARK: - 列表
@@ -68,7 +79,10 @@ struct TerminalListView: View {
                 Section(header: workspaceHeader(group)) {
                     ForEach(group.surfaces) { surface in
                         NavigationLink(destination: destinationView(for: surface)) {
-                            SurfaceRowView(surface: surface)
+                            SurfaceRowView(
+                                surface: surface,
+                                previewLine: lastOutputLine(for: surface.id)
+                            )
                         }
                     }
                 }
@@ -131,6 +145,12 @@ struct TerminalListView: View {
         }
     }
 
+    /// 获取终端快照中最后一行非空输出
+    private func lastOutputLine(for surfaceID: String) -> String? {
+        guard let snapshot = messageStore.snapshots[surfaceID] else { return nil }
+        return snapshot.lines.last(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty })
+    }
+
     private func groupedSurfaces() -> [WorkspaceGroup] {
         var dict: [String: (name: String, surfaces: [Surface])] = [:]
         for surface in messageStore.surfaces {
@@ -151,6 +171,11 @@ struct TerminalListView: View {
 
 private struct SurfaceRowView: View {
     let surface: Surface
+    /// 终端快照预览行（最后一行输出）
+    var previewLine: String?
+
+    /// 聚焦指示灯脉冲动画
+    @State private var isPulsing = false
 
     /// 副标题：显示类型和引用标识
     private var surfaceSubtitle: String {
@@ -179,6 +204,13 @@ private struct SurfaceRowView: View {
                         Circle()
                             .fill(.green)
                             .frame(width: 6, height: 6)
+                            .scaleEffect(isPulsing ? 1.4 : 1.0)
+                            .opacity(isPulsing ? 0.6 : 1.0)
+                            .animation(
+                                .easeInOut(duration: 1.2).repeatForever(autoreverses: true),
+                                value: isPulsing
+                            )
+                            .onAppear { isPulsing = true }
                     }
                 }
 
@@ -186,10 +218,28 @@ private struct SurfaceRowView: View {
                 Text(surfaceSubtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                // 终端预览行（最后一行输出）
+                if let preview = previewLine, !preview.isEmpty {
+                    Text(preview)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.gray)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
             }
 
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 12)
+        .background(
+            LinearGradient(
+                colors: [Color(white: 0.12), Color(white: 0.08)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

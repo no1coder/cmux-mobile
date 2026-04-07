@@ -6,6 +6,7 @@ struct TerminalView: View {
     @EnvironmentObject var messageStore: MessageStore
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
+    @Environment(\.dismiss) private var dismiss
 
     /// 是否正在加载屏幕内容
     @State private var isLoading = true
@@ -15,26 +16,49 @@ struct TerminalView: View {
     @State private var fontSize: CGFloat = 14
     /// 自动刷新定时器
     @State private var refreshTask: Task<Void, Never>?
+    /// 当前是否处于横屏模式
+    @State private var isLandscape = false
+    /// 终端内容是否已加载完成（用于渐入动画）
+    @State private var contentVisible = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // 终端输出区域
-            terminalContent
+        ZStack(alignment: .topLeading) {
+            VStack(spacing: 0) {
+                // 终端输出区域
+                terminalContent
 
-            // 输入工具栏
-            TerminalInputBar(
-                onSendText: { text in
-                    sendText(text + "\n")
-                },
-                onSendKey: { key, mods in
-                    sendKey(key: key, mods: mods)
+                // 输入工具栏（横竖屏均显示在底部）
+                TerminalInputBar(
+                    onSendText: { text in
+                        sendText(text + "\n")
+                    },
+                    onSendKey: { key, mods in
+                        sendKey(key: key, mods: mods)
+                    }
+                )
+                .environmentObject(inputManager)
+            }
+
+            // 横屏模式下显示浮动返回按钮
+            if isLandscape {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(10)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
                 }
-            )
-            .environmentObject(inputManager)
+                .padding(.top, 8)
+                .padding(.leading, 8)
+            }
         }
         .background(Color.black)
         .navigationTitle(surfaceTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(isLandscape)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -60,10 +84,22 @@ struct TerminalView: View {
             inputManager.enableInput()
             requestScreenContent()
             startAutoRefresh()
+            updateOrientation()
         }
         .onDisappear {
             inputManager.disableInput()
             stopAutoRefresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            updateOrientation()
+        }
+    }
+
+    /// 根据设备方向更新横屏状态
+    private func updateOrientation() {
+        let orientation = UIDevice.current.orientation
+        withAnimation(.easeInOut(duration: 0.25)) {
+            isLandscape = orientation.isLandscape
         }
     }
 
@@ -100,7 +136,7 @@ struct TerminalView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
         } else {
-            // 终端内容
+            // 终端内容（渐入动画）
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
@@ -119,8 +155,12 @@ struct TerminalView: View {
                     .padding(.vertical, 4)
                 }
                 .background(Color.black)
+                .opacity(contentVisible ? 1 : 0)
                 .onAppear {
                     proxy.scrollTo("bottom", anchor: .bottom)
+                    withAnimation(.easeIn(duration: 0.3)) {
+                        contentVisible = true
+                    }
                 }
                 .task(id: lines.count) {
                     withAnimation(.easeOut(duration: 0.15)) {

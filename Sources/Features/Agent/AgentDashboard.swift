@@ -36,11 +36,34 @@ struct AgentDashboard: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// 连接状态指示器，显示已连接的 Mac 信息
+    private var connectionIndicator: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(.green)
+                .frame(width: 8, height: 8)
+            let deviceName = KeychainHelper.load(key: "pairedDeviceID").flatMap {
+                KeychainHelper.load(key: "deviceName_\($0)")
+            } ?? String(localized: "agent.connected_device.unknown", defaultValue: "Mac")
+            Text(String(localized: "agent.connected_to", defaultValue: "已连接：\(deviceName)"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.green.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
     // MARK: - 主内容
 
     private var dashboardContent: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
+                // 连接状态指示器
+                connectionIndicator
+
                 // 待处理区块
                 if !approvalManager.pendingRequests.isEmpty {
                     sectionHeader(
@@ -74,30 +97,37 @@ struct AgentDashboard: View {
     // MARK: - 子视图
 
     private var emptyStateView: some View {
-        Group {
-            if #available(iOS 17.0, macOS 14.0, *) {
-                ContentUnavailableView(
-                    String(localized: "agent.empty.title", defaultValue: "无待审批请求"),
-                    systemImage: "checkmark.shield",
-                    description: Text(
-                        String(localized: "agent.empty.description", defaultValue: "Agent 发出审批请求时会显示在这里")
-                    )
-                )
-            } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "checkmark.shield")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
-                    Text(String(localized: "agent.empty.title", defaultValue: "无待审批请求"))
-                        .font(.title2)
-                    Text(String(localized: "agent.empty.description", defaultValue: "Agent 发出审批请求时会显示在这里"))
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
+        VStack(spacing: 20) {
+            Spacer()
+
+            // 友好的插图
+            ZStack {
+                Circle()
+                    .fill(Color.green.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.green.opacity(0.7))
             }
+
+            Text(String(localized: "agent.empty.title", defaultValue: "一切就绪"))
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            Text(String(localized: "agent.empty.description", defaultValue: "当前没有待审批的请求\nAgent 发出审批请求时会显示在这里"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+
+            // 连接指示器
+            connectionIndicator
+                .padding(.horizontal, 32)
+
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     private func sectionHeader(title: String, count: Int) -> some View {
