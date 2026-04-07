@@ -236,6 +236,9 @@ struct PairingSettingsView: View {
             return
         }
 
+        // 先关闭扫码界面
+        showScanner = false
+
         // 获取或生成手机 ID
         let phoneID = getOrCreatePhoneID()
         let phoneName = UIDevice.current.name
@@ -246,6 +249,15 @@ struct PairingSettingsView: View {
                 phoneID: phoneID,
                 phoneName: phoneName
             )
+
+            // 直接在这里处理结果
+            if let result = pairingManager.pairedDevice {
+                savePairedDevice(result)
+                connectAfterPairing(result)
+                showFeedback(String(localized: "settings.pairing.paired_success", defaultValue: "配对成功！"))
+            } else if let error = pairingManager.error {
+                showFeedback("⚠️ \(error)")
+            }
         }
     }
 
