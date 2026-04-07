@@ -79,6 +79,15 @@ enum ANSIParser {
                     // 其他两字符 ESC 序列（如 ESC=, ESC>），跳过
                     index = input.index(nextIndex, offsetBy: 1, limitedBy: input.endIndex) ?? input.endIndex
                 }
+            } else if char == "\u{9C}" || char == "\u{90}" || char == "\u{9D}" || char == "\u{9E}" || char == "\u{9F}" {
+                // C1 控制字符（8-bit），跳过到终止符
+                index = input.index(after: index)
+                while index < input.endIndex {
+                    let c = input[index]
+                    if c == "\u{9C}" || c == "\u{07}" || c == "\u{1B}" { break }
+                    index = input.index(after: index)
+                }
+                if index < input.endIndex { index = input.index(after: index) }
             } else if char.asciiValue.map({ $0 < 0x20 && $0 != 0x0A && $0 != 0x0D && $0 != 0x09 }) == true {
                 // 跳过其他控制字符（保留换行、回车、制表符）
                 index = input.index(after: index)

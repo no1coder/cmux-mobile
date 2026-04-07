@@ -11,8 +11,10 @@ struct TerminalView: View {
     @State private var isLoading = true
     /// 加载错误信息
     @State private var errorMessage: String?
-    /// 终端字体大小（可通过捏合缩放调整）
+    /// 终端字体大小
     @State private var fontSize: CGFloat = 11
+    /// 自动刷新定时器
+    @State private var refreshTask: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,16 +25,9 @@ struct TerminalView: View {
             TerminalInputBar(
                 onSendText: { text in
                     sendText(text + "\n")
-                    // 发送后刷新屏幕
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        requestScreenContent()
-                    }
                 },
                 onSendKey: { key, mods in
                     sendKey(key: key, mods: mods)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        requestScreenContent()
-                    }
                 }
             )
             .environmentObject(inputManager)
@@ -64,9 +59,11 @@ struct TerminalView: View {
         .onAppear {
             inputManager.enableInput()
             requestScreenContent()
+            startAutoRefresh()
         }
         .onDisappear {
             inputManager.disableInput()
+            stopAutoRefresh()
         }
     }
 
@@ -166,6 +163,25 @@ struct TerminalView: View {
                 print("[terminal] read_screen 未知响应: \(result.keys)")
             }
         }
+    }
+
+    // MARK: - 自动刷新
+
+    /// 每 2 秒刷新一次终端内容
+    private func startAutoRefresh() {
+        stopAutoRefresh()
+        refreshTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                guard !Task.isCancelled else { break }
+                requestScreenContent()
+            }
+        }
+    }
+
+    private func stopAutoRefresh() {
+        refreshTask?.cancel()
+        refreshTask = nil
     }
 
     // MARK: - 输入发送
