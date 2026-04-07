@@ -27,8 +27,13 @@ final class MessageStore: ObservableObject {
     /// 解析原始 JSON 数据，更新 seq 并按类型分发
     func processRawMessage(_ data: Data) {
         guard let envelope = try? JSONDecoder().decode(RelayEnvelope.self, from: data) else {
+            // 调试：打印解码失败的原始数据
+            if let text = String(data: data, encoding: .utf8) {
+                print("[messageStore] 解码失败: \(text.prefix(200))")
+            }
             return
         }
+        print("[messageStore] 收到消息: type=\(envelope.type) from=\(envelope.from)")
 
         // 更新最新序列号
         if envelope.seq > lastSeq {
@@ -194,18 +199,39 @@ final class MessageStore: ObservableObject {
 
     /// 处理 RPC 响应类型消息
     private func handleRPCResponse(_ payload: [String: AnyCodable]) {
-        guard case .object(let result) = payload["result"] else { return }
+        print("[messageStore] rpc_response payload keys: \(payload.keys.sorted())")
+        // Mac Bridge 返回的格式：payload 直接包含 result 字段
+        // 也可能 result 嵌套在 payload 中
+        let result: [String: AnyCodable]
+        if case .object(let r) = payload["result"] {
+            result = r
+            print("[messageStore] result keys: \(r.keys.sorted())")
+        } else {
+            // 尝试直接把 payload 当 result 用
+            result = payload
+            print("[messageStore] 直接用 payload 作 result, keys: \(payload.keys.sorted())")
+        }
 
         // 处理 surface 列表响应
         if case .array(let surfacesArray) = result["surfaces"] {
+            print("[messageStore] 找到 surfaces 数组, 元素数=\(surfacesArray.count)")
             let decoded = surfacesArray.compactMap { item -> Surface? in
-                guard case .object(let dict) = item else { return nil }
-                guard let data = try? JSONEncoder().encode(dict),
-                      let surface = try? JSONDecoder().decode(Surface.self, from: data) else {
+                guard case .object(let dict) = item else {
+                    print("[messageStore] surface 元素不是 object")
                     return nil
                 }
-                return surface
+                do {
+                    let data = try JSONEncoder().encode(dict)
+                    let surface = try JSONDecoder().decode(Surface.self, from: data)
+                    return surface
+                } catch {
+                    print("[messageStore] surface 解码失败: \(error)")
+                    // 打印原始 key 帮助调试
+                    print("[messageStore] surface dict keys: \(dict.keys.sorted())")
+                    return nil
+                }
             }
+            print("[messageStore] 成功解码 \(decoded.count) 个 surface")
             surfaces = decoded
             return
         }

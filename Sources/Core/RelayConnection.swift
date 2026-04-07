@@ -102,6 +102,17 @@ final class RelayConnection: NSObject, ObservableObject {
         send(payloadWithID)
     }
 
+    /// 连接成功后主动请求 surface 列表
+    func requestSurfaceList() {
+        let requestID = Int(Date().timeIntervalSince1970)
+        sendWithResponse([
+            "method": "surface.list",
+            "id": requestID,
+        ]) { result in
+            print("[relay] surface.list 响应: \(result.keys.joined(separator: ","))")
+        }
+    }
+
     /// 发送断点续传恢复消息
     func sendResume(lastSeq: UInt64) {
         let envelope: [String: Any] = [
@@ -174,6 +185,7 @@ final class RelayConnection: NSObject, ObservableObject {
                 status = .connected
                 reconnectDelay = 1
                 startHeartbeat()
+                print("[relay] 认证成功，已连接")
                 // C4: 通知 recovery 连接已恢复，并发送 resume（如有历史序列号）
                 if let r = recovery {
                     r.markReconnected()
@@ -181,6 +193,8 @@ final class RelayConnection: NSObject, ObservableObject {
                         sendResume(lastSeq: r.lastSeq)
                     }
                 }
+                // 连接成功后，主动请求 surface 列表
+                requestSurfaceList()
                 return
             case "auth_fail":
                 disconnect()
