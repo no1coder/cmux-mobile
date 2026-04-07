@@ -1,0 +1,17 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+DerivedData/
+
+# SPM
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Build artifacts
+*.ipa
+*.dSYM.zip
+*.dSYM

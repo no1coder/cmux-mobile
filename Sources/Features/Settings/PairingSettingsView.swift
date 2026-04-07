@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 配对设置视图：展示已配对设备信息，支持解除配对和自托管服务器配置
+/// 配对设置视图：展示已配对设备信息，支持扫码配对、解除配对和自托管服务器配置
 struct PairingSettingsView: View {
 
     // MARK: - Keychain 键名
@@ -8,24 +8,33 @@ struct PairingSettingsView: View {
     private static let keyDeviceID = "pairedDeviceID"
     private static let keyServerURL = "pairedServerURL"
     private static let keySelfHostedURL = "selfHostedServerURL"
+    private static let keyPhoneID = "phoneID"
 
     // MARK: - 状态
 
     /// 已配对的设备 ID（从 Keychain 读取）
     @State private var deviceID: String?
+    /// 已配对的设备名称
+    @State private var deviceName: String?
     /// 已配对的服务器 URL（从 Keychain 读取）
     @State private var serverURL: String?
     /// 自托管服务器 URL（可编辑）
     @State private var selfHostedURL: String = ""
     /// 是否显示解除配对确认弹窗
     @State private var showUnpairConfirm: Bool = false
+    /// 是否显示扫码界面
+    @State private var showScanner: Bool = false
     /// 操作结果反馈信息
     @State private var feedbackMessage: String?
+
+    /// 配对管理器
+    @StateObject private var pairingManager = PairingManager()
 
     var body: some View {
         NavigationStack {
             Form {
                 pairedDeviceSection
+                scanSection
                 selfHostedSection
             }
             .navigationTitle(String(localized: "settings.pairing.title", defaultValue: "配对设置"))
@@ -50,6 +59,17 @@ struct PairingSettingsView: View {
                     defaultValue: "解除配对后，应用将无法连接到此设备，确认继续？"
                 ))
             }
+            .fullScreenCover(isPresented: $showScanner) {
+                QRScannerView(
+                    onScanned: { text in
+                        handleQRScanned(text)
+                    },
+                    onDismiss: {
+                        showScanner = false
+                    }
+                )
+                .ignoresSafeArea()
+            }
             .safeAreaInset(edge: .bottom) {
                 if let msg = feedbackMessage {
                     Text(msg)
@@ -63,6 +83,18 @@ struct PairingSettingsView: View {
                 }
             }
             .animation(.easeInOut, value: feedbackMessage)
+            .onChange(of: pairingManager.pairedDevice) { _, result in
+                guard let result else { return }
+                // 配对成功，保存设备信息
+                savePairedDevice(result)
+                showScanner = false
+                showFeedback(String(localized: "settings.pairing.paired_success", defaultValue: "配对成功！"))
+            }
+            .onChange(of: pairingManager.error) { _, error in
+                guard let error else { return }
+                showScanner = false
+                showFeedback("⚠️ \(error)")
+            }
         }
     }
 
@@ -74,6 +106,14 @@ struct PairingSettingsView: View {
             header: Text(String(localized: "settings.pairing.device_section", defaultValue: "已配对设备"))
         ) {
             if let id = deviceID, !id.isEmpty {
+                // 设备名称行
+                if let name = deviceName, !name.isEmpty {
+                    LabeledContent(
+                        String(localized: "settings.pairing.device_name", defaultValue: "设备名称"),
+                        value: name
+                    )
+                }
+
                 // 设备 ID 行
                 LabeledContent(
                     String(localized: "settings.pairing.device_id", defaultValue: "设备 ID"),
@@ -110,6 +150,40 @@ struct PairingSettingsView: View {
         }
     }
 
+    // MARK: - Section：扫码配对
+
+    private var scanSection: some View {
+        Section {
+            if pairingManager.isPairing {
+                HStack {
+                    ProgressView()
+                        .padding(.trailing, 8)
+                    Text(String(localized: "settings.pairing.pairing_in_progress", defaultValue: "正在配对..."))
+                        .foregroundStyle(.secondary)
+                }
+            } else if deviceID == nil || deviceID?.isEmpty == true {
+                Button {
+                    showScanner = true
+                } label: {
+                    Label(
+                        String(localized: "settings.pairing.scan_qr", defaultValue: "扫描二维码配对"),
+                        systemImage: "qrcode.viewfinder"
+                    )
+                    .font(.headline)
+                }
+            } else {
+                Button {
+                    showScanner = true
+                } label: {
+                    Label(
+                        String(localized: "settings.pairing.scan_new_qr", defaultValue: "扫描新设备二维码"),
+                        systemImage: "qrcode.viewfinder"
+                    )
+                }
+            }
+        }
+    }
+
     // MARK: - Section：自托管服务器
 
     private var selfHostedSection: some View {
@@ -121,11 +195,9 @@ struct PairingSettingsView: View {
                 String(localized: "settings.pairing.self_hosted_placeholder", defaultValue: "例如：relay.example.com"),
                 text: $selfHostedURL
             )
-            #if os(iOS)
             .keyboardType(.URL)
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
-            #endif
 
             Button {
                 saveSelfHostedURL()
@@ -138,6 +210,29 @@ struct PairingSettingsView: View {
         }
     }
 
+    // MARK: - QR 扫码处理
+
+    /// 处理扫描到的 QR 码文本
+    private func handleQRScanned(_ text: String) {
+        guard let qrData = PairingManager.parseQRCode(text) else {
+            showScanner = false
+            showFeedback("⚠️ " + String(localized: "settings.pairing.invalid_qr", defaultValue: "无效的配对二维码"))
+            return
+        }
+
+        // 获取或生成手机 ID
+        let phoneID = getOrCreatePhoneID()
+        let phoneName = UIDevice.current.name
+
+        Task {
+            await pairingManager.confirmPairing(
+                qrData: qrData,
+                phoneID: phoneID,
+                phoneName: phoneName
+            )
+        }
+    }
+
     // MARK: - Keychain 操作
 
     /// 从 Keychain 加载配对信息
@@ -146,6 +241,36 @@ struct PairingSettingsView: View {
         deviceID = KeychainHelper.load(key: Self.keyDeviceID)
         serverURL = KeychainHelper.load(key: Self.keyServerURL)
         selfHostedURL = KeychainHelper.load(key: Self.keySelfHostedURL) ?? ""
+        // 加载设备名称
+        if let id = deviceID {
+            deviceName = KeychainHelper.load(key: "deviceName_\(id)")
+        }
+        #endif
+    }
+
+    /// 保存配对成功的设备信息
+    private func savePairedDevice(_ result: PairResult) {
+        #if canImport(Security)
+        try? KeychainHelper.save(key: Self.keyDeviceID, value: result.deviceID)
+        try? KeychainHelper.save(key: Self.keyServerURL, value: result.serverURL)
+        try? KeychainHelper.save(key: "deviceName_\(result.deviceID)", value: result.deviceName)
+        #endif
+        deviceID = result.deviceID
+        deviceName = result.deviceName
+        serverURL = result.serverURL
+    }
+
+    /// 获取或创建手机 ID
+    private func getOrCreatePhoneID() -> String {
+        #if canImport(Security)
+        if let existing = KeychainHelper.load(key: Self.keyPhoneID) {
+            return existing
+        }
+        let newID = "phone-" + UUID().uuidString.prefix(8).lowercased()
+        try? KeychainHelper.save(key: Self.keyPhoneID, value: newID)
+        return newID
+        #else
+        return "phone-" + UUID().uuidString.prefix(8).lowercased()
         #endif
     }
 
@@ -153,15 +278,16 @@ struct PairingSettingsView: View {
     private func unpair() {
         #if canImport(Security)
         if let id = deviceID {
-            // 删除配对凭据（pairSecret 和 serverURL 以 deviceID 为后缀存储）
             KeychainHelper.delete(key: "pairSecret_\(id)")
             KeychainHelper.delete(key: "serverURL_\(id)")
+            KeychainHelper.delete(key: "deviceName_\(id)")
         }
         KeychainHelper.delete(key: Self.keyDeviceID)
         KeychainHelper.delete(key: Self.keyServerURL)
         #endif
 
         deviceID = nil
+        deviceName = nil
         serverURL = nil
         showFeedback(String(localized: "settings.pairing.unpaired_success", defaultValue: "已成功解除配对"))
     }

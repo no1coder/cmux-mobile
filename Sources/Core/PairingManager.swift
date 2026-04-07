@@ -16,7 +16,7 @@ struct QRCodeData: Codable {
 }
 
 /// 配对成功后的结果
-struct PairResult {
+struct PairResult: Equatable {
     let deviceID: String
     let deviceName: String
     let pairSecret: String

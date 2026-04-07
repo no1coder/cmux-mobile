@@ -1,0 +1,636 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0032D90423878E794A25F0CD /* BrowserPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8F0766C6D1A7B8751C5C29 /* BrowserPreviewView.swift */; };
+		012E44546631C6D4643172AD /* ANSIParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */; };
+		0273CF921B7A3E4547C3B84A /* MessageStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C89084F105DAFCD0F85F599 /* MessageStoreTests.swift */; };
+		0C1FBB51BC378F7F361B12DF /* TerminalInputBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */; };
+		0C784637AAFAE5F503F1A4F1 /* RelayConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D14646F321994D5476EC6 /* RelayConnection.swift */; };
+		1961798322AE3F69A162C266 /* Surface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B77A75BFF2571D1EB22615 /* Surface.swift */; };
+		2141E78ABDD40410E1F19D21 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */; };
+		2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697189AF6714DB55223B968 /* InputManager.swift */; };
+		30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */; };
+		32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
+		45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4416396E67D1C2014948459 /* InputManagerTests.swift */; };
+		4C2BB256453DF748C688406F /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */; };
+		5410AEBF6F261CCA142FE720 /* FilePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97C9B26EA00C525C2807F937 /* FilePreviewView.swift */; };
+		589B0DB7975913F0F4F00A8F /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
+		5B12358A93E0985A37CF142C /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC23E6B02ABB80410D7E3BD4 /* AnyCodable.swift */; };
+		5E1FEFDE88127ED2C2701629 /* PairingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E26E0EC0AE08CA4CECA5F2A7 /* PairingSettingsView.swift */; };
+		670937A6255DD0A932266A93 /* PairingManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B0CE3FBD21CD697976F1D9 /* PairingManagerTests.swift */; };
+		6B781C54940A9D74481E9057 /* RelayConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D14646F321994D5476EC6 /* RelayConnection.swift */; };
+		6DD7DF466F966763799922E3 /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 489D61EC3B7EE5D14C55185C /* NotificationSettingsView.swift */; };
+		7D377C20F2FEA061FA93E545 /* DisconnectRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */; };
+		7D4C51EB3019824A34D84101 /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8281D9CAA5152412FA0AAF63 /* TerminalView.swift */; };
+		7D6ADDA6645C9C79A00AA671 /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 489D61EC3B7EE5D14C55185C /* NotificationSettingsView.swift */; };
+		7F3CCAE8644AEB66C0B48902 /* ConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */; };
+		7F9DEFAD0FA57F0A67C403C3 /* FilePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97C9B26EA00C525C2807F937 /* FilePreviewView.swift */; };
+		80CC2B778093B0EBF3430B44 /* ScreenSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */; };
+		81E92AC89989B1C736819D48 /* TerminalInputBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */; };
+		83E2A62343A9D5313570BD90 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */; };
+		877643F7C1F6F004C8F10A73 /* FileExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC765AF5EA3773CA198C50DA /* FileExplorerView.swift */; };
+		87E8662C7A9D2BF00A58A237 /* PairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEB7EC70AC6330E71E686A7C /* PairingManager.swift */; };
+		910E19A9E281AF4ADD857F8D /* ConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */; };
+		9B1B2B94231330A76CF50FD3 /* MessageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */; };
+		9E715B8C84C212893A8A9118 /* DisconnectRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFEF7F60ACF11F278EBA58F3 /* DisconnectRecoveryTests.swift */; };
+		A57707A29487AE8DAF286050 /* FileExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC765AF5EA3773CA198C50DA /* FileExplorerView.swift */; };
+		A94674CB2B38923E470CB9EF /* TerminalListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01095C093AB07DC9F57E1E91 /* TerminalListView.swift */; };
+		A984DDCF3019CC87C0D094C7 /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC23E6B02ABB80410D7E3BD4 /* AnyCodable.swift */; };
+		ADC3B0B1C58061ACB4ACA158 /* TerminalListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01095C093AB07DC9F57E1E91 /* TerminalListView.swift */; };
+		B3839D5501ED5B28624F792C /* ApprovalManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209D8E1A48C17AFC907DA8A3 /* ApprovalManagerTests.swift */; };
+		BC138FE31760CC00A9501E45 /* ApprovalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2A159CFD8617E079E568B2 /* ApprovalManager.swift */; };
+		C07C2DFA657B695B2FAB0C11 /* PairingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E26E0EC0AE08CA4CECA5F2A7 /* PairingSettingsView.swift */; };
+		C0B0DE79675F10C6BC7416FD /* ANSIParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7718FF64F18F50A9F2A73BE /* ANSIParser.swift */; };
+		C0D13C5C7F5F87C5C540C7B6 /* DisconnectRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */; };
+		C3B2574D02369F7D7E224FF8 /* AgentDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A3E91EAEEA35413CC974E7 /* AgentDashboard.swift */; };
+		C3C23242C1D9D1BAB7AA134D /* RelayMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA3CB797631338A34584ACFE /* RelayMessage.swift */; };
+		C551226171555ACC1D81D59E /* Surface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B77A75BFF2571D1EB22615 /* Surface.swift */; };
+		D37ECAE20DF175BAB4D582DB /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8281D9CAA5152412FA0AAF63 /* TerminalView.swift */; };
+		D90046800101027E98CD1E38 /* PairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEB7EC70AC6330E71E686A7C /* PairingManager.swift */; };
+		D9C8C8BFE08F26122FA286A6 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */; };
+		DCBD24AE0495A58F9648F6D7 /* ScreenSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */; };
+		DD0FC2B5861B6CC2E2661715 /* cmuxMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484641BAA51734ADE37A34CD /* cmuxMobileApp.swift */; };
+		E4BF6AD42F7FB27E0E48067B /* BrowserPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8F0766C6D1A7B8751C5C29 /* BrowserPreviewView.swift */; };
+		E721F20B55E8A204FAAE6E24 /* InputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697189AF6714DB55223B968 /* InputManager.swift */; };
+		E78BA8DD1C6FE7F0C9AF453F /* ANSIParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7718FF64F18F50A9F2A73BE /* ANSIParser.swift */; };
+		E8C746AA8AE3E8C485E36B9A /* MessageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */; };
+		EA9397173B55EDE9BAED58AB /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */; };
+		EDE594FE9A6E38BC50D05148 /* AgentDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A3E91EAEEA35413CC974E7 /* AgentDashboard.swift */; };
+		F654864958D7829CFA79764F /* ApprovalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2A159CFD8617E079E568B2 /* ApprovalManager.swift */; };
+		FA1743CA4F39BE83C58D7D8D /* RelayMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA3CB797631338A34584ACFE /* RelayMessage.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		ED14B711FEED9ADFE8108DCE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BF9B6EF0640F63FB39475E76 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C60F5F21CF796CC40CC09CF6;
+			remoteInfo = "cmux-mobile";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		01095C093AB07DC9F57E1E91 /* TerminalListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalListView.swift; sourceTree = "<group>"; };
+		0697189AF6714DB55223B968 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
+		0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParserTests.swift; sourceTree = "<group>"; };
+		1699BAEF2B052C22C6A66CD8 /* cmux-mobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "cmux-mobile.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
+		209D8E1A48C17AFC907DA8A3 /* ApprovalManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalManagerTests.swift; sourceTree = "<group>"; };
+		23877578361466A0A1163EA2 /* cmux-mobileTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = "cmux-mobileTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		484641BAA51734ADE37A34CD /* cmuxMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = cmuxMobileApp.swift; sourceTree = "<group>"; };
+		489D61EC3B7EE5D14C55185C /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
+		4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalRequestView.swift; sourceTree = "<group>"; };
+		4F8F0766C6D1A7B8751C5C29 /* BrowserPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserPreviewView.swift; sourceTree = "<group>"; };
+		52B0CE3FBD21CD697976F1D9 /* PairingManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingManagerTests.swift; sourceTree = "<group>"; };
+		60B77A75BFF2571D1EB22615 /* Surface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Surface.swift; sourceTree = "<group>"; };
+		6C89084F105DAFCD0F85F599 /* MessageStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStoreTests.swift; sourceTree = "<group>"; };
+		817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSnapshot.swift; sourceTree = "<group>"; };
+		8281D9CAA5152412FA0AAF63 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
+		8F2A159CFD8617E079E568B2 /* ApprovalManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalManager.swift; sourceTree = "<group>"; };
+		964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionStatusBadge.swift; sourceTree = "<group>"; };
+		97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectRecovery.swift; sourceTree = "<group>"; };
+		97C9B26EA00C525C2807F937 /* FilePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewView.swift; sourceTree = "<group>"; };
+		A0A3E91EAEEA35413CC974E7 /* AgentDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDashboard.swift; sourceTree = "<group>"; };
+		AEB7EC70AC6330E71E686A7C /* PairingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingManager.swift; sourceTree = "<group>"; };
+		B55D14646F321994D5476EC6 /* RelayConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayConnection.swift; sourceTree = "<group>"; };
+		BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStore.swift; sourceTree = "<group>"; };
+		BC23E6B02ABB80410D7E3BD4 /* AnyCodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyCodable.swift; sourceTree = "<group>"; };
+		C4416396E67D1C2014948459 /* InputManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManagerTests.swift; sourceTree = "<group>"; };
+		CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionStatus.swift; sourceTree = "<group>"; };
+		CFEF7F60ACF11F278EBA58F3 /* DisconnectRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectRecoveryTests.swift; sourceTree = "<group>"; };
+		D7718FF64F18F50A9F2A73BE /* ANSIParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParser.swift; sourceTree = "<group>"; };
+		DC765AF5EA3773CA198C50DA /* FileExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExplorerView.swift; sourceTree = "<group>"; };
+		DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		E26E0EC0AE08CA4CECA5F2A7 /* PairingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingSettingsView.swift; sourceTree = "<group>"; };
+		EA3CB797631338A34584ACFE /* RelayMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayMessage.swift; sourceTree = "<group>"; };
+		FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalInputBar.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0CE643CE2897A23CD31F2A20 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				489D61EC3B7EE5D14C55185C /* NotificationSettingsView.swift */,
+				E26E0EC0AE08CA4CECA5F2A7 /* PairingSettingsView.swift */,
+				18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		110D6D4AD15A9B3EC6CCAF01 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */,
+				97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */,
+				0697189AF6714DB55223B968 /* InputManager.swift */,
+				DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */,
+				BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */,
+				AEB7EC70AC6330E71E686A7C /* PairingManager.swift */,
+				B55D14646F321994D5476EC6 /* RelayConnection.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		16380F7ABA76D28A85BAD428 /* Browser */ = {
+			isa = PBXGroup;
+			children = (
+				4F8F0766C6D1A7B8751C5C29 /* BrowserPreviewView.swift */,
+			);
+			path = Browser;
+			sourceTree = "<group>";
+		};
+		1C5748899243D58D440BD3E1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BC23E6B02ABB80410D7E3BD4 /* AnyCodable.swift */,
+				EA3CB797631338A34584ACFE /* RelayMessage.swift */,
+				817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */,
+				60B77A75BFF2571D1EB22615 /* Surface.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		58E4D2DBDBD69177FAE83292 /* Files */ = {
+			isa = PBXGroup;
+			children = (
+				DC765AF5EA3773CA198C50DA /* FileExplorerView.swift */,
+				97C9B26EA00C525C2807F937 /* FilePreviewView.swift */,
+			);
+			path = Files;
+			sourceTree = "<group>";
+		};
+		8EF8872118FD3BA99842FA59 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */,
+				209D8E1A48C17AFC907DA8A3 /* ApprovalManagerTests.swift */,
+				CFEF7F60ACF11F278EBA58F3 /* DisconnectRecoveryTests.swift */,
+				C4416396E67D1C2014948459 /* InputManagerTests.swift */,
+				6C89084F105DAFCD0F85F599 /* MessageStoreTests.swift */,
+				52B0CE3FBD21CD697976F1D9 /* PairingManagerTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		AF965E3866C34B62FC5C6BB6 = {
+			isa = PBXGroup;
+			children = (
+				CA6FC2CF7540FFC77C0CE48E /* App */,
+				B183DDB9DADC7C3ADCD2A2FC /* Sources */,
+				8EF8872118FD3BA99842FA59 /* Tests */,
+				F0A163C1F7E3439ECB8F0603 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B183DDB9DADC7C3ADCD2A2FC /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				110D6D4AD15A9B3EC6CCAF01 /* Core */,
+				B3A36B43832D485617CB9774 /* Features */,
+				1C5748899243D58D440BD3E1 /* Models */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		B3A36B43832D485617CB9774 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				E9B8C07F47AD8FADE6F6558B /* Agent */,
+				16380F7ABA76D28A85BAD428 /* Browser */,
+				58E4D2DBDBD69177FAE83292 /* Files */,
+				0CE643CE2897A23CD31F2A20 /* Settings */,
+				CD9BB19602F55D00A34DD125 /* Terminal */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		CA6FC2CF7540FFC77C0CE48E /* App */ = {
+			isa = PBXGroup;
+			children = (
+				484641BAA51734ADE37A34CD /* cmuxMobileApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		CD9BB19602F55D00A34DD125 /* Terminal */ = {
+			isa = PBXGroup;
+			children = (
+				D7718FF64F18F50A9F2A73BE /* ANSIParser.swift */,
+				964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */,
+				FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */,
+				01095C093AB07DC9F57E1E91 /* TerminalListView.swift */,
+				8281D9CAA5152412FA0AAF63 /* TerminalView.swift */,
+			);
+			path = Terminal;
+			sourceTree = "<group>";
+		};
+		E9B8C07F47AD8FADE6F6558B /* Agent */ = {
+			isa = PBXGroup;
+			children = (
+				A0A3E91EAEEA35413CC974E7 /* AgentDashboard.swift */,
+				8F2A159CFD8617E079E568B2 /* ApprovalManager.swift */,
+				4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */,
+			);
+			path = Agent;
+			sourceTree = "<group>";
+		};
+		F0A163C1F7E3439ECB8F0603 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1699BAEF2B052C22C6A66CD8 /* cmux-mobile.app */,
+				23877578361466A0A1163EA2 /* cmux-mobileTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		571D80A72F611459641D1BE9 /* cmux-mobileTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 038FA7FA760003E029BA59D4 /* Build configuration list for PBXNativeTarget "cmux-mobileTests" */;
+			buildPhases = (
+				4A4BBB74BE2F5AC378A43AC2 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				132EAFA9E8CA16203537FE15 /* PBXTargetDependency */,
+			);
+			name = "cmux-mobileTests";
+			packageProductDependencies = (
+			);
+			productName = "cmux-mobileTests";
+			productReference = 23877578361466A0A1163EA2 /* cmux-mobileTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C60F5F21CF796CC40CC09CF6 /* cmux-mobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F584C1F09EB15349F7E35475 /* Build configuration list for PBXNativeTarget "cmux-mobile" */;
+			buildPhases = (
+				7252969F32D7725F9F40D9BD /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "cmux-mobile";
+			packageProductDependencies = (
+			);
+			productName = "cmux-mobile";
+			productReference = 1699BAEF2B052C22C6A66CD8 /* cmux-mobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BF9B6EF0640F63FB39475E76 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					C60F5F21CF796CC40CC09CF6 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = DE08A8FB38048A63F8E87158 /* Build configuration list for PBXProject "cmux-mobile" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = AF965E3866C34B62FC5C6BB6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = F0A163C1F7E3439ECB8F0603 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C60F5F21CF796CC40CC09CF6 /* cmux-mobile */,
+				571D80A72F611459641D1BE9 /* cmux-mobileTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4A4BBB74BE2F5AC378A43AC2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E78BA8DD1C6FE7F0C9AF453F /* ANSIParser.swift in Sources */,
+				012E44546631C6D4643172AD /* ANSIParserTests.swift in Sources */,
+				C3B2574D02369F7D7E224FF8 /* AgentDashboard.swift in Sources */,
+				5B12358A93E0985A37CF142C /* AnyCodable.swift in Sources */,
+				BC138FE31760CC00A9501E45 /* ApprovalManager.swift in Sources */,
+				B3839D5501ED5B28624F792C /* ApprovalManagerTests.swift in Sources */,
+				32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */,
+				0032D90423878E794A25F0CD /* BrowserPreviewView.swift in Sources */,
+				910E19A9E281AF4ADD857F8D /* ConnectionStatus.swift in Sources */,
+				30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */,
+				C0D13C5C7F5F87C5C540C7B6 /* DisconnectRecovery.swift in Sources */,
+				9E715B8C84C212893A8A9118 /* DisconnectRecoveryTests.swift in Sources */,
+				A57707A29487AE8DAF286050 /* FileExplorerView.swift in Sources */,
+				7F9DEFAD0FA57F0A67C403C3 /* FilePreviewView.swift in Sources */,
+				2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */,
+				45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */,
+				83E2A62343A9D5313570BD90 /* KeychainHelper.swift in Sources */,
+				9B1B2B94231330A76CF50FD3 /* MessageStore.swift in Sources */,
+				0273CF921B7A3E4547C3B84A /* MessageStoreTests.swift in Sources */,
+				7D6ADDA6645C9C79A00AA671 /* NotificationSettingsView.swift in Sources */,
+				D90046800101027E98CD1E38 /* PairingManager.swift in Sources */,
+				670937A6255DD0A932266A93 /* PairingManagerTests.swift in Sources */,
+				C07C2DFA657B695B2FAB0C11 /* PairingSettingsView.swift in Sources */,
+				4C2BB256453DF748C688406F /* QRScannerView.swift in Sources */,
+				0C784637AAFAE5F503F1A4F1 /* RelayConnection.swift in Sources */,
+				FA1743CA4F39BE83C58D7D8D /* RelayMessage.swift in Sources */,
+				80CC2B778093B0EBF3430B44 /* ScreenSnapshot.swift in Sources */,
+				C551226171555ACC1D81D59E /* Surface.swift in Sources */,
+				0C1FBB51BC378F7F361B12DF /* TerminalInputBar.swift in Sources */,
+				ADC3B0B1C58061ACB4ACA158 /* TerminalListView.swift in Sources */,
+				7D4C51EB3019824A34D84101 /* TerminalView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7252969F32D7725F9F40D9BD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0B0DE79675F10C6BC7416FD /* ANSIParser.swift in Sources */,
+				EDE594FE9A6E38BC50D05148 /* AgentDashboard.swift in Sources */,
+				A984DDCF3019CC87C0D094C7 /* AnyCodable.swift in Sources */,
+				F654864958D7829CFA79764F /* ApprovalManager.swift in Sources */,
+				589B0DB7975913F0F4F00A8F /* ApprovalRequestView.swift in Sources */,
+				E4BF6AD42F7FB27E0E48067B /* BrowserPreviewView.swift in Sources */,
+				7F3CCAE8644AEB66C0B48902 /* ConnectionStatus.swift in Sources */,
+				EA9397173B55EDE9BAED58AB /* ConnectionStatusBadge.swift in Sources */,
+				7D377C20F2FEA061FA93E545 /* DisconnectRecovery.swift in Sources */,
+				877643F7C1F6F004C8F10A73 /* FileExplorerView.swift in Sources */,
+				5410AEBF6F261CCA142FE720 /* FilePreviewView.swift in Sources */,
+				E721F20B55E8A204FAAE6E24 /* InputManager.swift in Sources */,
+				D9C8C8BFE08F26122FA286A6 /* KeychainHelper.swift in Sources */,
+				E8C746AA8AE3E8C485E36B9A /* MessageStore.swift in Sources */,
+				6DD7DF466F966763799922E3 /* NotificationSettingsView.swift in Sources */,
+				87E8662C7A9D2BF00A58A237 /* PairingManager.swift in Sources */,
+				5E1FEFDE88127ED2C2701629 /* PairingSettingsView.swift in Sources */,
+				2141E78ABDD40410E1F19D21 /* QRScannerView.swift in Sources */,
+				6B781C54940A9D74481E9057 /* RelayConnection.swift in Sources */,
+				C3C23242C1D9D1BAB7AA134D /* RelayMessage.swift in Sources */,
+				DCBD24AE0495A58F9648F6D7 /* ScreenSnapshot.swift in Sources */,
+				1961798322AE3F69A162C266 /* Surface.swift in Sources */,
+				81E92AC89989B1C736819D48 /* TerminalInputBar.swift in Sources */,
+				A94674CB2B38923E470CB9EF /* TerminalListView.swift in Sources */,
+				D37ECAE20DF175BAB4D582DB /* TerminalView.swift in Sources */,
+				DD0FC2B5861B6CC2E2661715 /* cmuxMobileApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		132EAFA9E8CA16203537FE15 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C60F5F21CF796CC40CC09CF6 /* cmux-mobile */;
+			targetProxy = ED14B711FEED9ADFE8108DCE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		4C3C239166834791FABA7C46 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "SupportingFiles/cmux-mobile.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = SupportingFiles/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.manaflow.cmux-mobile";
+				PRODUCT_NAME = "cmux mobile";
+				SDKROOT = iphoneos;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		56A7F88CE3BF3F919894BF78 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "SupportingFiles/cmux-mobile.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = SupportingFiles/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.manaflow.cmux-mobile";
+				PRODUCT_NAME = "cmux mobile";
+				SDKROOT = iphoneos;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		5F006807FB6A7D27004B3301 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.manaflow.cmux-mobileTests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/cmux mobile.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/cmux mobile";
+			};
+			name = Debug;
+		};
+		BBBD776835F803B19224EE98 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.manaflow.cmux-mobileTests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/cmux mobile.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/cmux mobile";
+			};
+			name = Release;
+		};
+		DB73C5E18A0C7C98D5DBFFB0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		F8BB4E281BE6DC4330DB2FF5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		038FA7FA760003E029BA59D4 /* Build configuration list for PBXNativeTarget "cmux-mobileTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F006807FB6A7D27004B3301 /* Debug */,
+				BBBD776835F803B19224EE98 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DE08A8FB38048A63F8E87158 /* Build configuration list for PBXProject "cmux-mobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F8BB4E281BE6DC4330DB2FF5 /* Debug */,
+				DB73C5E18A0C7C98D5DBFFB0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F584C1F09EB15349F7E35475 /* Build configuration list for PBXNativeTarget "cmux-mobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C3C239166834791FABA7C46 /* Debug */,
+				56A7F88CE3BF3F919894BF78 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BF9B6EF0640F63FB39475E76 /* Project object */;
+}

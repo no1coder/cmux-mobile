@@ -1,6 +1,5 @@
 import SwiftUI
 
-#if os(iOS)
 @main
 struct cmuxMobileApp: App {
     @StateObject private var messageStore = MessageStore()
@@ -19,7 +18,7 @@ struct cmuxMobileApp: App {
                     iPhoneTabView
                 }
             }
-            // H14: 用 onAppear 替代 let _ = {} 注入 approvalManager，避免 SwiftUI 副作用
+            // 注入 approvalManager 到 messageStore
             .onAppear {
                 messageStore.approvalManager = approvalManager
             }
@@ -77,7 +76,7 @@ struct cmuxMobileApp: App {
     // MARK: - iPad NavigationSplitView 布局
 
     private var iPadSplitView: some View {
-        iPadSplitViewContent
+        iPadSplitViewContent()
             .environmentObject(messageStore)
             .environmentObject(relayConnection)
             .environmentObject(inputManager)
@@ -174,11 +173,3 @@ private struct iPadSplitViewContent: View {
         }
     }
 }
-
-#else
-/// macOS 构建占位入口（仅供 Swift PM 满足链接需求）
-@main
-enum cmuxMobileApp {
-    static func main() {}
-}
-#endif
