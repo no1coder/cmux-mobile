@@ -2,6 +2,7 @@ import SwiftUI
 
 /// 配对设置视图：展示已配对设备信息，支持扫码配对、解除配对和自托管服务器配置
 struct PairingSettingsView: View {
+    @EnvironmentObject var relayConnection: RelayConnection
 
     // MARK: - Keychain 键名
 
@@ -88,8 +89,9 @@ struct PairingSettingsView: View {
             .animation(.easeInOut, value: feedbackMessage)
             .onChange(of: pairingManager.pairedDevice) { _, result in
                 guard let result else { return }
-                // 配对成功，保存设备信息
+                // 配对成功，保存设备信息并连接
                 savePairedDevice(result)
+                connectAfterPairing(result)
                 showScanner = false
                 showFeedback(String(localized: "settings.pairing.paired_success", defaultValue: "配对成功！"))
             }
@@ -211,6 +213,17 @@ struct PairingSettingsView: View {
                 )
             }
         }
+    }
+
+    // MARK: - 配对后自动连接
+
+    /// 配对成功后立即发起 WebSocket 连接
+    private func connectAfterPairing(_ result: PairResult) {
+        let phoneID = getOrCreatePhoneID()
+        relayConnection.serverURL = result.serverURL
+        relayConnection.phoneID = phoneID
+        relayConnection.pairSecret = result.pairSecret
+        relayConnection.connect()
     }
 
     // MARK: - QR 扫码处理
