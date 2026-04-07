@@ -104,12 +104,10 @@ struct cmuxMobileApp: App {
 
     // MARK: - 自动连接
 
-    /// 如果已配对（Keychain 中有凭据），自动发起 WebSocket 连接
+    /// 如果已配对（DeviceStore 中有活跃设备），自动发起 WebSocket 连接
     private func autoConnectIfPaired() {
         #if canImport(Security)
-        guard let deviceID = KeychainHelper.load(key: "pairedDeviceID"),
-              let serverURL = KeychainHelper.load(key: "pairedServerURL"),
-              let pairSecret = KeychainHelper.load(key: "pairSecret_\(deviceID)") else {
+        guard let activeDevice = DeviceStore.getActiveDevice() else {
             return
         }
 
@@ -120,10 +118,12 @@ struct cmuxMobileApp: App {
             return newID
         }()
 
-        relayConnection.serverURL = serverURL
+        relayConnection.serverURL = activeDevice.serverURL
         relayConnection.phoneID = phoneID
-        relayConnection.pairSecret = pairSecret
+        relayConnection.pairSecret = activeDevice.pairSecret
         relayConnection.connect()
+
+        DeviceStore.updateLastConnected(id: activeDevice.id)
         #endif
     }
 

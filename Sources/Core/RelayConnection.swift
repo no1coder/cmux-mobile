@@ -81,6 +81,15 @@ final class RelayConnection: NSObject, ObservableObject {
         reconnectDelay = 1
     }
 
+    /// 切换到新设备：断开当前连接，更新凭据并重新连接
+    func switchDevice(serverURL: String, phoneID: String, pairSecret: String) {
+        disconnect()
+        self.serverURL = serverURL
+        self.phoneID = phoneID
+        self.pairSecret = pairSecret
+        connect()
+    }
+
     // MARK: - 消息发送
 
     /// 发送 RPC 请求消息
@@ -268,18 +277,23 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// 处理远端解除配对：清除凭据并断开连接
     private func handleRemoteUnpair() {
-        #if canImport(Security)
-        // 清除本地配对凭据
-        if let deviceID = KeychainHelper.load(key: "pairedDeviceID") {
-            KeychainHelper.delete(key: "pairSecret_\(deviceID)")
-            KeychainHelper.delete(key: "serverURL_\(deviceID)")
-            KeychainHelper.delete(key: "deviceName_\(deviceID)")
+        // 从 DeviceStore 移除当前活跃设备
+        if let activeDevice = DeviceStore.getActiveDevice() {
+            DeviceStore.removeDevice(id: activeDevice.id)
         }
-        KeychainHelper.delete(key: "pairedDeviceID")
-        KeychainHelper.delete(key: "pairedServerURL")
-        #endif
 
         disconnect()
+
+        // 如果还有其他设备，自动切换到下一个
+        if let nextDevice = DeviceStore.getActiveDevice() {
+            let phoneID = KeychainHelper.load(key: "phoneID") ?? ""
+            switchDevice(
+                serverURL: nextDevice.serverURL,
+                phoneID: phoneID,
+                pairSecret: nextDevice.pairSecret
+            )
+        }
+
         onRemoteUnpair?()
     }
 
