@@ -106,7 +106,7 @@ struct TerminalView: View {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
                             Text(ANSIParser.parse(line))
-                                .font(.system(size: fontSize, design: .monospaced))
+                                .font(.custom("MesloLGSNerdFontMono-Regular", size: fontSize))
                                 .foregroundStyle(.white)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
