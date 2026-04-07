@@ -284,7 +284,7 @@ enum ANSIParser {
         var container = AttributeContainer()
 
         if style.bold {
-            container.font = .custom("MesloLGSNerdFontMono-Bold", size: 11)
+            container.font = .custom("MesloLGSNFM-Bold", size: 11)
         }
 
         if let fg = style.foreground {
