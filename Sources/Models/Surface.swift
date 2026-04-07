@@ -9,6 +9,10 @@ struct Surface: Identifiable, Codable, Equatable {
     let focused: Bool
     let paneID: String?
     let paneRef: String?
+    /// 所属 workspace ID
+    let workspaceID: String?
+    /// 所属 workspace 名称
+    let workspaceName: String?
 
     enum SurfaceType: String, Codable {
         case terminal
@@ -19,5 +23,7 @@ struct Surface: Identifiable, Codable, Equatable {
         case id, ref, index, type, title, focused
         case paneID = "pane_id"
         case paneRef = "pane_ref"
+        case workspaceID = "workspace_id"
+        case workspaceName = "workspace_name"
     }
 }
