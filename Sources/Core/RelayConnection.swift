@@ -43,11 +43,15 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// 建立 WebSocket 连接
     func connect() {
-        guard !serverURL.isEmpty, !phoneID.isEmpty else { return }
+        guard !serverURL.isEmpty, !phoneID.isEmpty else {
+            print("[relay] connect 跳过: serverURL=\(serverURL) phoneID=\(phoneID)")
+            return
+        }
 
         cancelReconnect()
         status = .connecting
 
+        print("[relay] 正在连接: wss://\(serverURL)/ws/phone/\(phoneID) pairSecret长度=\(pairSecret.count)")
         let urlString = "wss://\(serverURL)/ws/phone/\(phoneID)"
         guard let url = URL(string: urlString) else {
             status = .disconnected
@@ -132,9 +136,11 @@ final class RelayConnection: NSObject, ObservableObject {
                 guard let self else { return }
                 switch result {
                 case .success(let message):
+                    print("[relay] 收到消息")
                     self.handleMessage(message)
                     self.receiveNext()
                 case .failure(let error):
+                    print("[relay] 接收失败: \(error)")
                     self.handleDisconnect(error: error)
                 }
             }
@@ -208,7 +214,8 @@ final class RelayConnection: NSObject, ObservableObject {
         // C1: 服务端 challenge 只含 nonce，不含 timestamp；timestamp 由客户端生成
         guard let nonce = json["nonce"] as? String else { return }
 
-        let timestamp = Int64(Date().timeIntervalSince1970 * 1000)
+        // 时间戳使用秒（与 Mac 端和服务器一致）
+        let timestamp = Int64(Date().timeIntervalSince1970)
 
         // 计算 HMAC-SHA256(key=SHA256(pairSecret) hex, msg=phoneID:nonce:timestamp)
         // C7: 消息各字段用 ":" 分隔，避免拼接歧义
