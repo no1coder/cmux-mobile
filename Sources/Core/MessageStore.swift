@@ -60,6 +60,12 @@ final class MessageStore: ObservableObject {
         case "agent.approval_resolved":
             handleApprovalResolved(payload)
             return
+        case "surface.list_update":
+            handleSurfaceListUpdate(payload)
+            return
+        case "workspace.list_update":
+            handleWorkspaceListUpdate(payload)
+            return
         default:
             break
         }
@@ -99,6 +105,43 @@ final class MessageStore: ObservableObject {
         var updated = snapshots
         updated[surfaceID] = snapshot
         snapshots = updated
+    }
+
+    // MARK: - Surface/Workspace 列表更新
+
+    /// 处理 Mac 推送的 surface 列表更新
+    private func handleSurfaceListUpdate(_ payload: [String: AnyCodable]) {
+        // surfaces 可能是 AnyCodable 数组
+        guard case .array(let surfacesArray) = payload["surfaces"] else {
+            // 也可能是嵌套在 result 中
+            if case .object(let result) = payload["surfaces"],
+               case .array(let arr) = result["surfaces"] {
+                decodeSurfaces(arr)
+            }
+            return
+        }
+        decodeSurfaces(surfacesArray)
+    }
+
+    /// 将 AnyCodable 数组解码为 Surface 列表
+    private func decodeSurfaces(_ surfacesArray: [AnyCodable]) {
+        let decoded = surfacesArray.compactMap { item -> Surface? in
+            guard case .object(let dict) = item else { return nil }
+            guard let data = try? JSONEncoder().encode(dict),
+                  let surface = try? JSONDecoder().decode(Surface.self, from: data) else {
+                return nil
+            }
+            return surface
+        }
+        if !decoded.isEmpty {
+            surfaces = decoded
+        }
+    }
+
+    /// 处理 Mac 推送的 workspace 列表更新
+    private func handleWorkspaceListUpdate(_ payload: [String: AnyCodable]) {
+        // 暂时只打印，后续 workspace UI 接入时处理
+        // workspace 数据会在终端列表中间接使用
     }
 
     // MARK: - Agent 审批事件处理
