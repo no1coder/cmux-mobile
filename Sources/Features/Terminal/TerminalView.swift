@@ -11,6 +11,8 @@ struct TerminalView: View {
     @State private var isLoading = true
     /// 加载错误信息
     @State private var errorMessage: String?
+    /// 终端字体大小（可通过捏合缩放调整）
+    @State private var fontSize: CGFloat = 11
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +41,25 @@ struct TerminalView: View {
         .navigationTitle(surfaceTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                // 字体缩小
+                Button { fontSize = max(8, fontSize - 1) } label: {
+                    Image(systemName: "textformat.size.smaller")
+                        .font(.caption)
+                }
+                // 字体放大
+                Button { fontSize = min(18, fontSize + 1) } label: {
+                    Image(systemName: "textformat.size.larger")
+                        .font(.caption)
+                }
+                // 刷新屏幕
+                Button { requestScreenContent() } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                }
+            }
+        }
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
             inputManager.enableInput()
@@ -88,7 +109,7 @@ struct TerminalView: View {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
                             Text(ANSIParser.parse(line))
-                                .font(.system(size: 12, design: .monospaced))
+                                .font(.system(size: fontSize, design: .monospaced))
                                 .foregroundStyle(.white)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)

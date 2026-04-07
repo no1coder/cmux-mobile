@@ -13,36 +13,77 @@ enum ANSIParser {
         var index = input.startIndex
 
         while index < input.endIndex {
-            // 检测 ESC[ (CSI) 序列
-            if input[index] == "\u{1B}",
-               let nextIndex = input.index(index, offsetBy: 1, limitedBy: input.endIndex),
-               nextIndex < input.endIndex,
-               input[nextIndex] == "[" {
-                // 跳过 ESC[
-                let paramStart = input.index(nextIndex, offsetBy: 1, limitedBy: input.endIndex) ?? input.endIndex
+            let char = input[index]
 
-                // 找到序列终止符（字母）
-                var scanIndex = paramStart
-                while scanIndex < input.endIndex && !input[scanIndex].isLetter {
-                    scanIndex = input.index(after: scanIndex)
+            if char == "\u{1B}" {
+                // ESC 字符，检测转义序列类型
+                guard let nextIndex = input.index(index, offsetBy: 1, limitedBy: input.endIndex),
+                      nextIndex < input.endIndex else {
+                    index = input.endIndex
+                    break
                 }
 
-                if scanIndex < input.endIndex {
-                    let command = input[scanIndex]
-                    // 只处理 SGR 命令 'm'
-                    if command == "m" {
-                        let paramStr = String(input[paramStart..<scanIndex])
-                        currentStyle = applySGR(params: paramStr, to: currentStyle)
+                let nextChar = input[nextIndex]
+
+                if nextChar == "[" {
+                    // CSI 序列：ESC[ ... 终止符（0x40-0x7E）
+                    let paramStart = input.index(nextIndex, offsetBy: 1, limitedBy: input.endIndex) ?? input.endIndex
+                    var scanIndex = paramStart
+
+                    // 跳过参数字节（0x30-0x3F）和中间字节（0x20-0x2F）
+                    while scanIndex < input.endIndex {
+                        let c = input[scanIndex]
+                        if c.asciiValue.map({ $0 >= 0x40 && $0 <= 0x7E }) == true {
+                            break
+                        }
+                        scanIndex = input.index(after: scanIndex)
                     }
-                    // 移动到序列结束之后
-                    index = input.index(after: scanIndex)
-                } else {
-                    // 不完整的转义序列，跳过
+
+                    if scanIndex < input.endIndex {
+                        let command = input[scanIndex]
+                        // 只处理 SGR 命令 'm'，其他 CSI 命令静默跳过
+                        if command == "m" {
+                            let paramStr = String(input[paramStart..<scanIndex])
+                            currentStyle = applySGR(params: paramStr, to: currentStyle)
+                        }
+                        index = input.index(after: scanIndex)
+                    } else {
+                        index = scanIndex
+                    }
+                } else if nextChar == "]" {
+                    // OSC 序列：ESC] ... ST（ESC\ 或 BEL \u{07}）
+                    var scanIndex = input.index(nextIndex, offsetBy: 1, limitedBy: input.endIndex) ?? input.endIndex
+                    while scanIndex < input.endIndex {
+                        let c = input[scanIndex]
+                        if c == "\u{07}" {
+                            // BEL 终止
+                            scanIndex = input.index(after: scanIndex)
+                            break
+                        }
+                        if c == "\u{1B}" {
+                            let afterEsc = input.index(scanIndex, offsetBy: 1, limitedBy: input.endIndex) ?? input.endIndex
+                            if afterEsc < input.endIndex && input[afterEsc] == "\\" {
+                                // ST 终止（ESC\）
+                                scanIndex = input.index(after: afterEsc)
+                                break
+                            }
+                        }
+                        scanIndex = input.index(after: scanIndex)
+                    }
                     index = scanIndex
+                } else if nextChar == "(" || nextChar == ")" {
+                    // 字符集选择序列：ESC( 或 ESC)，后跟一个字符
+                    let skip = input.index(nextIndex, offsetBy: 2, limitedBy: input.endIndex) ?? input.endIndex
+                    index = skip
+                } else {
+                    // 其他两字符 ESC 序列（如 ESC=, ESC>），跳过
+                    index = input.index(nextIndex, offsetBy: 1, limitedBy: input.endIndex) ?? input.endIndex
                 }
+            } else if char.asciiValue.map({ $0 < 0x20 && $0 != 0x0A && $0 != 0x0D && $0 != 0x09 }) == true {
+                // 跳过其他控制字符（保留换行、回车、制表符）
+                index = input.index(after: index)
             } else {
-                // 普通字符，附加带当前样式的字符
-                let char = input[index]
+                // 普通字符
                 var segment = AttributedString(String(char))
                 applyStyle(currentStyle, to: &segment)
                 result.append(segment)

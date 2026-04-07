@@ -31,6 +31,15 @@ struct TerminalInputBar: View {
         ShortcutKey(id: "ctrl_d", label: "^D",     key: "d",      mods: "ctrl"),
         ShortcutKey(id: "ctrl_z", label: "^Z",     key: "z",      mods: "ctrl"),
         ShortcutKey(id: "ctrl_l", label: "^L",     key: "l",      mods: "ctrl"),
+        ShortcutKey(id: "enter",  label: "↵",      key: "return", mods: ""),
+    ]
+
+    /// Claude Code 快捷命令
+    private let claudeCommands: [(label: String, command: String)] = [
+        ("claude", "claude\n"),
+        ("/help", "/help\n"),
+        ("/status", "/status\n"),
+        ("/compact", "/compact\n"),
     ]
 
     var body: some View {
@@ -79,6 +88,31 @@ struct TerminalInputBar: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
+            }
+
+            // Claude 快捷命令行
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(claudeCommands, id: \.label) { cmd in
+                        Button {
+                            onSendText(cmd.command)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkle")
+                                    .font(.system(size: 10))
+                                Text(cmd.label)
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Color.purple.opacity(0.3))
+                            .foregroundStyle(Color.purple)
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
+                        }
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.bottom, 2)
             }
 
             // 文本输入行
