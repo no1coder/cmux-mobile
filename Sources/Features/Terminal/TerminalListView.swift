@@ -17,6 +17,15 @@ struct TerminalListView: View {
                 }
             }
             .navigationTitle("终端")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        createWorkspace()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
         }
     }
 
@@ -85,6 +94,18 @@ struct TerminalListView: View {
             systemImage: "terminal",
             description: Text("连接到 Mac 后终端列表将显示在这里")
         )
+    }
+
+    // MARK: - 新建 workspace
+
+    /// 发送 workspace.create 命令到 Mac
+    private func createWorkspace() {
+        relayConnection.sendWithResponse([
+            "method": "workspace.create",
+        ]) { _ in
+            // 创建成功后刷新 surface 列表
+            relayConnection.requestSurfaceList()
+        }
     }
 
     // MARK: - 分组逻辑
