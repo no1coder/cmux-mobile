@@ -12,7 +12,7 @@ struct TerminalView: View {
     /// 加载错误信息
     @State private var errorMessage: String?
     /// 终端字体大小
-    @State private var fontSize: CGFloat = 9
+    @State private var fontSize: CGFloat = 14
     /// 自动刷新定时器
     @State private var refreshTask: Task<Void, Never>?
 
@@ -44,7 +44,7 @@ struct TerminalView: View {
                         .font(.caption)
                 }
                 // 字体放大
-                Button { fontSize = min(14, fontSize + 1) } label: {
+                Button { fontSize = min(20, fontSize + 1) } label: {
                     Image(systemName: "textformat.size.larger")
                         .font(.caption)
                 }
@@ -106,7 +106,7 @@ struct TerminalView: View {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
                             Text(ANSIParser.parse(line))
-                                .font(.custom("MesloLGSNFM-Regular", size: fontSize))
+                                .font(.system(size: fontSize, design: .monospaced))
                                 .foregroundStyle(.white)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)

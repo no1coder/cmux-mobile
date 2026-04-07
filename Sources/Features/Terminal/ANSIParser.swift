@@ -92,11 +92,16 @@ enum ANSIParser {
                 // 跳过其他控制字符（保留换行、回车、制表符）
                 index = input.index(after: index)
             } else {
-                // 普通字符
-                var segment = AttributedString(String(char))
-                applyStyle(currentStyle, to: &segment)
-                result.append(segment)
-                index = input.index(after: index)
+                // 普通字符（过滤 Private Use Area 特殊符号）
+                if isPrivateUseChar(char) {
+                    // 跳过 Nerd Font / Powerline 等特殊字符
+                    index = input.index(after: index)
+                } else {
+                    var segment = AttributedString(String(char))
+                    applyStyle(currentStyle, to: &segment)
+                    result.append(segment)
+                    index = input.index(after: index)
+                }
             }
         }
 
@@ -284,7 +289,7 @@ enum ANSIParser {
         var container = AttributeContainer()
 
         if style.bold {
-            container.font = .custom("MesloLGSNFM-Bold", size: 11)
+            container.font = .system(.body, design: .monospaced).bold()
         }
 
         if let fg = style.foreground {
@@ -301,6 +306,21 @@ enum ANSIParser {
         }
 
         segment.mergeAttributes(container)
+    }
+
+    // MARK: - 特殊字符过滤
+
+    /// 判断是否为 Private Use Area 字符（Nerd Font / Powerline 等特殊符号）
+    private static func isPrivateUseChar(_ char: Character) -> Bool {
+        guard let scalar = char.unicodeScalars.first else { return false }
+        let v = scalar.value
+        // Unicode Private Use Areas:
+        // BMP PUA: U+E000 - U+F8FF（Powerline、Nerd Font 图标）
+        // Supplementary PUA-A: U+F0000 - U+FFFFD
+        // Supplementary PUA-B: U+100000 - U+10FFFD
+        return (v >= 0xE000 && v <= 0xF8FF)
+            || (v >= 0xF0000 && v <= 0xFFFFD)
+            || (v >= 0x100000 && v <= 0x10FFFD)
     }
 
     // MARK: - 颜色查找表
