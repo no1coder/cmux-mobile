@@ -10,6 +10,9 @@ struct PairingSettingsView: View {
     private static let keySelfHostedURL = "selfHostedServerURL"
     private static let keyPhoneID = "phoneID"
 
+    /// 默认中继服务器地址
+    static let defaultServerURL = "cmux.rooyun.com"
+
     // MARK: - 状态
 
     /// 已配对的设备 ID（从 Keychain 读取）
@@ -240,7 +243,7 @@ struct PairingSettingsView: View {
         #if canImport(Security)
         deviceID = KeychainHelper.load(key: Self.keyDeviceID)
         serverURL = KeychainHelper.load(key: Self.keyServerURL)
-        selfHostedURL = KeychainHelper.load(key: Self.keySelfHostedURL) ?? ""
+        selfHostedURL = KeychainHelper.load(key: Self.keySelfHostedURL) ?? Self.defaultServerURL
         // 加载设备名称
         if let id = deviceID {
             deviceName = KeychainHelper.load(key: "deviceName_\(id)")
