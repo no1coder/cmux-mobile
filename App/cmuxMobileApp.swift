@@ -19,6 +19,9 @@ struct cmuxMobileApp: App {
                 }
             }
             .onAppear {
+                // 注册 Nerd Font
+                FontLoader.registerFonts()
+
                 // 注入 approvalManager 到 messageStore
                 messageStore.approvalManager = approvalManager
 

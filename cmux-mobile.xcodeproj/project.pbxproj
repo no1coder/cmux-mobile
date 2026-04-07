@@ -14,10 +14,12 @@
 		0C784637AAFAE5F503F1A4F1 /* RelayConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D14646F321994D5476EC6 /* RelayConnection.swift */; };
 		1961798322AE3F69A162C266 /* Surface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B77A75BFF2571D1EB22615 /* Surface.swift */; };
 		2141E78ABDD40410E1F19D21 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */; };
+		25C1738C8D887586715C91C8 /* MesloLGSNerdFontMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4035B4AFCAD2BA015D82A08 /* MesloLGSNerdFontMono-Bold.ttf */; };
 		2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697189AF6714DB55223B968 /* InputManager.swift */; };
 		30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */; };
 		32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
 		45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4416396E67D1C2014948459 /* InputManagerTests.swift */; };
+		49123810093D59CE96B8AB39 /* FontLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8BF77D802A5642E9BB7C267 /* FontLoader.swift */; };
 		4C2BB256453DF748C688406F /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */; };
 		5410AEBF6F261CCA142FE720 /* FilePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97C9B26EA00C525C2807F937 /* FilePreviewView.swift */; };
 		589B0DB7975913F0F4F00A8F /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
@@ -36,14 +38,18 @@
 		83E2A62343A9D5313570BD90 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */; };
 		877643F7C1F6F004C8F10A73 /* FileExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC765AF5EA3773CA198C50DA /* FileExplorerView.swift */; };
 		87E8662C7A9D2BF00A58A237 /* PairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEB7EC70AC6330E71E686A7C /* PairingManager.swift */; };
+		8B663AA0F946AAB067B312AF /* MesloLGSNerdFontMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */; };
 		910E19A9E281AF4ADD857F8D /* ConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */; };
+		92C0ADD29D44D996759AC351 /* FontLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8BF77D802A5642E9BB7C267 /* FontLoader.swift */; };
 		9B1B2B94231330A76CF50FD3 /* MessageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */; };
 		9E715B8C84C212893A8A9118 /* DisconnectRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFEF7F60ACF11F278EBA58F3 /* DisconnectRecoveryTests.swift */; };
+		A190F7FE73EAC45D1CF61419 /* MesloLGSNerdFontMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */; };
 		A57707A29487AE8DAF286050 /* FileExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC765AF5EA3773CA198C50DA /* FileExplorerView.swift */; };
 		A94674CB2B38923E470CB9EF /* TerminalListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01095C093AB07DC9F57E1E91 /* TerminalListView.swift */; };
 		A984DDCF3019CC87C0D094C7 /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC23E6B02ABB80410D7E3BD4 /* AnyCodable.swift */; };
 		ADC3B0B1C58061ACB4ACA158 /* TerminalListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01095C093AB07DC9F57E1E91 /* TerminalListView.swift */; };
 		B3839D5501ED5B28624F792C /* ApprovalManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209D8E1A48C17AFC907DA8A3 /* ApprovalManagerTests.swift */; };
+		B81B4FD5566A7D3620F44513 /* MesloLGSNerdFontMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4035B4AFCAD2BA015D82A08 /* MesloLGSNerdFontMono-Bold.ttf */; };
 		BC138FE31760CC00A9501E45 /* ApprovalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2A159CFD8617E079E568B2 /* ApprovalManager.swift */; };
 		C07C2DFA657B695B2FAB0C11 /* PairingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E26E0EC0AE08CA4CECA5F2A7 /* PairingSettingsView.swift */; };
 		C0B0DE79675F10C6BC7416FD /* ANSIParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7718FF64F18F50A9F2A73BE /* ANSIParser.swift */; };
@@ -80,6 +86,7 @@
 		01095C093AB07DC9F57E1E91 /* TerminalListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalListView.swift; sourceTree = "<group>"; };
 		0697189AF6714DB55223B968 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
 		0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParserTests.swift; sourceTree = "<group>"; };
+		100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "MesloLGSNerdFontMono-Regular.ttf"; sourceTree = "<group>"; };
 		1699BAEF2B052C22C6A66CD8 /* cmux-mobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "cmux-mobile.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		209D8E1A48C17AFC907DA8A3 /* ApprovalManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalManagerTests.swift; sourceTree = "<group>"; };
@@ -98,6 +105,7 @@
 		97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectRecovery.swift; sourceTree = "<group>"; };
 		97C9B26EA00C525C2807F937 /* FilePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewView.swift; sourceTree = "<group>"; };
 		A0A3E91EAEEA35413CC974E7 /* AgentDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDashboard.swift; sourceTree = "<group>"; };
+		A8BF77D802A5642E9BB7C267 /* FontLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontLoader.swift; sourceTree = "<group>"; };
 		AEB7EC70AC6330E71E686A7C /* PairingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingManager.swift; sourceTree = "<group>"; };
 		B55D14646F321994D5476EC6 /* RelayConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayConnection.swift; sourceTree = "<group>"; };
 		BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStore.swift; sourceTree = "<group>"; };
@@ -110,6 +118,7 @@
 		DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		E26E0EC0AE08CA4CECA5F2A7 /* PairingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingSettingsView.swift; sourceTree = "<group>"; };
 		EA3CB797631338A34584ACFE /* RelayMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayMessage.swift; sourceTree = "<group>"; };
+		F4035B4AFCAD2BA015D82A08 /* MesloLGSNerdFontMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "MesloLGSNerdFontMono-Bold.ttf"; sourceTree = "<group>"; };
 		FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalInputBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -129,6 +138,7 @@
 			children = (
 				CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */,
 				97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */,
+				A8BF77D802A5642E9BB7C267 /* FontLoader.swift */,
 				0697189AF6714DB55223B968 /* InputManager.swift */,
 				DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */,
 				BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */,
@@ -166,6 +176,15 @@
 			path = Files;
 			sourceTree = "<group>";
 		};
+		641B3B6BCFC630B633AF49E8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F4035B4AFCAD2BA015D82A08 /* MesloLGSNerdFontMono-Bold.ttf */,
+				100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		8EF8872118FD3BA99842FA59 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -195,6 +214,7 @@
 				110D6D4AD15A9B3EC6CCAF01 /* Core */,
 				B3A36B43832D485617CB9774 /* Features */,
 				1C5748899243D58D440BD3E1 /* Models */,
+				641B3B6BCFC630B633AF49E8 /* Resources */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -258,6 +278,7 @@
 			buildConfigurationList = 038FA7FA760003E029BA59D4 /* Build configuration list for PBXNativeTarget "cmux-mobileTests" */;
 			buildPhases = (
 				4A4BBB74BE2F5AC378A43AC2 /* Sources */,
+				F0605EA372778CF9595185E6 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -276,6 +297,7 @@
 			buildConfigurationList = F584C1F09EB15349F7E35475 /* Build configuration list for PBXNativeTarget "cmux-mobile" */;
 			buildPhases = (
 				7252969F32D7725F9F40D9BD /* Sources */,
+				9746AE2A51E6B030DF81F881 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -322,6 +344,27 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		9746AE2A51E6B030DF81F881 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B81B4FD5566A7D3620F44513 /* MesloLGSNerdFontMono-Bold.ttf in Resources */,
+				8B663AA0F946AAB067B312AF /* MesloLGSNerdFontMono-Regular.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F0605EA372778CF9595185E6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				25C1738C8D887586715C91C8 /* MesloLGSNerdFontMono-Bold.ttf in Resources */,
+				A190F7FE73EAC45D1CF61419 /* MesloLGSNerdFontMono-Regular.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		4A4BBB74BE2F5AC378A43AC2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -341,6 +384,7 @@
 				9E715B8C84C212893A8A9118 /* DisconnectRecoveryTests.swift in Sources */,
 				A57707A29487AE8DAF286050 /* FileExplorerView.swift in Sources */,
 				7F9DEFAD0FA57F0A67C403C3 /* FilePreviewView.swift in Sources */,
+				92C0ADD29D44D996759AC351 /* FontLoader.swift in Sources */,
 				2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */,
 				45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */,
 				83E2A62343A9D5313570BD90 /* KeychainHelper.swift in Sources */,
@@ -376,6 +420,7 @@
 				7D377C20F2FEA061FA93E545 /* DisconnectRecovery.swift in Sources */,
 				877643F7C1F6F004C8F10A73 /* FileExplorerView.swift in Sources */,
 				5410AEBF6F261CCA142FE720 /* FilePreviewView.swift in Sources */,
+				49123810093D59CE96B8AB39 /* FontLoader.swift in Sources */,
 				E721F20B55E8A204FAAE6E24 /* InputManager.swift in Sources */,
 				D9C8C8BFE08F26122FA286A6 /* KeychainHelper.swift in Sources */,
 				E8C746AA8AE3E8C485E36B9A /* MessageStore.swift in Sources */,

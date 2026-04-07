@@ -45,8 +45,8 @@
 	<string>需要使用相机扫描配对二维码，以连接到您的 Mac 终端</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Fonts/MesloLGSNerdFontMono-Regular.ttf</string>
-		<string>Fonts/MesloLGSNerdFontMono-Bold.ttf</string>
+		<string>Resources/MesloLGSNerdFontMono-Regular.ttf</string>
+		<string>Resources/MesloLGSNerdFontMono-Bold.ttf</string>
 	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
