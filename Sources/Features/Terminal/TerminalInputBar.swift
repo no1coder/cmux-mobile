@@ -27,14 +27,18 @@ struct TerminalInputBar: View {
         ShortcutKey(id: "down",   label: "↓",      key: "down",   mods: ""),
         ShortcutKey(id: "left",   label: "←",      key: "left",   mods: ""),
         ShortcutKey(id: "right",  label: "→",      key: "right",  mods: ""),
-        ShortcutKey(id: "ctrl_c", label: "Ctrl+C", key: "c",      mods: "ctrl"),
-        ShortcutKey(id: "ctrl_d", label: "Ctrl+D", key: "d",      mods: "ctrl"),
-        ShortcutKey(id: "ctrl_z", label: "Ctrl+Z", key: "z",      mods: "ctrl"),
+        ShortcutKey(id: "ctrl_c", label: "^C",     key: "c",      mods: "ctrl"),
+        ShortcutKey(id: "ctrl_d", label: "^D",     key: "d",      mods: "ctrl"),
+        ShortcutKey(id: "ctrl_z", label: "^Z",     key: "z",      mods: "ctrl"),
+        ShortcutKey(id: "ctrl_l", label: "^L",     key: "l",      mods: "ctrl"),
     ]
 
     var body: some View {
         VStack(spacing: 0) {
-            Divider()
+            // 分隔线
+            Rectangle()
+                .fill(Color.white.opacity(0.15))
+                .frame(height: 0.5)
 
             // 快捷键水平滚动栏
             ScrollView(.horizontal, showsIndicators: false) {
@@ -44,88 +48,80 @@ struct TerminalInputBar: View {
                         inputManager.toggleCtrlMode()
                     } label: {
                         Text("Ctrl")
-                            .font(.system(.footnote, design: .monospaced))
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
                             .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
+                            .padding(.vertical, 5)
                             .background(
                                 inputManager.isCtrlMode
-                                    ? Color.accentColor
-                                    : Color.secondary.opacity(0.2)
+                                    ? Color.green
+                                    : Color.white.opacity(0.12)
                             )
                             .foregroundStyle(
-                                inputManager.isCtrlMode ? Color.white : Color.primary
+                                inputManager.isCtrlMode ? Color.black : Color.white
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
                     }
-                    
-                    // 其他快捷键按钮
+
+                    // 快捷键按钮
                     ForEach(shortcuts) { shortcut in
                         Button {
                             handleShortcut(shortcut)
                         } label: {
                             Text(shortcut.label)
-                                .font(.system(.footnote, design: .monospaced))
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
                                 .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Color.secondary.opacity(0.2))
-                                .foregroundStyle(Color.primary)
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .padding(.vertical, 5)
+                                .background(Color.white.opacity(0.12))
+                                .foregroundStyle(Color.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
                         }
-                        
                     }
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 6)
             }
 
             // 文本输入行
             HStack(spacing: 8) {
-                TextField(
-                    String(localized: "input.placeholder", defaultValue: "输入文本…"),
-                    text: $inputText
-                )
-                .font(.system(.body, design: .monospaced))
-                #if os(iOS)
-                .textInputAutocapitalization(.never)
-                #endif
-                .autocorrectionDisabled()
-                
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(Color.secondary.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                TextField("", text: $inputText, prompt: Text("输入命令…").foregroundStyle(.gray))
+                    .font(.system(size: 15, design: .monospaced))
+                    .foregroundStyle(.white)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .onSubmit {
+                        guard !inputText.isEmpty else { return }
+                        onSendText(inputText)
+                        inputText = ""
+                    }
 
                 Button {
                     guard !inputText.isEmpty else { return }
                     onSendText(inputText)
                     inputText = ""
                 } label: {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(.body))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Color.accentColor)
-                        .foregroundStyle(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(inputText.isEmpty ? Color.gray : Color.green)
                 }
-                .disabled(!inputManager.isInputEnabled || inputText.isEmpty)
+                .disabled(inputText.isEmpty)
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 10)
             .padding(.bottom, 8)
         }
-        .background(Color(white: 0.12))
+        .background(Color(white: 0.1))
     }
 
     // MARK: - 私有方法
 
-    /// 处理快捷键点击，若 ctrlMode 激活则附加 ctrl 修饰
     private func handleShortcut(_ shortcut: ShortcutKey) {
-        // 固定含 ctrl 修饰的快捷键直接发送
         if !shortcut.mods.isEmpty {
             onSendKey(shortcut.key, shortcut.mods)
             return
         }
-        // 其他键通过 inputManager 检查 ctrlMode
         let input = inputManager.applyModifiers(to: shortcut.key)
         onSendKey(input.key, input.mods)
     }

@@ -204,14 +204,11 @@ final class RelayConnection: NSObject, ObservableObject {
                 handleRemoteUnpair()
                 return
             case "rpc_response":
-                // C4: 若消息携带 id 且有注册的回调，则调用回调并移除
-                if let msgID = json["id"] as? Int,
-                   let handler = responseHandlers.removeValue(forKey: msgID) {
-                    if let payload = json["payload"] as? [String: Any] {
-                        handler(payload)
-                    } else {
-                        handler(json)
-                    }
+                // 从 payload 中提取 id（Envelope 格式的 id 在 payload 内部）
+                let payloadDict = json["payload"] as? [String: Any]
+                let msgID = payloadDict?["id"] as? Int ?? json["id"] as? Int
+                if let msgID, let handler = responseHandlers.removeValue(forKey: msgID) {
+                    handler(payloadDict ?? json)
                     // 仍然转发给上层，供 MessageStore 更新状态
                 }
             default:
