@@ -57,8 +57,7 @@ struct TerminalInputBar: View {
                             )
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
-                    .disabled(!inputManager.isInputEnabled)
-
+                    
                     // 其他快捷键按钮
                     ForEach(shortcuts) { shortcut in
                         Button {
@@ -72,7 +71,7 @@ struct TerminalInputBar: View {
                                 .foregroundStyle(Color.primary)
                                 .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
-                        .disabled(!inputManager.isInputEnabled)
+                        
                     }
                 }
                 .padding(.horizontal, 12)
@@ -90,7 +89,7 @@ struct TerminalInputBar: View {
                 .textInputAutocapitalization(.never)
                 #endif
                 .autocorrectionDisabled()
-                .disabled(!inputManager.isInputEnabled)
+                
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 .background(Color.secondary.opacity(0.1))
@@ -114,7 +113,7 @@ struct TerminalInputBar: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
         }
-        .background(Color(white: 0.98))
+        .background(Color(white: 0.12))
     }
 
     // MARK: - 私有方法
