@@ -110,20 +110,22 @@ struct ClaudeChatView: View {
         case .assistant:
             HStack(alignment: .top, spacing: 8) {
                 claudeAvatar
-                Text(msg.content).font(.system(size: 15)).foregroundStyle(.white.opacity(0.9))
-                    .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                markdownText(msg.content)
                 Spacer(minLength: 20)
             }
         case .tool(name: let name):
             HStack(alignment: .top, spacing: 8) {
                 Color.clear.frame(width: 26)
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 4) {
                         Image(systemName: toolIcon(name)).font(.system(size: 10)).foregroundStyle(.green)
                         Text(name).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.6))
                     }
-                    Text(msg.content).font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.4)).lineLimit(4)
+                    // 工具参数预览
+                    if !msg.content.isEmpty {
+                        Text(msg.content).font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4)).lineLimit(6)
+                    }
                 }
                 .padding(8).background(Color.white.opacity(0.03))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -155,6 +157,27 @@ struct ClaudeChatView: View {
         ZStack {
             Circle().fill(Color.purple.opacity(0.15)).frame(width: 26, height: 26)
             Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.purple)
+        }
+    }
+
+    /// Markdown 渲染
+    @ViewBuilder
+    private func markdownText(_ content: String) -> some View {
+        if let attributed = try? AttributedString(
+            markdown: content,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) {
+            Text(attributed)
+                .font(.system(size: 15))
+                .foregroundStyle(.white.opacity(0.9))
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            Text(content)
+                .font(.system(size: 15))
+                .foregroundStyle(.white.opacity(0.9))
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
