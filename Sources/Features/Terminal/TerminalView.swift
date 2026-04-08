@@ -56,10 +56,7 @@ struct TerminalView: View {
             }
         }
         .background(Color.black)
-        .navigationTitle(surfaceTitle)
-        .navigationBarTitleDisplayMode(.inline)
         .navigationBarHidden(isLandscape)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // 字体缩小
@@ -79,7 +76,6 @@ struct TerminalView: View {
                 }
             }
         }
-        .toolbar(.hidden, for: .tabBar)
         .onAppear {
             inputManager.enableInput()
             requestScreenContent()

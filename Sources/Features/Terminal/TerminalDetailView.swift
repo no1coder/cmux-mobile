@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 终端详情页 — 统一入口，支持终端模式和聊天模式切换
+/// 终端详情页 — 自动检测 Claude，无缝切换模式
 struct TerminalDetailView: View {
     let surfaceID: String
     let surfaceTitle: String
@@ -8,76 +8,109 @@ struct TerminalDetailView: View {
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
 
-    /// 当前显示模式
-    @State private var displayMode: DisplayMode = .terminal
-    /// 是否检测到 Claude Code
-    @State private var isClaudeDetected = false
+    /// 是否在 Claude 模式
+    @State private var isClaudeMode = false
+    /// 是否显示原始终端（Sheet）
+    @State private var showTerminalSheet = false
+    /// 是否显示退出确认
+    @State private var showExitConfirm = false
+    /// 是否显示会话信息
+    @State private var showSessionInfo = false
+    /// 会话信息
+    @State private var sessionModel = ""
+    @State private var sessionContext = ""
 
-    enum DisplayMode: String {
-        case terminal
-        case chat
+    /// 从标题中提取项目名
+    private var projectName: String {
+        let title = surfaceTitle
+        // ~/code/aiapi → aiapi
+        if let last = title.split(separator: "/").last {
+            return String(last)
+        }
+        return title.isEmpty ? "终端" : title
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // 模式切换栏（仅 Claude 检测到时显示）
-            if isClaudeDetected {
-                modeSwitcher
-            }
-
-            // 内容区域
-            switch displayMode {
-            case .terminal:
-                TerminalView(surfaceID: surfaceID)
-                    .environmentObject(messageStore)
-                    .environmentObject(inputManager)
-                    .environmentObject(relayConnection)
-            case .chat:
+        Group {
+            if isClaudeMode {
                 ClaudeChatView(surfaceID: surfaceID)
                     .environmentObject(messageStore)
                     .environmentObject(inputManager)
                     .environmentObject(relayConnection)
+            } else {
+                TerminalView(surfaceID: surfaceID)
+                    .environmentObject(messageStore)
+                    .environmentObject(inputManager)
+                    .environmentObject(relayConnection)
             }
         }
+        .navigationTitle(projectName)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    if isClaudeMode {
+                        Button {
+                            showTerminalSheet = true
+                        } label: {
+                            Label("查看终端", systemImage: "terminal")
+                        }
+
+                        Button(role: .destructive) {
+                            showExitConfirm = true
+                        } label: {
+                            Label("退出 Claude", systemImage: "xmark.circle")
+                        }
+                    }
+
+                    if !sessionModel.isEmpty {
+                        Section("会话信息") {
+                            Label(sessionModel, systemImage: "cpu")
+                            if !sessionContext.isEmpty {
+                                Label("上下文 \(sessionContext)", systemImage: "chart.bar")
+                            }
+                            Label(surfaceTitle, systemImage: "folder")
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.gray)
+                }
+            }
+        }
+        .sheet(isPresented: $showTerminalSheet) {
+            NavigationStack {
+                TerminalView(surfaceID: surfaceID)
+                    .environmentObject(messageStore)
+                    .environmentObject(inputManager)
+                    .environmentObject(relayConnection)
+                    .navigationTitle("终端")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("关闭") { showTerminalSheet = false }
+                        }
+                    }
+            }
+        }
+        .alert("退出 Claude Code？", isPresented: $showExitConfirm) {
+            Button("退出", role: .destructive) {
+                exitClaude()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("将发送 Ctrl+C 退出 Claude Code，回到终端")
+        }
         .onAppear {
-            detectClaudeMode()
+            detectMode()
         }
     }
 
-    // MARK: - 模式切换栏
+    // MARK: - 检测模式
 
-    private var modeSwitcher: some View {
-        HStack(spacing: 0) {
-            modeTab("终端", mode: .terminal, icon: "terminal")
-            modeTab("聊天", mode: .chat, icon: "bubble.left.and.bubble.right")
-        }
-        .background(Color(white: 0.1))
-    }
-
-    private func modeTab(_ label: String, mode: DisplayMode, icon: String) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                displayMode = mode
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-                Text(label)
-                    .font(.system(size: 13, weight: .medium))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(displayMode == mode ? Color.purple.opacity(0.2) : Color.clear)
-            .foregroundStyle(displayMode == mode ? .purple : .white.opacity(0.5))
-        }
-    }
-
-    // MARK: - Claude 检测
-
-    /// 读取终端内容检测是否运行 Claude Code
-    private func detectClaudeMode() {
+    private func detectMode() {
         relayConnection.sendWithResponse([
             "method": "read_screen",
             "params": ["surface_id": surfaceID],
@@ -85,13 +118,27 @@ struct TerminalDetailView: View {
             let resultDict = result["result"] as? [String: Any] ?? result
             if let lines = resultDict["lines"] as? [String] {
                 let detected = ClaudeOutputParser.isClaudeSession(lines)
-                withAnimation {
-                    isClaudeDetected = detected
-                    if detected {
-                        displayMode = .chat
-                    }
+                let info = ClaudeOutputParser.parseSessionInfo(lines)
+                sessionModel = info.model
+                sessionContext = info.context
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isClaudeMode = detected
                 }
             }
+        }
+    }
+
+    // MARK: - 退出 Claude
+
+    private func exitClaude() {
+        // 发送 Ctrl+C 退出 Claude Code
+        relayConnection.send([
+            "method": "surface.send_key",
+            "params": ["surface_id": surfaceID, "key": "c", "mods": "ctrl"],
+        ])
+        // 切换到终端模式
+        withAnimation {
+            isClaudeMode = false
         }
     }
 }
