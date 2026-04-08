@@ -100,6 +100,10 @@
 		EDE594FE9A6E38BC50D05148 /* AgentDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A3E91EAEEA35413CC974E7 /* AgentDashboard.swift */; };
 		F654864958D7829CFA79764F /* ApprovalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2A159CFD8617E079E568B2 /* ApprovalManager.swift */; };
 		FA1743CA4F39BE83C58D7D8D /* RelayMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA3CB797631338A34584ACFE /* RelayMessage.swift */; };
+		VOICE001BUILDF1LE00000001 /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */; };
+		VOICE001BUILDF1LE00000002 /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */; };
+		VOICE002BUILDF1LE00000001 /* VoiceInputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE002FILEREF00000000001 /* VoiceInputButton.swift */; };
+		VOICE002BUILDF1LE00000002 /* VoiceInputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE002FILEREF00000000001 /* VoiceInputButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -165,6 +169,8 @@
 		EA3CB797631338A34584ACFE /* RelayMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayMessage.swift; sourceTree = "<group>"; };
 		F4035B4AFCAD2BA015D82A08 /* MesloLGSNerdFontMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "MesloLGSNerdFontMono-Bold.ttf"; sourceTree = "<group>"; };
 		FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalInputBar.swift; sourceTree = "<group>"; };
+		VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
+		VOICE002FILEREF00000000001 /* VoiceInputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -195,6 +201,7 @@
 				BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */,
 				AEB7EC70AC6330E71E686A7C /* PairingManager.swift */,
 				B55D14646F321994D5476EC6 /* RelayConnection.swift */,
+				VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -254,6 +261,7 @@
 			children = (
 				69698D3DABA01AC3792159DF /* ConnectionStatusBar.swift */,
 				THEME001FILEREF00000000001 /* Theme.swift */,
+				VOICE002FILEREF00000000001 /* VoiceInputButton.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -488,6 +496,8 @@
 				0C1FBB51BC378F7F361B12DF /* TerminalInputBar.swift in Sources */,
 				ADC3B0B1C58061ACB4ACA158 /* TerminalListView.swift in Sources */,
 				7D4C51EB3019824A34D84101 /* TerminalView.swift in Sources */,
+				VOICE001BUILDF1LE00000001 /* SpeechRecognizer.swift in Sources */,
+				VOICE002BUILDF1LE00000001 /* VoiceInputButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -537,6 +547,8 @@
 				A94674CB2B38923E470CB9EF /* TerminalListView.swift in Sources */,
 				D37ECAE20DF175BAB4D582DB /* TerminalView.swift in Sources */,
 				DD0FC2B5861B6CC2E2661715 /* cmuxMobileApp.swift in Sources */,
+				VOICE001BUILDF1LE00000002 /* SpeechRecognizer.swift in Sources */,
+				VOICE002BUILDF1LE00000002 /* VoiceInputButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

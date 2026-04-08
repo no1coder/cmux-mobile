@@ -8,6 +8,7 @@ struct ClaudeChatView: View {
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
 
+    @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var inputText = ""
     @State private var isThinking = false
     @State private var activityLabel = ""
@@ -75,6 +76,16 @@ struct ClaudeChatView: View {
             stopWatching()
         }
         .onChange(of: inputText) { _, newValue in handleInputChange(newValue) }
+        .onChange(of: speechRecognizer.isRecording) { _, recording in
+            // 录音停止时，将转写文本追加到输入框
+            if !recording {
+                let text = speechRecognizer.transcript
+                if !text.isEmpty {
+                    inputText += text
+                    isInputFocused = true
+                }
+            }
+        }
     }
 
     // MARK: - 聊天区域
@@ -356,6 +367,9 @@ struct ClaudeChatView: View {
                     .background(Color.white.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .onSubmit { send() }
+                VoiceInputButton(isRecording: speechRecognizer.isRecording) {
+                    handleVoiceTap()
+                }
                 Button(action: send) {
                     Image(systemName: "arrow.up.circle.fill").font(.system(size: 30))
                         .foregroundStyle(inputText.isEmpty ? .gray.opacity(0.3) : .purple)
@@ -408,6 +422,24 @@ struct ClaudeChatView: View {
                 }.sorted { a, b in
                     if a.isDirectory != b.isDirectory { return a.isDirectory }
                     return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+                }
+            }
+        }
+    }
+
+    // MARK: - 语音输入
+
+    private func handleVoiceTap() {
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        } else {
+            Task {
+                let granted = await speechRecognizer.requestPermissions()
+                guard granted else { return }
+                do {
+                    try speechRecognizer.startRecording()
+                } catch {
+                    // 语音识别启动失败，静默处理
                 }
             }
         }
