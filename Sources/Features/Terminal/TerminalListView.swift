@@ -122,16 +122,19 @@ struct TerminalListView: View {
         let workspaceName: String
         let surfaces: [Surface]
 
-        /// 显示名称：优先使用 workspaceName，其次使用路径类标题，最后回退到默认名
+        /// 显示名称：优先用 workspaceName（现在是 cwd），其次用 surface 的 cwd，最后回退
         var displayName: String {
             if !workspaceName.isEmpty {
                 return workspaceName
             }
-            // 优先使用路径类标题（跳过 "Claude Code" 等非路径名称）
+            // 优先使用 surface 的 cwd（不受进程标题覆盖影响）
+            if let cwd = surfaces.first(where: { $0.cwd != nil && !$0.cwd!.isEmpty })?.cwd {
+                return cwd
+            }
+            // 优先使用路径类标题
             if let pathTitle = surfaces.first(where: { $0.title.hasPrefix("~") || $0.title.hasPrefix("/") })?.title {
                 return pathTitle
             }
-            // 回退到第一个非空标题
             if let firstTitle = surfaces.first?.title, !firstTitle.isEmpty {
                 return firstTitle
             }
@@ -176,10 +179,11 @@ private struct SurfaceRowView: View {
         surface.title.contains("Claude Code")
     }
 
-    /// 行标题：Claude Code 运行时显示目录路径而非 "Claude Code"
+    /// 行标题：优先用 cwd（真实目录），Claude Code 运行时标题会被覆盖
     private var displayTitle: String {
-        if isClaudeSession, let wsName = surface.workspaceName, !wsName.isEmpty {
-            return wsName
+        // 优先使用 cwd（不受 Claude Code 等进程标题覆盖影响）
+        if let cwd = surface.cwd, !cwd.isEmpty {
+            return cwd
         }
         return surface.title.isEmpty ? "终端" : surface.title
     }

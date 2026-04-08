@@ -9,6 +9,8 @@ struct Surface: Identifiable, Codable, Equatable {
     let focused: Bool
     let paneID: String?
     let paneRef: String?
+    /// 终端当前工作目录（不受进程标题覆盖影响）
+    let cwd: String?
     /// 所属 workspace ID
     let workspaceID: String?
     /// 所属 workspace 名称
@@ -20,7 +22,7 @@ struct Surface: Identifiable, Codable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, ref, index, type, title, focused
+        case id, ref, index, type, title, focused, cwd
         case paneID = "pane_id"
         case paneRef = "pane_ref"
         case workspaceID = "workspace_id"
