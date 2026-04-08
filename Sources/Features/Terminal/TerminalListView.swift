@@ -4,6 +4,7 @@ import SwiftUI
 struct TerminalListView: View {
     @EnvironmentObject var messageStore: MessageStore
     @EnvironmentObject var relayConnection: RelayConnection
+    @EnvironmentObject var sessionManager: SessionManager
 
     var body: some View {
         NavigationStack {
@@ -63,6 +64,12 @@ struct TerminalListView: View {
 
     private var surfaceList: some View {
         List {
+            // Claude 会话快捷入口
+            let claudeGroups = sessionManager.groupedActiveSessions()
+            if !claudeGroups.isEmpty {
+                claudeSessionsSection(groups: claudeGroups)
+            }
+
             // 按 workspace 分组
             let groups = groupedSurfaces()
             ForEach(groups, id: \.workspaceID) { group in
@@ -82,6 +89,95 @@ struct TerminalListView: View {
         .refreshable {
             relayConnection.requestSurfaceList()
         }
+        .onChange(of: messageStore.surfaces) { newSurfaces in
+            sessionManager.syncFromSurfaces(newSurfaces)
+        }
+    }
+
+    // MARK: - Claude 会话快捷区域
+
+    @ViewBuilder
+    private func claudeSessionsSection(
+        groups: [(projectName: String, sessions: [ClaudeSession])]
+    ) -> some View {
+        Section {
+            ForEach(groups, id: \.projectName) { group in
+                ForEach(group.sessions) { session in
+                    NavigationLink {
+                        TerminalDetailView(
+                            surfaceID: session.surfaceID,
+                            surfaceTitle: session.title
+                        )
+                    } label: {
+                        claudeSessionRow(session: session)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button {
+                            withAnimation {
+                                sessionManager.archive(id: session.id)
+                            }
+                        } label: {
+                            Label(
+                                String(localized: "session.archive", defaultValue: "归档"),
+                                systemImage: "archivebox"
+                            )
+                        }
+                        .tint(.orange)
+                    }
+                }
+            }
+        } header: {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.caption)
+                    .foregroundStyle(.purple)
+                Text(String(localized: "terminal.claude_sessions", defaultValue: "Claude 会话"))
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+        }
+    }
+
+    /// Claude 会话行视图
+    private func claudeSessionRow(session: ClaudeSession) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.purple.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                Image(systemName: "sparkles")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.purple)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(session.projectName.isEmpty
+                    ? String(localized: "session.untitled", defaultValue: "未命名会话")
+                    : session.projectName
+                )
+                .font(.body)
+                .fontWeight(.medium)
+                .lineLimit(1)
+
+                HStack(spacing: 6) {
+                    if !session.model.isEmpty {
+                        Text(session.model)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                    let formatter = RelativeDateTimeFormatter()
+                    Text({
+                        formatter.unitsStyle = .short
+                        return formatter.localizedString(for: session.lastActiveAt, relativeTo: Date())
+                    }())
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                }
+            }
+
+            Spacer()
+        }
+        .padding(.vertical, 4)
     }
 
     /// workspace 分组头部

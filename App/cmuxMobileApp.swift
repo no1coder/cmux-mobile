@@ -7,6 +7,7 @@ struct cmuxMobileApp: App {
     @StateObject private var relayConnection = RelayConnection()
     @StateObject private var inputManager = InputManager()
     @StateObject private var approvalManager = ApprovalManager()
+    @StateObject private var sessionManager = SessionManager()
 
     var body: some Scene {
         WindowGroup {
@@ -97,6 +98,7 @@ struct cmuxMobileApp: App {
                     .environmentObject(messageStore)
                     .environmentObject(relayConnection)
                     .environmentObject(inputManager)
+                    .environmentObject(sessionManager)
                     .tag(1)
 
                 // 文件浏览器 Tab
@@ -178,6 +180,7 @@ struct cmuxMobileApp: App {
             .environmentObject(relayConnection)
             .environmentObject(inputManager)
             .environmentObject(approvalManager)
+            .environmentObject(sessionManager)
     }
 }
 
@@ -189,6 +192,7 @@ private struct iPadSplitViewContent: View {
     @EnvironmentObject var relayConnection: RelayConnection
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var approvalManager: ApprovalManager
+    @EnvironmentObject var sessionManager: SessionManager
 
     /// 当前选中的侧栏项
     @State private var selectedTab: SidebarTab? = .agent
@@ -254,6 +258,7 @@ private struct iPadSplitViewContent: View {
                 .environmentObject(messageStore)
                 .environmentObject(relayConnection)
                 .environmentObject(inputManager)
+                .environmentObject(sessionManager)
 
         case .files:
             FileExplorerView()

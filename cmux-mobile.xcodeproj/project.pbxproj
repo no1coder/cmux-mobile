@@ -104,6 +104,12 @@
 		VOICE001BUILDF1LE00000002 /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */; };
 		VOICE002BUILDF1LE00000001 /* VoiceInputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE002FILEREF00000000001 /* VoiceInputButton.swift */; };
 		VOICE002BUILDF1LE00000002 /* VoiceInputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE002FILEREF00000000001 /* VoiceInputButton.swift */; };
+		SESS001BUILDF1LE00000001 /* ClaudeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS001FILEREF00000000001 /* ClaudeSession.swift */; };
+		SESS001BUILDF1LE00000002 /* ClaudeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS001FILEREF00000000001 /* ClaudeSession.swift */; };
+		SESS002BUILDF1LE00000001 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS002FILEREF00000000001 /* SessionManager.swift */; };
+		SESS002BUILDF1LE00000002 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS002FILEREF00000000001 /* SessionManager.swift */; };
+		SESS003BUILDF1LE00000001 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS003FILEREF00000000001 /* SessionListView.swift */; };
+		SESS003BUILDF1LE00000002 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS003FILEREF00000000001 /* SessionListView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -171,6 +177,9 @@
 		FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalInputBar.swift; sourceTree = "<group>"; };
 		VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
 		VOICE002FILEREF00000000001 /* VoiceInputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputButton.swift; sourceTree = "<group>"; };
+		SESS001FILEREF00000000001 /* ClaudeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSession.swift; sourceTree = "<group>"; };
+		SESS002FILEREF00000000001 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		SESS003FILEREF00000000001 /* SessionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -201,6 +210,7 @@
 				BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */,
 				AEB7EC70AC6330E71E686A7C /* PairingManager.swift */,
 				B55D14646F321994D5476EC6 /* RelayConnection.swift */,
+				SESS002FILEREF00000000001 /* SessionManager.swift */,
 				VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */,
 			);
 			path = Core;
@@ -219,6 +229,7 @@
 			children = (
 				BC23E6B02ABB80410D7E3BD4 /* AnyCodable.swift */,
 				0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */,
+				SESS001FILEREF00000000001 /* ClaudeSession.swift */,
 				EA3CB797631338A34584ACFE /* RelayMessage.swift */,
 				817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */,
 				60B77A75BFF2571D1EB22615 /* Surface.swift */,
@@ -308,10 +319,19 @@
 				16380F7ABA76D28A85BAD428 /* Browser */,
 				7FFC23B219279CDCCCFB681E /* Claude */,
 				58E4D2DBDBD69177FAE83292 /* Files */,
+				SESS003GROUPREF000000001 /* Sessions */,
 				0CE643CE2897A23CD31F2A20 /* Settings */,
 				CD9BB19602F55D00A34DD125 /* Terminal */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		SESS003GROUPREF000000001 /* Sessions */ = {
+			isa = PBXGroup;
+			children = (
+				SESS003FILEREF00000000001 /* SessionListView.swift */,
+			);
+			path = Sessions;
 			sourceTree = "<group>";
 		};
 		CA6FC2CF7540FFC77C0CE48E /* App */ = {
@@ -498,6 +518,9 @@
 				7D4C51EB3019824A34D84101 /* TerminalView.swift in Sources */,
 				VOICE001BUILDF1LE00000001 /* SpeechRecognizer.swift in Sources */,
 				VOICE002BUILDF1LE00000001 /* VoiceInputButton.swift in Sources */,
+				SESS001BUILDF1LE00000001 /* ClaudeSession.swift in Sources */,
+				SESS002BUILDF1LE00000001 /* SessionManager.swift in Sources */,
+				SESS003BUILDF1LE00000001 /* SessionListView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -549,6 +572,9 @@
 				DD0FC2B5861B6CC2E2661715 /* cmuxMobileApp.swift in Sources */,
 				VOICE001BUILDF1LE00000002 /* SpeechRecognizer.swift in Sources */,
 				VOICE002BUILDF1LE00000002 /* VoiceInputButton.swift in Sources */,
+				SESS001BUILDF1LE00000002 /* ClaudeSession.swift in Sources */,
+				SESS002BUILDF1LE00000002 /* SessionManager.swift in Sources */,
+				SESS003BUILDF1LE00000002 /* SessionListView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
