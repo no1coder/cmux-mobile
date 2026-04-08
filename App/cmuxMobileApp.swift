@@ -47,6 +47,11 @@ struct cmuxMobileApp: App {
                     }
                 }
 
+                // Claude 推送事件：MessageStore → RelayConnection → ClaudeChatView
+                messageStore.onClaudeUpdate = { [weak relayConnection] payload in
+                    relayConnection?.onClaudeUpdate?(payload)
+                }
+
                 // 初始化推送通知
                 PushNotificationManager.shared.relayConnection = relayConnection
                 PushNotificationManager.shared.requestAuthorization()

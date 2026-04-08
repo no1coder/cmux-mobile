@@ -121,6 +121,9 @@ final class RelayConnection: NSObject, ObservableObject {
     /// 直接通知 onSurfacesUpdated 回调，不依赖 MessageStore 解析
     var onSurfacesUpdated: (([[String: Any]]) -> Void)?
 
+    /// Claude 消息推送回调（Mac 端 JSONL 文件变化时触发）
+    var onClaudeUpdate: (([String: Any]) -> Void)?
+
     func requestSurfaceList() {
         sendWithResponse([
             "method": "surface.list",

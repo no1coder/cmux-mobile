@@ -19,6 +19,9 @@ final class MessageStore: ObservableObject {
     /// 关联的审批管理器，由外部注入（弱引用避免循环）
     weak var approvalManager: ApprovalManager?
 
+    /// Claude 推送事件回调（Mac 端 JSONL 文件变化时触发）
+    var onClaudeUpdate: (([String: Any]) -> Void)?
+
     /// C4: 关联的断线恢复管理器，由外部注入（弱引用避免循环）
     weak var recovery: DisconnectRecovery?
 
@@ -78,6 +81,11 @@ final class MessageStore: ObservableObject {
             return
         case "workspace.list_update":
             handleWorkspaceListUpdate(payload)
+            return
+        case "claude.messages.update":
+            // 将 AnyCodable 转为原生字典，通过 onClaudeUpdate 分发
+            let rawDict = anyCodableToRawDict(payload)
+            onClaudeUpdate?(rawDict)
             return
         default:
             break

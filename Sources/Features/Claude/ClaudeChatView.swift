@@ -39,9 +39,14 @@ struct ClaudeChatView: View {
             messageStore.claudeChats[surfaceID] = nil
             lastSeq = 0
             fetchMessages()
+            // 订阅 Mac 端推送（文件监听），保留低频轮询作为降级
+            startWatching()
             startPolling()
         }
-        .onDisappear { stopPolling() }
+        .onDisappear {
+            stopPolling()
+            stopWatching()
+        }
         .onChange(of: inputText) { _, newValue in handleInputChange(newValue) }
     }
 
@@ -573,13 +578,47 @@ struct ClaudeChatView: View {
         }
     }
 
-    // MARK: - 轮询
+    // MARK: - Mac 端推送监听（主要通道）
+
+    /// 订阅 Mac 端 JSONL 文件监听推送
+    private func startWatching() {
+        // 发送 claude.watch 让 Mac 端开始监听文件变化
+        relayConnection.send([
+            "method": "claude.watch",
+            "params": ["surface_id": surfaceID],
+        ])
+
+        // 监听推送事件
+        let sid = surfaceID
+        relayConnection.onClaudeUpdate = { payload in
+            let payloadSid = payload["surface_id"] as? String ?? ""
+            guard payloadSid == sid else { return }
+
+            if let messages = payload["messages"] as? [[String: Any]] {
+                let status = payload["status"] as? String ?? "idle"
+                activityLabel = status
+                isThinking = (status == "thinking" || status == "tool_running")
+                processJsonlMessages(messages)
+            }
+        }
+    }
+
+    private func stopWatching() {
+        relayConnection.send([
+            "method": "claude.unwatch",
+            "params": ["surface_id": surfaceID],
+        ])
+        relayConnection.onClaudeUpdate = nil
+    }
+
+    // MARK: - 降级轮询（5秒兜底）
 
     private func startPolling() {
         stopPolling()
         refreshTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                // 推送通道存在时，轮询仅作为 5 秒兜底
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
                 guard !Task.isCancelled else { break }
                 fetchMessages()
             }
