@@ -483,8 +483,9 @@ struct ClaudeChatView: View {
                 if !textBlocks.isEmpty {
                     let text = textBlocks.compactMap { $0["text"] as? String }.joined()
                     if !text.isEmpty {
-                        // UUID-based 去重，避免内容相同但不同消息被错误跳过
-                        let exists = chatMessages.contains { $0.id == uuid }
+                        // 去重：匹配 ID 或内容（本地发送的 ID 与 JSONL 的 ID 不同）
+                        let exists = chatMessages.contains { $0.id == uuid || ($0.role == .user && $0.content == text) }
+                            || newItems.contains { $0.role == .user && $0.content == text }
                         if !exists {
                             newItems.append(ClaudeChatItem(id: uuid, role: .user, content: text, timestamp: Date()))
                         }
