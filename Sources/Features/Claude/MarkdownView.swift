@@ -2,8 +2,13 @@ import SwiftUI
 
 /// 简易 Markdown 渲染器，支持块级元素
 /// 支持：# 标题、``` 代码块、--- 分隔线、- 列表、| 表格、行内样式
-struct MarkdownView: View {
+/// Equatable 使 SwiftUI 在 content 未变时跳过重新渲染
+struct MarkdownView: View, Equatable {
     let content: String
+
+    static func == (lhs: MarkdownView, rhs: MarkdownView) -> Bool {
+        lhs.content == rhs.content
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

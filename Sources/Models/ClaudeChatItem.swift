@@ -7,11 +7,11 @@ struct ClaudeChatItem: Identifiable, Equatable {
     let content: String
     let timestamp: Date
     /// 工具执行结果（仅 tool 角色有值）
-    var toolResult: String?
+    let toolResult: String?
     /// 工具状态
-    var toolState: ToolState
+    let toolState: ToolState
     /// 工具调用 ID（用于关联 tool_use 和 tool_result）
-    var toolUseId: String?
+    let toolUseId: String?
 
     enum Role: Equatable {
         case user

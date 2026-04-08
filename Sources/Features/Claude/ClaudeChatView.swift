@@ -35,9 +35,10 @@ struct ClaudeChatView: View {
         }
         .background(Color(red: 0.06, green: 0.06, blue: 0.08))
         .onAppear {
-            // 清空缓存，以 JSONL 为唯一数据源
-            messageStore.claudeChats[surfaceID] = nil
-            lastSeq = 0
+            // 保留已有消息避免闪烁，仅首次加载时重置序号
+            if chatMessages.isEmpty {
+                lastSeq = 0
+            }
             fetchMessages()
             // 订阅 Mac 端推送（文件监听），保留低频轮询作为降级
             startWatching()
@@ -460,7 +461,8 @@ struct ClaudeChatView: View {
                 if !textBlocks.isEmpty {
                     let text = textBlocks.compactMap { $0["text"] as? String }.joined()
                     if !text.isEmpty {
-                        let exists = chatMessages.contains { $0.role == .user && $0.content == text }
+                        // UUID-based 去重，避免内容相同但不同消息被错误跳过
+                        let exists = chatMessages.contains { $0.id == uuid }
                         if !exists {
                             newItems.append(ClaudeChatItem(id: uuid, role: .user, content: text, timestamp: Date()))
                         }
@@ -474,10 +476,12 @@ struct ClaudeChatView: View {
                     switch blockType {
                     case "text":
                         if let text = block["text"] as? String, !text.isEmpty {
-                            let exists = chatMessages.contains { $0.role == .assistant && $0.content == text }
+                            let msgID = "\(uuid)-text"
+                            // UUID-based 去重
+                            let exists = chatMessages.contains { $0.id == msgID }
                             if !exists {
                                 newItems.append(ClaudeChatItem(
-                                    id: "\(uuid)-text", role: .assistant,
+                                    id: msgID, role: .assistant,
                                     content: text, timestamp: Date()
                                 ))
                             }
@@ -527,15 +531,28 @@ struct ClaudeChatView: View {
             }
         }
 
-        // 更新已有工具消息的状态和结果
-        var all = messageStore.claudeChats[surfaceID] ?? []
+        // 更新已有工具消息的状态和结果（不可变：创建新实例替换旧的）
+        let existing = messageStore.claudeChats[surfaceID] ?? []
+        var all: [ClaudeChatItem] = []
         var updated = false
-        for (idx, item) in all.enumerated() {
-            guard let toolId = item.toolUseId, item.toolState == .running,
-                  let result = toolResults[toolId] else { continue }
-            all[idx].toolResult = result.content
-            all[idx].toolState = result.isError ? .error : .completed
-            updated = true
+        for item in existing {
+            if let toolId = item.toolUseId, item.toolState == .running,
+               let result = toolResults[toolId] {
+                // 创建新实例替代就地修改
+                let updatedItem = ClaudeChatItem(
+                    id: item.id,
+                    role: item.role,
+                    content: item.content,
+                    timestamp: item.timestamp,
+                    toolResult: result.content,
+                    toolState: result.isError ? .error : .completed,
+                    toolUseId: item.toolUseId
+                )
+                all.append(updatedItem)
+                updated = true
+            } else {
+                all.append(item)
+            }
         }
 
         if !newItems.isEmpty {

@@ -74,6 +74,7 @@ final class RelayConnection: NSObject, ObservableObject {
     func disconnect() {
         cancelReconnect()
         stopHeartbeat()
+        clearPendingHandlers()
         webSocketTask?.cancel(with: .normalClosure, reason: nil)
         webSocketTask = nil
         urlSession = nil
@@ -105,6 +106,7 @@ final class RelayConnection: NSObject, ObservableObject {
     }
 
     /// C4: 发送 RPC 请求并注册响应回调，响应到达时在主线程调用 handler
+    /// 30 秒超时自动移除 handler，防止内存泄漏
     func sendWithResponse(_ payload: [String: Any], handler: @escaping ([String: Any]) -> Void) {
         let id = payload["id"] as? Int ?? {
             let current = nextRequestID
@@ -115,6 +117,15 @@ final class RelayConnection: NSObject, ObservableObject {
         var payloadWithID = payload
         payloadWithID["id"] = id
         send(payloadWithID)
+
+        // 30 秒超时：自动清除未响应的 handler
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 30_000_000_000)
+            guard let self else { return }
+            if let expiredHandler = self.responseHandlers.removeValue(forKey: id) {
+                expiredHandler(["error": "timeout", "message": "响应超时（30秒）"])
+            }
+        }
     }
 
     /// 连接成功后主动请求 surface 列表
@@ -321,10 +332,20 @@ final class RelayConnection: NSObject, ObservableObject {
         guard status != .disconnected else { return }
         status = .disconnected
         stopHeartbeat()
+        clearPendingHandlers()
         webSocketTask = nil
         // C4: 通知 recovery 连接已断开
         recovery?.markDisconnected()
         scheduleReconnect()
+    }
+
+    /// 清除所有待响应的 handler，通知调用方连接已断开
+    private func clearPendingHandlers() {
+        let pending = responseHandlers
+        responseHandlers.removeAll()
+        for (_, handler) in pending {
+            handler(["error": "disconnected", "message": "连接已断开"])
+        }
     }
 
     // MARK: - 心跳
