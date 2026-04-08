@@ -104,6 +104,10 @@
 		VOICE001BUILDF1LE00000002 /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */; };
 		VOICE002BUILDF1LE00000001 /* VoiceInputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE002FILEREF00000000001 /* VoiceInputButton.swift */; };
 		VOICE002BUILDF1LE00000002 /* VoiceInputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = VOICE002FILEREF00000000001 /* VoiceInputButton.swift */; };
+		DIFF001BUILDF1LE00000001 /* DiffCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DIFF001FILEREF00000000001 /* DiffCodeView.swift */; };
+		DIFF001BUILDF1LE00000002 /* DiffCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DIFF001FILEREF00000000001 /* DiffCodeView.swift */; };
+		TOKU001BUILDF1LE00000001 /* TokenUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOKU001FILEREF00000000001 /* TokenUsageView.swift */; };
+		TOKU001BUILDF1LE00000002 /* TokenUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOKU001FILEREF00000000001 /* TokenUsageView.swift */; };
 		SESS001BUILDF1LE00000001 /* ClaudeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS001FILEREF00000000001 /* ClaudeSession.swift */; };
 		SESS001BUILDF1LE00000002 /* ClaudeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS001FILEREF00000000001 /* ClaudeSession.swift */; };
 		SESS002BUILDF1LE00000001 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS002FILEREF00000000001 /* SessionManager.swift */; };
@@ -197,6 +201,8 @@
 		FE1C68BE973A9F8BDF8ACF45 /* TerminalInputBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalInputBar.swift; sourceTree = "<group>"; };
 		VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
 		VOICE002FILEREF00000000001 /* VoiceInputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputButton.swift; sourceTree = "<group>"; };
+		DIFF001FILEREF00000000001 /* DiffCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffCodeView.swift; sourceTree = "<group>"; };
+		TOKU001FILEREF00000000001 /* TokenUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenUsageView.swift; sourceTree = "<group>"; };
 		SESS001FILEREF00000000001 /* ClaudeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSession.swift; sourceTree = "<group>"; };
 		SESS002FILEREF00000000001 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		SESS003FILEREF00000000001 /* SessionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListView.swift; sourceTree = "<group>"; };
@@ -302,7 +308,9 @@
 			isa = PBXGroup;
 			children = (
 				69698D3DABA01AC3792159DF /* ConnectionStatusBar.swift */,
+				DIFF001FILEREF00000000001 /* DiffCodeView.swift */,
 				THEME001FILEREF00000000001 /* Theme.swift */,
+				TOKU001FILEREF00000000001 /* TokenUsageView.swift */,
 				VOICE002FILEREF00000000001 /* VoiceInputButton.swift */,
 			);
 			path = Components;
@@ -545,6 +553,8 @@
 				30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */,
 				752311638DD7AC78B651021F /* ConnectionStatusBar.swift in Sources */,
 				THEME001BUILDF1LE00000001 /* Theme.swift in Sources */,
+				DIFF001BUILDF1LE00000001 /* DiffCodeView.swift in Sources */,
+				TOKU001BUILDF1LE00000001 /* TokenUsageView.swift in Sources */,
 				62CE32A6EEDA79144BA9968C /* DeviceListView.swift in Sources */,
 				AA4382ACC31E0C3AC3001FC7 /* DeviceStore.swift in Sources */,
 				C0D13C5C7F5F87C5C540C7B6 /* DisconnectRecovery.swift in Sources */,
@@ -612,6 +622,8 @@
 				EA9397173B55EDE9BAED58AB /* ConnectionStatusBadge.swift in Sources */,
 				3757ED27F56257392E9220F7 /* ConnectionStatusBar.swift in Sources */,
 				THEME001BUILDF1LE00000002 /* Theme.swift in Sources */,
+				DIFF001BUILDF1LE00000002 /* DiffCodeView.swift in Sources */,
+				TOKU001BUILDF1LE00000002 /* TokenUsageView.swift in Sources */,
 				47C16D641B1285F2C3C3DAB0 /* DeviceListView.swift in Sources */,
 				764DF970F61194E561F3E69D /* DeviceStore.swift in Sources */,
 				7D377C20F2FEA061FA93E545 /* DisconnectRecovery.swift in Sources */,

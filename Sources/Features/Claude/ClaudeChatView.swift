@@ -33,6 +33,8 @@ struct ClaudeChatView: View {
     @AppStorage("recentSlashCommands") private var recentCommandsData = ""
     /// 是否有图片在粘贴板
     @State private var hasPastedImage = false
+    /// Token 用量统计
+    @State private var tokenUsage: [String: Int] = [:]
 
     private var chatMessages: [ClaudeChatItem] {
         messageStore.claudeChats[surfaceID] ?? []
@@ -145,6 +147,17 @@ struct ClaudeChatView: View {
             }
             if !sessionInfo.project.isEmpty {
                 Text(sessionInfo.project).font(.system(size: 11, design: .monospaced)).foregroundStyle(.white.opacity(0.3))
+            }
+            // Token 用量
+            if !tokenUsage.isEmpty {
+                TokenUsageView(
+                    inputTokens: tokenUsage["input"] ?? 0,
+                    outputTokens: tokenUsage["output"] ?? 0,
+                    cacheTokens: tokenUsage["cache"] ?? 0,
+                    compact: true
+                )
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
             }
         }
     }
@@ -752,6 +765,11 @@ struct ClaudeChatView: View {
             activityLabel = status
             isThinking = (status == "thinking" || status == "tool_running")
 
+            // 提取 token 用量
+            if let usage = resultDict["usage"] as? [String: Int] {
+                tokenUsage = usage
+            }
+
             processJsonlMessages(messages)
         }
     }
@@ -947,6 +965,12 @@ struct ClaudeChatView: View {
                 let status = payload["status"] as? String ?? "idle"
                 activityLabel = status
                 isThinking = (status == "thinking" || status == "tool_running")
+
+                // 提取 token 用量
+                if let usage = payload["usage"] as? [String: Int] {
+                    tokenUsage = usage
+                }
+
                 processJsonlMessages(messages)
             }
         }

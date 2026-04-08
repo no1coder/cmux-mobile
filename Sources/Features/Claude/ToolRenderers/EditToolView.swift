@@ -61,38 +61,7 @@ struct EditToolView: View {
     }
 
     private var diffView: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // 删除的行
-            ForEach(Array(oldString.components(separatedBy: "\n").enumerated()), id: \.offset) { _, line in
-                HStack(spacing: 4) {
-                    Text("-")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    Text(line)
-                        .font(.system(size: 11, design: .monospaced))
-                }
-                .foregroundStyle(.red.opacity(0.8))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.red.opacity(0.08))
-            }
-
-            // 新增的行
-            ForEach(Array(newString.components(separatedBy: "\n").enumerated()), id: \.offset) { _, line in
-                HStack(spacing: 4) {
-                    Text("+")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    Text(line)
-                        .font(.system(size: 11, design: .monospaced))
-                }
-                .foregroundStyle(.green.opacity(0.8))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.green.opacity(0.08))
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .padding(.horizontal, 12)
+        DiffCodeView(oldText: oldString, newText: newString, showLineNumbers: true)
+            .padding(.horizontal, 12)
     }
 }
