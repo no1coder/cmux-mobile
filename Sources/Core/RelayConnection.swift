@@ -118,13 +118,23 @@ final class RelayConnection: NSObject, ObservableObject {
     }
 
     /// 连接成功后主动请求 surface 列表
+    /// 直接通知 onSurfacesUpdated 回调，不依赖 MessageStore 解析
+    var onSurfacesUpdated: (([[String: Any]]) -> Void)?
+
     func requestSurfaceList() {
-        let requestID = Int(Date().timeIntervalSince1970)
         sendWithResponse([
             "method": "surface.list",
-            "id": requestID,
-        ]) { result in
-            print("[relay] surface.list 响应: \(result.keys.joined(separator: ","))")
+        ]) { [weak self] result in
+            print("[relay] surface.list 回调, keys=\(result.keys.sorted())")
+            // 从响应中提取 surfaces 数组
+            if let surfacesArr = result["surfaces"] as? [[String: Any]] {
+                print("[relay] 直接获取到 \(surfacesArr.count) 个 surface (dict)")
+                self?.onSurfacesUpdated?(surfacesArr)
+            } else if let resultDict = result["result"] as? [String: Any],
+                      let surfacesArr = resultDict["surfaces"] as? [[String: Any]] {
+                print("[relay] 从 result 获取到 \(surfacesArr.count) 个 surface")
+                self?.onSurfacesUpdated?(surfacesArr)
+            }
         }
     }
 
@@ -208,8 +218,13 @@ final class RelayConnection: NSObject, ObservableObject {
                         sendResume(lastSeq: r.lastSeq)
                     }
                 }
-                // 连接成功后，主动请求 surface 列表
+                // 连接成功后，主动请求 surface 列表（带重试）
                 requestSurfaceList()
+                // 3 秒后再试一次（防止首次请求丢失）
+                Task {
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    await MainActor.run { requestSurfaceList() }
+                }
                 return
             case "auth_fail":
                 disconnect()
@@ -221,6 +236,7 @@ final class RelayConnection: NSObject, ObservableObject {
             case "rpc_response":
                 // 从 payload 中提取 id（Envelope 格式的 id 在 payload 内部）
                 let payloadDict = json["payload"] as? [String: Any]
+                print("[relay] rpc_response 到达, payload keys=\(payloadDict?.keys.sorted().joined(separator: ",") ?? "nil"), handlers=\(responseHandlers.count)")
                 // 支持 Int / Double / String 等多种 id 类型
                 let rawID = payloadDict?["id"] ?? json["id"]
                 let msgID: Int? = {

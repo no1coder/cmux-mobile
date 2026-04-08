@@ -33,6 +33,19 @@ struct cmuxMobileApp: App {
                     }
                 }
 
+                // surface 列表更新回调：直接解码并更新 messageStore
+                relayConnection.onSurfacesUpdated = { [weak messageStore] surfaceDicts in
+                    Task { @MainActor in
+                        let decoded = surfaceDicts.compactMap { dict -> Surface? in
+                            guard let data = try? JSONSerialization.data(withJSONObject: dict),
+                                  let surface = try? JSONDecoder().decode(Surface.self, from: data) else { return nil }
+                            return surface
+                        }
+                        print("[app] 更新 surfaces: \(decoded.count) 个")
+                        messageStore?.surfaces = decoded
+                    }
+                }
+
                 // 如果已配对，自动连接
                 autoConnectIfPaired()
             }

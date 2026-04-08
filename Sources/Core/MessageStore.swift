@@ -124,8 +124,10 @@ final class MessageStore: ObservableObject {
 
     /// 处理 Mac 推送的 surface 列表更新
     private func handleSurfaceListUpdate(_ payload: [String: AnyCodable]) {
+        print("[messageStore] handleSurfaceListUpdate, payload keys=\(payload.keys.sorted()), surfaces type=\(payload["surfaces"].map { "\($0)" } ?? "nil")")
         // surfaces 可能是 AnyCodable 数组
         guard case .array(let surfacesArray) = payload["surfaces"] else {
+            print("[messageStore] surfaces 不是数组！")
             // 也可能是嵌套在 result 中
             if case .object(let result) = payload["surfaces"],
                case .array(let arr) = result["surfaces"] {
