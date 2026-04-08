@@ -19,6 +19,8 @@
 				AA11BB22CC33DD44EE550003 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550001 /* PushNotificationManager.swift */; };
 				AA11BB22CC33DD44EE550005 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550004 /* AppDelegate.swift */; };
 				AA11BB22CC33DD44EE550006 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550004 /* AppDelegate.swift */; };
+		E2E0000100000001E2E00001 /* E2ECryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0000100000000E2E00001 /* E2ECryptoManager.swift */; };
+		E2E0000100000002E2E00001 /* E2ECryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0000100000000E2E00001 /* E2ECryptoManager.swift */; };
 		2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697189AF6714DB55223B968 /* InputManager.swift */; };
 		30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */; };
 		32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
@@ -113,6 +115,7 @@
 		04569613F9A6AA3E9EA322B6 /* DeviceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListView.swift; sourceTree = "<group>"; };
 				AA11BB22CC33DD44EE550001 /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 				AA11BB22CC33DD44EE550004 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		E2E0000100000000E2E00001 /* E2ECryptoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = E2ECryptoManager.swift; sourceTree = "<group>"; };
 		0697189AF6714DB55223B968 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
 		0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParserTests.swift; sourceTree = "<group>"; };
 		0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeChatItem.swift; sourceTree = "<group>"; };
@@ -179,6 +182,7 @@
 				CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */,
 				D844DDB482FC6F9572686EFD /* DeviceStore.swift */,
 				97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */,
+				E2E0000100000000E2E00001 /* E2ECryptoManager.swift */,
 				A8BF77D802A5642E9BB7C267 /* FontLoader.swift */,
 				0697189AF6714DB55223B968 /* InputManager.swift */,
 				AA11BB22CC33DD44EE550004 /* AppDelegate.swift */,
@@ -458,6 +462,7 @@
 				A57707A29487AE8DAF286050 /* FileExplorerView.swift in Sources */,
 				7F9DEFAD0FA57F0A67C403C3 /* FilePreviewView.swift in Sources */,
 				92C0ADD29D44D996759AC351 /* FontLoader.swift in Sources */,
+				E2E0000100000001E2E00001 /* E2ECryptoManager.swift in Sources */,
 				2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */,
 				AA11BB22CC33DD44EE550005 /* AppDelegate.swift in Sources */,
 				AA11BB22CC33DD44EE550002 /* PushNotificationManager.swift in Sources */,
@@ -507,6 +512,7 @@
 				877643F7C1F6F004C8F10A73 /* FileExplorerView.swift in Sources */,
 				5410AEBF6F261CCA142FE720 /* FilePreviewView.swift in Sources */,
 				49123810093D59CE96B8AB39 /* FontLoader.swift in Sources */,
+				E2E0000100000002E2E00001 /* E2ECryptoManager.swift in Sources */,
 				E721F20B55E8A204FAAE6E24 /* InputManager.swift in Sources */,
 				AA11BB22CC33DD44EE550006 /* AppDelegate.swift in Sources */,
 				AA11BB22CC33DD44EE550003 /* PushNotificationManager.swift in Sources */,

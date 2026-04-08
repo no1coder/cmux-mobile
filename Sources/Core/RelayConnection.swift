@@ -16,6 +16,9 @@ final class RelayConnection: NSObject, ObservableObject {
     var phoneID: String = ""
     var pairSecret: String = ""
 
+    /// E2E 加密管理器，设置后自动加密发送载荷、解密接收载荷
+    var e2eCrypto: E2ECryptoManager?
+
     /// 收到消息时的回调（在主线程调用）
     var onMessage: ((Data) -> Void)?
 
@@ -48,6 +51,11 @@ final class RelayConnection: NSObject, ObservableObject {
         guard !serverURL.isEmpty, !phoneID.isEmpty else {
             print("[relay] connect 跳过: serverURL=\(serverURL) phoneID=\(phoneID)")
             return
+        }
+
+        // E2E: pairSecret 可用时初始化加密管理器
+        if !pairSecret.isEmpty {
+            e2eCrypto = E2ECryptoManager(pairSecret: pairSecret)
         }
 
         cancelReconnect()
@@ -95,12 +103,20 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// 发送 RPC 请求消息
     func send(_ payload: [String: Any]) {
+        // E2E: 如果加密管理器已配置，加密内层载荷
+        let finalPayload: [String: Any]
+        if let crypto = e2eCrypto, let encrypted = crypto.encrypt(payload) {
+            finalPayload = encrypted
+        } else {
+            finalPayload = payload
+        }
+
         let envelope: [String: Any] = [
             "seq": 0,
             "ts": Int64(Date().timeIntervalSince1970 * 1000),
             "from": "phone",
             "type": "rpc_request",
-            "payload": payload
+            "payload": finalPayload
         ]
         sendRaw(envelope)
     }
@@ -249,7 +265,15 @@ final class RelayConnection: NSObject, ObservableObject {
                 return
             case "rpc_response":
                 // 从 payload 中提取 id（Envelope 格式的 id 在 payload 内部）
-                let payloadDict = json["payload"] as? [String: Any]
+                // E2E: 如果载荷已加密，先解密
+                let rawPayload = json["payload"] as? [String: Any]
+                let payloadDict: [String: Any]? = {
+                    guard let raw = rawPayload else { return nil }
+                    if let crypto = e2eCrypto, E2ECryptoManager.isEncrypted(raw) {
+                        return crypto.decrypt(raw)
+                    }
+                    return raw
+                }()
                 print("[relay] rpc_response 到达, payload keys=\(payloadDict?.keys.sorted().joined(separator: ",") ?? "nil"), handlers=\(responseHandlers.count)")
                 // 支持 Int / Double / String 等多种 id 类型
                 let rawID = payloadDict?["id"] ?? json["id"]
@@ -269,6 +293,19 @@ final class RelayConnection: NSObject, ObservableObject {
         }
 
         // 转发给上层处理
+        // E2E: 如果消息载荷已加密，解密后重新序列化再转发
+        if let crypto = e2eCrypto,
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let encryptedPayload = json["payload"] as? [String: Any],
+           E2ECryptoManager.isEncrypted(encryptedPayload),
+           let decryptedPayload = crypto.decrypt(encryptedPayload) {
+            var decryptedJson = json
+            decryptedJson["payload"] = decryptedPayload
+            if let decryptedData = try? JSONSerialization.data(withJSONObject: decryptedJson) {
+                onMessage?(decryptedData)
+                return
+            }
+        }
         onMessage?(data)
     }
 
