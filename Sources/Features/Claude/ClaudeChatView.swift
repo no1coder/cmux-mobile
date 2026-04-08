@@ -302,6 +302,10 @@ struct ClaudeChatView: View {
     private func fetchSessionInfo() {
         readTerminal { lines in
             sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
+            // 首次进入时，扫描屏幕上已有的对话作为历史
+            if chatMessages.isEmpty {
+                loadHistoryFromScreen(lines)
+            }
         }
     }
 
@@ -311,7 +315,7 @@ struct ClaudeChatView: View {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
                 guard !Task.isCancelled else { break }
-                pollTerminalChanges()
+                pollForResponse()
             }
         }
     }
@@ -321,7 +325,6 @@ struct ClaudeChatView: View {
         refreshTask = nil
     }
 
-    /// 读取终端内容
     private func readTerminal(completion: @escaping ([String]) -> Void) {
         relayConnection.sendWithResponse([
             "method": "read_screen",
@@ -337,139 +340,196 @@ struct ClaudeChatView: View {
     /// 保存当前终端快照
     private func saveCurrentSnapshot() {
         readTerminal { lines in
-            let clean = Self.cleanTerminalText(lines)
-            messageStore.lastCleanText[surfaceID] = clean
             messageStore.lastTerminalHash[surfaceID] = lines.joined().hashValue
         }
     }
 
-    /// 轮询检测终端变化，提取 Claude 回复
-    private func pollTerminalChanges() {
+    /// 从屏幕内容加载已有对话历史
+    private func loadHistoryFromScreen(_ lines: [String]) {
+        let conversations = Self.scanConversations(lines)
+        if !conversations.isEmpty {
+            messageStore.claudeChats[surfaceID] = conversations
+        }
+    }
+
+    /// 轮询检测新回复
+    private func pollForResponse() {
         readTerminal { lines in
-            // 更新会话信息
             sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
 
-            // 检测内容变化
             let hash = lines.joined().hashValue
             let prevHash = messageStore.lastTerminalHash[surfaceID] ?? 0
             guard hash != prevHash else { return }
             messageStore.lastTerminalHash[surfaceID] = hash
 
-            // 提取干净文本
-            let cleanText = Self.cleanTerminalText(lines)
-            let prevText = messageStore.lastCleanText[surfaceID] ?? ""
+            // 从屏幕扫描所有对话
+            let scanned = Self.scanConversations(lines)
 
-            // 只在 thinking 状态下提取新回复
-            if isThinking && !cleanText.isEmpty {
-                let newContent = Self.extractNewResponse(previous: prevText, current: cleanText)
-                if !newContent.isEmpty {
+            // 如果扫描到的回复比当前存储的多，追加新的
+            let existingAssistantCount = chatMessages.filter { $0.role == .assistant }.count
+            let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
+
+            if scannedAssistantCount > existingAssistantCount {
+                // 有新回复
+                isThinking = false
+                // 取最后一个新回复
+                if let lastAssistant = scanned.last(where: { $0.role == .assistant }) {
+                    let alreadyHas = chatMessages.contains { $0.role == .assistant && $0.content == lastAssistant.content }
+                    if !alreadyHas {
+                        appendMessage(lastAssistant)
+                    }
+                }
+            }
+
+            // 如果内容变化了但 thinking 状态，检查是否 Claude 已完成（出现新的 prompt）
+            if isThinking {
+                let cleanText = lines.map { Self.stripAnsi($0) }.joined()
+                // Claude 完成的标志：出现了新的输入 prompt（❯ 后面没内容）
+                let hasIdlePrompt = cleanText.contains("❯") && !cleanText.contains("Perusing") && !cleanText.contains("Harmonizing") && !cleanText.contains("Thinking")
+                if hasIdlePrompt && scannedAssistantCount >= existingAssistantCount {
+                    // Claude 已完成但可能回复太长滚出了屏幕
+                    // 再次全量扫描获取完整对话
+                    let fullScan = Self.scanConversations(lines)
+                    mergeScannedMessages(fullScan)
                     isThinking = false
-                    appendMessage(ClaudeChatItem(
-                        id: UUID().uuidString,
-                        role: .assistant,
-                        content: newContent,
+                }
+            }
+        }
+    }
+
+    /// 合并扫描到的消息和本地消息
+    private func mergeScannedMessages(_ scanned: [ClaudeChatItem]) {
+        var merged = chatMessages
+        for item in scanned {
+            let exists = merged.contains { $0.content == item.content && $0.role == item.role }
+            if !exists {
+                merged.append(item)
+            }
+        }
+        if merged.count != chatMessages.count {
+            messageStore.claudeChats[surfaceID] = merged
+        }
+    }
+
+    // MARK: - 屏幕内容扫描
+
+    /// 去除 ANSI 转义码
+    static func stripAnsi(_ line: String) -> String {
+        var result = ""
+        var i = line.startIndex
+        while i < line.endIndex {
+            let c = line[i]
+            if c == "\u{1B}" {
+                i = line.index(after: i)
+                guard i < line.endIndex else { break }
+                if line[i] == "[" {
+                    i = line.index(after: i)
+                    while i < line.endIndex {
+                        if line[i].asciiValue.map({ $0 >= 0x40 && $0 <= 0x7E }) == true { i = line.index(after: i); break }
+                        i = line.index(after: i)
+                    }
+                } else if line[i] == "]" {
+                    i = line.index(after: i)
+                    while i < line.endIndex {
+                        if line[i] == "\u{07}" { i = line.index(after: i); break }
+                        if line[i] == "\u{1B}" { let ni = line.index(after: i); if ni < line.endIndex && line[ni] == "\\" { i = line.index(after: ni); break } }
+                        i = line.index(after: i)
+                    }
+                } else { i = line.index(after: i) }
+                continue
+            }
+            if let s = c.unicodeScalars.first {
+                let v = s.value
+                if v < 0x20 && v != 0x09 { i = line.index(after: i); continue }
+                if (v >= 0xE000 && v <= 0xF8FF) || v >= 0xF0000 { i = line.index(after: i); continue }
+                if (v >= 0x2500 && v <= 0x259F) || (v >= 0x2800 && v <= 0x28FF) { i = line.index(after: i); continue }
+            }
+            result.append(c)
+            i = line.index(after: i)
+        }
+        return result.trimmingCharacters(in: .whitespaces)
+    }
+
+    /// 判断行是否为 Claude TUI 噪音
+    static func isNoiseLine(_ line: String) -> Bool {
+        let t = line.trimmingCharacters(in: .whitespaces)
+        if t.isEmpty || t.count <= 2 { return true }
+        if t.allSatisfy({ "─━_=-~".contains($0) }) { return true }
+
+        let noisePatterns = [
+            "Claude Code v", "with medium effort", "with high effort", "with low effort",
+            "Claude Max", "Claude API", "Loamwaddle",
+            "Context", "git:(", "git:", "main*)",
+            "<(", "._>", "`--'", "^^^",
+            "1M context", "200K context",
+            "Harmonizing", "Perusing", "Thinking",
+            "Accessing workspace", "safety check", "trust this folder",
+            "Security guide", "Tip:", "Usage", "Weekly", "resets in",
+        ]
+        return noisePatterns.contains { t.contains($0) }
+    }
+
+    /// 从终端屏幕扫描对话（user prompt + assistant response 对）
+    static func scanConversations(_ lines: [String]) -> [ClaudeChatItem] {
+        var items: [ClaudeChatItem] = []
+        var i = 0
+        let cleaned = lines.map { stripAnsi($0) }
+
+        while i < cleaned.count {
+            let line = cleaned[i].trimmingCharacters(in: .whitespaces)
+
+            // 检测用户输入行：以 ❯ 开头后跟文本
+            if let userText = extractUserPrompt(line) {
+                if !userText.isEmpty {
+                    items.append(ClaudeChatItem(
+                        id: "scan-user-\(items.count)",
+                        role: .user,
+                        content: userText,
                         timestamp: Date()
                     ))
                 }
-            }
+                i += 1
 
-            messageStore.lastCleanText[surfaceID] = cleanText
-        }
-    }
-
-    // MARK: - 文本处理（静态方法）
-
-    /// 从终端行中提取干净的纯文本内容
-    static func cleanTerminalText(_ lines: [String]) -> String {
-        var result: [String] = []
-
-        for line in lines {
-            var clean = ""
-            var i = line.startIndex
-
-            while i < line.endIndex {
-                let char = line[i]
-
-                // 跳过 ESC 序列
-                if char == "\u{1B}" {
-                    i = line.index(after: i)
-                    guard i < line.endIndex else { break }
-                    if line[i] == "[" {
-                        i = line.index(after: i)
-                        while i < line.endIndex {
-                            if line[i].asciiValue.map({ $0 >= 0x40 && $0 <= 0x7E }) == true {
-                                i = line.index(after: i); break
-                            }
-                            i = line.index(after: i)
-                        }
-                    } else if line[i] == "]" {
-                        i = line.index(after: i)
-                        while i < line.endIndex {
-                            if line[i] == "\u{07}" { i = line.index(after: i); break }
-                            if line[i] == "\u{1B}" {
-                                let ni = line.index(after: i)
-                                if ni < line.endIndex && line[ni] == "\\" { i = line.index(after: ni); break }
-                            }
-                            i = line.index(after: i)
-                        }
-                    } else {
-                        i = line.index(after: i)
+                // 收集接下来的 Claude 回复（直到下一个 prompt 或屏幕结束）
+                var responseLines: [String] = []
+                while i < cleaned.count {
+                    let nextLine = cleaned[i].trimmingCharacters(in: .whitespaces)
+                    // 遇到下一个 prompt，结束收集
+                    if extractUserPrompt(nextLine) != nil { break }
+                    // 跳过噪音行
+                    if !isNoiseLine(nextLine) {
+                        responseLines.append(nextLine)
                     }
-                    continue
+                    i += 1
                 }
 
-                // 跳过控制字符和特殊 Unicode
-                if let scalar = char.unicodeScalars.first {
-                    let v = scalar.value
-                    if v < 0x20 && v != 0x09 { i = line.index(after: i); continue }
-                    if (v >= 0xE000 && v <= 0xF8FF) || v >= 0xF0000 { i = line.index(after: i); continue }
-                    if (v >= 0x2500 && v <= 0x259F) || (v >= 0x2800 && v <= 0x28FF) { i = line.index(after: i); continue }
+                let response = responseLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !response.isEmpty && response.count > 3 {
+                    items.append(ClaudeChatItem(
+                        id: "scan-assist-\(items.count)",
+                        role: .assistant,
+                        content: response,
+                        timestamp: Date()
+                    ))
                 }
-
-                clean.append(char)
-                i = line.index(after: i)
+            } else {
+                i += 1
             }
-
-            let trimmed = clean.trimmingCharacters(in: .whitespaces)
-
-            // 跳过装饰行和无意义短行
-            if trimmed.isEmpty { continue }
-            if trimmed.count <= 2 { continue }
-            if trimmed.allSatisfy({ "─━_=-~".contains($0) }) { continue }
-
-            // 跳过 Claude TUI 固有内容
-            if trimmed.contains("Claude Code v") { continue }
-            if trimmed.contains("with medium effort") || trimmed.contains("with high effort") { continue }
-            if trimmed.contains("Claude Max") || trimmed.contains("Claude API") { continue }
-            if trimmed.contains("Loamwaddle") { continue }
-            if trimmed.contains("Context") && trimmed.contains("%") { continue }
-            if trimmed.hasPrefix("[Opus") || trimmed.hasPrefix("[Sonnet") { continue }
-            if trimmed.contains("git:(") || trimmed.contains("git:") { continue }
-            if trimmed.contains("<(") || trimmed.contains("._>") || trimmed.contains("`--'") { continue }
-            if trimmed.contains("1M context") || trimmed.contains("200K context") { continue }
-            if trimmed.contains("Harmonizing") { continue }
-            if trimmed.contains("Accessing workspace") { continue }
-
-            result.append(trimmed)
         }
 
-        return result.joined(separator: "\n")
+        return items
     }
 
-    /// 从前后文本对比中提取 Claude 的新回复
-    static func extractNewResponse(previous: String, current: String) -> String {
-        // 如果 current 包含 previous，取新增部分
-        if current.count > previous.count && current.hasPrefix(previous) {
-            let diff = String(current.dropFirst(previous.count)).trimmingCharacters(in: .whitespacesAndNewlines)
-            if diff.count > 3 { return diff }
+    /// 从行中提取用户 prompt 文本（如果是 prompt 行的话）
+    static func extractUserPrompt(_ line: String) -> String? {
+        let t = line.trimmingCharacters(in: .whitespaces)
+        // Claude Code prompt: ❯ text 或 > text
+        if t.hasPrefix("❯ ") && t.count > 2 { return String(t.dropFirst(2)) }
+        if t.hasPrefix("> ") && t.count > 2 {
+            let text = String(t.dropFirst(2))
+            // 排除 markdown 引用块（Claude 回复可能包含 >）
+            if !text.hasPrefix(" ") && !text.hasPrefix(">") { return text }
         }
-
-        // 如果完全不同，找出新增行
-        let prevLines = Set(previous.components(separatedBy: "\n"))
-        let currLines = current.components(separatedBy: "\n")
-        let newLines = currLines.filter { !prevLines.contains($0) && !$0.isEmpty }
-
-        let joined = newLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
-        return joined.count > 3 ? joined : ""
+        return nil
     }
 }
