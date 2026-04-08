@@ -68,7 +68,7 @@ struct TerminalInputBar: View {
                                 .font(.system(size: 12, weight: .medium))
                         }
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
+                        .padding(.vertical, 8)
                         .background(Color.orange.opacity(0.25))
                         .foregroundStyle(Color.orange)
                         .clipShape(RoundedRectangle(cornerRadius: 5))
@@ -82,7 +82,7 @@ struct TerminalInputBar: View {
                         Text("Ctrl")
                             .font(.system(size: 13, weight: .medium, design: .monospaced))
                             .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
+                            .padding(.vertical, 8)
                             .background(
                                 inputManager.isCtrlMode
                                     ? Color.green
@@ -103,7 +103,7 @@ struct TerminalInputBar: View {
                             Text(shortcut.label)
                                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                                 .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
+                                .padding(.vertical, 8)
                                 .background(Color.white.opacity(0.12))
                                 .foregroundStyle(Color.white)
                                 .clipShape(RoundedRectangle(cornerRadius: 5))
@@ -170,7 +170,7 @@ struct TerminalInputBar: View {
             .padding(.horizontal, 10)
             .padding(.bottom, 8)
         }
-        .background(Color(white: 0.1))
+        .background(CMColors.backgroundSecondary)
     }
 
     // MARK: - 私有方法

@@ -188,12 +188,11 @@ private struct SurfaceRowView: View {
         return surface.title.isEmpty ? "终端" : surface.title
     }
 
-    /// 副标题：显示类型和引用标识
+    /// 副标题：仅显示 surface 类型
     private var surfaceSubtitle: String {
-        let typeLabel = surface.type == .browser
+        surface.type == .browser
             ? String(localized: "terminal.type.browser", defaultValue: "浏览器")
             : String(localized: "terminal.type.terminal", defaultValue: "终端")
-        return "\(typeLabel) - \(surface.ref)"
     }
 
     var body: some View {

@@ -77,6 +77,27 @@ struct AgentDashboard: View {
                             onApprove: { handleApprove(request) },
                             onReject: { handleReject(request) }
                         )
+                        .swipeActions(edge: .trailing) {
+                            Button {
+                                handleApprove(request)
+                            } label: {
+                                Label(
+                                    String(localized: "approval.action.approve", defaultValue: "批准"),
+                                    systemImage: "checkmark.circle"
+                                )
+                            }
+                            .tint(.green)
+                        }
+                        .swipeActions(edge: .leading) {
+                            Button(role: .destructive) {
+                                handleReject(request)
+                            } label: {
+                                Label(
+                                    String(localized: "approval.action.reject", defaultValue: "拒绝"),
+                                    systemImage: "xmark.circle"
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -115,11 +136,18 @@ struct AgentDashboard: View {
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text(String(localized: "agent.empty.description", defaultValue: "当前没有待审批的请求\nAgent 发出审批请求时会显示在这里"))
+            Text(String(localized: "agent.empty.description", defaultValue: "当前没有待审批的请求"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
+
+            Text(String(localized: "agent.empty.guidance", defaultValue: "当 Mac 上的 Claude Code 需要执行文件修改或运行命令时，审批请求将出现在这里"))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .padding(.horizontal, 24)
 
             // 连接指示器
             connectionIndicator

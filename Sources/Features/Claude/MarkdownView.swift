@@ -156,6 +156,16 @@ struct MarkdownView: View, Equatable {
             }
             .background(Color.black.opacity(0.4))
             .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    UIPasteboard.general.string = code
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.3))
+                        .padding(6)
+                }
+            }
 
         case .horizontalRule:
             Rectangle()

@@ -12,8 +12,8 @@ struct TerminalView: View {
     @State private var isLoading = true
     /// 加载错误信息
     @State private var errorMessage: String?
-    /// 终端字体大小
-    @State private var fontSize: CGFloat = 14
+    /// 终端字体大小（持久化到 UserDefaults）
+    @AppStorage("terminalFontSize") private var fontSize: Double = 14
     /// 自动刷新定时器
     @State private var refreshTask: Task<Void, Never>?
     /// 当前是否处于横屏模式
@@ -60,12 +60,12 @@ struct TerminalView: View {
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // 字体缩小
-                Button { fontSize = max(6, fontSize - 1) } label: {
+                Button { fontSize = max(6.0, fontSize - 1.0) } label: {
                     Image(systemName: "textformat.size.smaller")
                         .font(.caption)
                 }
                 // 字体放大
-                Button { fontSize = min(20, fontSize + 1) } label: {
+                Button { fontSize = min(20.0, fontSize + 1.0) } label: {
                     Image(systemName: "textformat.size.larger")
                         .font(.caption)
                 }
@@ -138,7 +138,7 @@ struct TerminalView: View {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
                             Text(ANSIParser.parse(line))
-                                .font(.system(size: fontSize, design: .monospaced))
+                                .font(.system(size: CGFloat(fontSize), design: .monospaced))
                                 .foregroundStyle(.white)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)

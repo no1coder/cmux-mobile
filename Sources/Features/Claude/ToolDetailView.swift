@@ -44,7 +44,7 @@ struct ToolDetailView: View {
             }
             .padding(.vertical, 16)
         }
-        .background(Color(red: 0.06, green: 0.06, blue: 0.08))
+        .background(CMColors.backgroundPrimary)
         .navigationTitle(toolName)
         .navigationBarTitleDisplayMode(.inline)
     }

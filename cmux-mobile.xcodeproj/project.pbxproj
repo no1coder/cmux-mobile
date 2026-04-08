@@ -23,6 +23,8 @@
 		30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */; };
 		32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
 		3757ED27F56257392E9220F7 /* ConnectionStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69698D3DABA01AC3792159DF /* ConnectionStatusBar.swift */; };
+		THEME001BUILDF1LE00000001 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = THEME001FILEREF00000000001 /* Theme.swift */; };
+		THEME001BUILDF1LE00000002 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = THEME001FILEREF00000000001 /* Theme.swift */; };
 				A1B2C3D4E5F647891234AB01 /* ToolDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6718ADE8B1C24D9FA3E71B02 /* ToolDetailView.swift */; };
 				B2C3D4E5F6071829A4B5C601 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1B2C3D4E5F60718293A4B5 /* MarkdownView.swift */; };
 		3CCE97C9FA614389E11916BA /* ClaudeOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */; };
@@ -130,6 +132,7 @@
 		5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeOutputParser.swift; sourceTree = "<group>"; };
 		60B77A75BFF2571D1EB22615 /* Surface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Surface.swift; sourceTree = "<group>"; };
 		69698D3DABA01AC3792159DF /* ConnectionStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionStatusBar.swift; sourceTree = "<group>"; };
+		THEME001FILEREF00000000001 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		6C89084F105DAFCD0F85F599 /* MessageStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageStoreTests.swift; sourceTree = "<group>"; };
 		817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSnapshot.swift; sourceTree = "<group>"; };
 		8281D9CAA5152412FA0AAF63 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
@@ -242,6 +245,7 @@
 			isa = PBXGroup;
 			children = (
 				69698D3DABA01AC3792159DF /* ConnectionStatusBar.swift */,
+				THEME001FILEREF00000000001 /* Theme.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -446,6 +450,7 @@
 				910E19A9E281AF4ADD857F8D /* ConnectionStatus.swift in Sources */,
 				30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */,
 				752311638DD7AC78B651021F /* ConnectionStatusBar.swift in Sources */,
+				THEME001BUILDF1LE00000001 /* Theme.swift in Sources */,
 				62CE32A6EEDA79144BA9968C /* DeviceListView.swift in Sources */,
 				AA4382ACC31E0C3AC3001FC7 /* DeviceStore.swift in Sources */,
 				C0D13C5C7F5F87C5C540C7B6 /* DisconnectRecovery.swift in Sources */,
@@ -495,6 +500,7 @@
 				7F3CCAE8644AEB66C0B48902 /* ConnectionStatus.swift in Sources */,
 				EA9397173B55EDE9BAED58AB /* ConnectionStatusBadge.swift in Sources */,
 				3757ED27F56257392E9220F7 /* ConnectionStatusBar.swift in Sources */,
+				THEME001BUILDF1LE00000002 /* Theme.swift in Sources */,
 				47C16D641B1285F2C3C3DAB0 /* DeviceListView.swift in Sources */,
 				764DF970F61194E561F3E69D /* DeviceStore.swift in Sources */,
 				7D377C20F2FEA061FA93E545 /* DisconnectRecovery.swift in Sources */,

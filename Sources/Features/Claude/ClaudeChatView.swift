@@ -16,6 +16,8 @@ struct ClaudeChatView: View {
     @FocusState private var isInputFocused: Bool
     /// 已获取的最大消息序号（用于增量拉取）
     @State private var lastSeq = 0
+    /// 选中的工具项（用于 sheet 展示详情）
+    @State private var selectedTool: ClaudeChatItem?
     /// 是否显示 / 命令菜单
     @State private var showSlashMenu = false
     /// 是否显示 @ 文件选择器
@@ -33,7 +35,30 @@ struct ClaudeChatView: View {
             if showFilePicker { filePickerView }
             inputBar
         }
-        .background(Color(red: 0.06, green: 0.06, blue: 0.08))
+        .background(CMColors.backgroundPrimary)
+        .sheet(item: $selectedTool) { tool in
+            if case .tool(name: let name) = tool.role {
+                NavigationStack {
+                    ToolDetailView(
+                        toolName: name,
+                        input: tool.content,
+                        result: tool.toolResult,
+                        state: tool.toolState
+                    )
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                selectedTool = nil
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                .presentationDetents([.medium, .large])
+            }
+        }
         .onAppear {
             // 保留已有消息避免闪烁，仅首次加载时重置序号
             if chatMessages.isEmpty {
@@ -113,7 +138,7 @@ struct ClaudeChatView: View {
                 Spacer(minLength: 50)
                 Text(msg.content).font(.system(size: 15)).foregroundStyle(.white)
                     .padding(.horizontal, 14).padding(.vertical, 10)
-                    .background(Color(red: 0.22, green: 0.42, blue: 0.82))
+                    .background(CMColors.userBubble)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
         case .assistant:
@@ -123,12 +148,9 @@ struct ClaudeChatView: View {
                 Spacer(minLength: 20)
             }
         case .tool(name: let name):
-            NavigationLink(destination: ToolDetailView(
-                toolName: name,
-                input: msg.content,
-                result: msg.toolResult,
-                state: msg.toolState
-            )) {
+            Button {
+                selectedTool = msg
+            } label: {
                 HStack(alignment: .top, spacing: 8) {
                     Color.clear.frame(width: 26)
                     HStack(spacing: 0) {
@@ -260,7 +282,7 @@ struct ClaudeChatView: View {
                     Divider().background(Color.white.opacity(0.05))
                 }
             }
-        }.frame(maxHeight: 200).background(Color(red: 0.1, green: 0.1, blue: 0.12))
+        }.frame(maxHeight: 200).background(CMColors.menuBackground)
     }
 
     // MARK: - @ 文件选择器
@@ -303,14 +325,14 @@ struct ClaudeChatView: View {
                     }
                 }.frame(maxHeight: 200)
             }
-        }.background(Color(red: 0.1, green: 0.1, blue: 0.12))
+        }.background(CMColors.menuBackground)
     }
 
     // MARK: - 输入栏
 
     private var inputBar: some View {
         VStack(spacing: 0) {
-            Divider().background(Color.white.opacity(0.08))
+            Divider().background(CMColors.separator)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     chip("@", color: .blue) {
@@ -338,13 +360,13 @@ struct ClaudeChatView: View {
                         .foregroundStyle(inputText.isEmpty ? .gray.opacity(0.3) : .purple)
                 }.disabled(inputText.isEmpty)
             }.padding(.horizontal, 12).padding(.bottom, 8)
-        }.background(Color(red: 0.08, green: 0.08, blue: 0.1))
+        }.background(CMColors.inputBarBackground)
     }
 
     private func chip(_ label: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label).font(.system(size: 11, weight: .medium, design: .monospaced))
-                .padding(.horizontal, 8).padding(.vertical, 4)
+                .padding(.horizontal, 8).padding(.vertical, 8)
                 .background(color.opacity(0.1)).foregroundStyle(color.opacity(0.7)).clipShape(Capsule())
         }
     }
