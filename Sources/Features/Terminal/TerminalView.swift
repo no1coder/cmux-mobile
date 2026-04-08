@@ -233,12 +233,13 @@ struct TerminalView: View {
     }
 
     private func sendKey(key: String, mods: String) {
+        // Mac 端期望 key 格式为 "ctrl-l"，不是分开的 key+mods
+        let combinedKey = mods.isEmpty ? key : "\(mods)-\(key)"
         relayConnection.send([
             "method": "surface.send_key",
             "params": [
                 "surface_id": surfaceID,
-                "key": key,
-                "mods": mods,
+                "key": combinedKey,
             ],
         ])
     }

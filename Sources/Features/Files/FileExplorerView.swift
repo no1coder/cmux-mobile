@@ -70,6 +70,7 @@ struct FileExplorerView: View {
                 ? String(localized: "files.root_title", defaultValue: "文件")
                 : (currentPath.last ?? "")
             )
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .onAppear {
                 if relayConnection.status == .connected {

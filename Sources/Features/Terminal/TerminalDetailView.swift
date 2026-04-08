@@ -19,6 +19,8 @@ struct TerminalDetailView: View {
     /// 会话信息
     @State private var sessionModel = ""
     @State private var sessionContext = ""
+    /// 模式检测定时器
+    @State private var modeDetectTask: Task<Void, Never>?
 
     /// 从标题中提取项目名
     private var projectName: String {
@@ -105,6 +107,25 @@ struct TerminalDetailView: View {
         }
         .onAppear {
             detectMode()
+            startModeDetection()
+        }
+        .onDisappear {
+            modeDetectTask?.cancel()
+            modeDetectTask = nil
+        }
+    }
+
+    // MARK: - 周期性模式检测
+
+    /// 每 3 秒检测一次终端是否进入/退出 Claude 模式
+    private func startModeDetection() {
+        modeDetectTask?.cancel()
+        modeDetectTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                guard !Task.isCancelled else { break }
+                detectMode()
+            }
         }
     }
 
@@ -131,10 +152,10 @@ struct TerminalDetailView: View {
     // MARK: - 退出 Claude
 
     private func exitClaude() {
-        // 发送 Ctrl+C 退出 Claude Code
+        // 发送 Ctrl+C 退出 Claude Code（Mac 端期望 "ctrl-c" 格式）
         relayConnection.send([
             "method": "surface.send_key",
-            "params": ["surface_id": surfaceID, "key": "c", "mods": "ctrl"],
+            "params": ["surface_id": surfaceID, "key": "ctrl-c"],
         ])
         // 切换到终端模式
         withAnimation {

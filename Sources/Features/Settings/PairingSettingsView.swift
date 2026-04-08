@@ -32,6 +32,7 @@ struct PairingSettingsView: View {
                 .frame(maxHeight: 200)
             }
             .navigationTitle(String(localized: "settings.pairing.title", defaultValue: "配对设置"))
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear { loadSelfHostedURL() }
             .safeAreaInset(edge: .bottom) {
                 if let msg = feedbackMessage {

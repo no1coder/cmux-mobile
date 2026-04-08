@@ -283,9 +283,11 @@ struct ClaudeChatView: View {
     }
 
     private func sendKey(_ key: String, _ mods: String) {
+        // Mac 端期望 key 格式为 "ctrl-c"，不是分开的 key+mods
+        let combinedKey = mods.isEmpty ? key : "\(mods)-\(key)"
         relayConnection.send([
             "method": "surface.send_key",
-            "params": ["surface_id": surfaceID, "key": key, "mods": mods],
+            "params": ["surface_id": surfaceID, "key": combinedKey],
         ])
     }
 

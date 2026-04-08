@@ -17,6 +17,7 @@ struct AgentDashboard: View {
                 }
             }
             .navigationTitle(String(localized: "agent.dashboard.title", defaultValue: "Agent"))
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 

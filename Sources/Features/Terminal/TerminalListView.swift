@@ -17,6 +17,7 @@ struct TerminalListView: View {
                 }
             }
             .navigationTitle("终端")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -121,12 +122,16 @@ struct TerminalListView: View {
         let workspaceName: String
         let surfaces: [Surface]
 
-        /// 显示名称：优先使用 workspaceName，其次使用第一个 surface 的标题，最后回退到默认名
+        /// 显示名称：优先使用 workspaceName，其次使用路径类标题，最后回退到默认名
         var displayName: String {
             if !workspaceName.isEmpty {
                 return workspaceName
             }
-            // 使用第一个 surface 的标题作为分组名（通常是目录路径）
+            // 优先使用路径类标题（跳过 "Claude Code" 等非路径名称）
+            if let pathTitle = surfaces.first(where: { $0.title.hasPrefix("~") || $0.title.hasPrefix("/") })?.title {
+                return pathTitle
+            }
+            // 回退到第一个非空标题
             if let firstTitle = surfaces.first?.title, !firstTitle.isEmpty {
                 return firstTitle
             }
@@ -166,6 +171,14 @@ private struct SurfaceRowView: View {
     /// 聚焦指示灯脉冲动画
     @State private var isPulsing = false
 
+    /// 是否为 Claude Code 会话（通过预览行或标题检测）
+    private var isClaudeSession: Bool {
+        if let preview = previewLine {
+            return ClaudeOutputParser.isClaudeSession([preview])
+        }
+        return false
+    }
+
     /// 副标题：显示类型和引用标识
     private var surfaceSubtitle: String {
         let typeLabel = surface.type == .browser
@@ -184,6 +197,12 @@ private struct SurfaceRowView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
+                    // 如果是 Claude Code 会话，显示 Claude 图标 + 原始标题
+                    if isClaudeSession {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.purple)
+                    }
                     Text(surface.title)
                         .font(.body)
                         .fontWeight(.medium)
