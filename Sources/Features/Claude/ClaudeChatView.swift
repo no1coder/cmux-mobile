@@ -34,6 +34,8 @@ struct ClaudeChatView: View {
         }
         .background(Color(red: 0.06, green: 0.06, blue: 0.08))
         .onAppear {
+            // 清空缓存，以 JSONL 为唯一数据源
+            messageStore.claudeChats[surfaceID] = nil
             lastSeq = 0
             fetchMessages()
             startPolling()
