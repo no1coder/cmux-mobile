@@ -117,29 +117,67 @@ struct ClaudeChatView: View {
                 Spacer(minLength: 20)
             }
         case .tool(name: let name):
-            HStack(alignment: .top, spacing: 8) {
-                Color.clear.frame(width: 26)
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 4) {
-                        Image(systemName: toolIcon(name)).font(.system(size: 10)).foregroundStyle(.green)
-                        Text(name).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.6))
+            NavigationLink(destination: ToolDetailView(
+                toolName: name,
+                input: msg.content,
+                result: msg.toolResult,
+                state: msg.toolState
+            )) {
+                HStack(alignment: .top, spacing: 8) {
+                    Color.clear.frame(width: 26)
+                    HStack(spacing: 0) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 4) {
+                                Image(systemName: toolIcon(name)).font(.system(size: 10)).foregroundStyle(toolColor(name))
+                                Text(name).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.6))
+                            }
+                            if !msg.content.isEmpty {
+                                Text(msg.content).font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(.white.opacity(0.35)).lineLimit(2)
+                                    .multilineTextAlignment(.leading)
+                            }
+                        }
+                        Spacer(minLength: 8)
+                        // 状态图标
+                        toolStateIcon(msg.toolState)
                     }
-                    // 工具参数预览
-                    if !msg.content.isEmpty {
-                        Text(msg.content).font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.4)).lineLimit(6)
-                    }
+                    .padding(10).background(Color.white.opacity(0.04))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    Spacer(minLength: 20)
                 }
-                .padding(8).background(Color.white.opacity(0.03))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                Spacer(minLength: 20)
             }
+            .buttonStyle(.plain)
         case .system:
             HStack {
                 Spacer()
                 Text(msg.content).font(.system(size: 11)).foregroundStyle(.white.opacity(0.2))
                 Spacer()
             }
+        }
+    }
+
+    @ViewBuilder
+    private func toolStateIcon(_ state: ClaudeChatItem.ToolState) -> some View {
+        switch state {
+        case .running:
+            ProgressView().scaleEffect(0.5).tint(.orange).frame(width: 16, height: 16)
+        case .completed:
+            Image(systemName: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green.opacity(0.6))
+        case .error:
+            Image(systemName: "xmark.circle.fill").font(.system(size: 12)).foregroundStyle(.red.opacity(0.6))
+        case .none:
+            Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.white.opacity(0.2))
+        }
+    }
+
+    private func toolColor(_ name: String) -> Color {
+        switch name {
+        case "Read": return .blue
+        case "Write", "Edit": return .orange
+        case "Bash": return .green
+        case "Grep", "Glob": return .cyan
+        case "Agent", "Task": return .purple
+        default: return .gray
         }
     }
 
@@ -400,14 +438,31 @@ struct ClaudeChatView: View {
     /// 将 JSONL 结构化消息转换为 UI 消息
     private func processJsonlMessages(_ messages: [[String: Any]]) {
         var newItems: [ClaudeChatItem] = []
+        // 收集 tool_result，用于关联到 tool_use
+        var toolResults: [String: (content: String, isError: Bool)] = [:]
 
+        // 第一遍：收集所有 tool_result
+        for msg in messages {
+            let blocks = msg["content"] as? [[String: Any]] ?? []
+            for block in blocks {
+                if (block["type"] as? String) == "tool_result",
+                   let toolUseId = block["tool_use_id"] as? String {
+                    let content = block["content"] as? String ?? ""
+                    let isError = block["is_error"] as? Bool ?? false
+                    toolResults[toolUseId] = (content, isError)
+                }
+            }
+        }
+
+        // 第二遍：构建消息列表
         for msg in messages {
             let type = msg["type"] as? String ?? ""
             let uuid = msg["uuid"] as? String ?? UUID().uuidString
             let blocks = msg["content"] as? [[String: Any]] ?? []
+            let stopReason = msg["stop_reason"] as? String
 
             if type == "user" {
-                // 用户消息：只显示纯文本，跳过 tool_result
+                // 用户消息：只显示纯文本
                 let textBlocks = blocks.filter { ($0["type"] as? String) == "text" }
                 if !textBlocks.isEmpty {
                     let text = textBlocks.compactMap { $0["text"] as? String }.joined()
@@ -419,7 +474,6 @@ struct ClaudeChatView: View {
                     }
                 }
             } else if type == "assistant" {
-                // Claude 回复：可能包含 text 和 tool_use blocks
                 for block in blocks {
                     let blockType = block["type"] as? String ?? ""
                     switch blockType {
@@ -435,17 +489,31 @@ struct ClaudeChatView: View {
                         }
                     case "tool_use":
                         let toolName = block["name"] as? String ?? "Tool"
+                        let toolUseId = block["id"] as? String ?? ""
                         let toolInput = block["input"] as? [String: Any] ?? [:]
-                        // 提取工具调用的关键信息
                         let summary = formatToolInput(name: toolName, input: toolInput)
-                        let exists = chatMessages.contains {
-                            if case .tool(name: let n) = $0.role { return n == toolName && $0.content == summary }
-                            return false
+
+                        // 查找对应的 tool_result
+                        let result = toolResults[toolUseId]
+                        let toolState: ClaudeChatItem.ToolState
+                        if let result {
+                            toolState = result.isError ? .error : .completed
+                        } else if stopReason == "tool_use" || stopReason == nil {
+                            toolState = .running
+                        } else {
+                            toolState = .none
                         }
+
+                        let exists = chatMessages.contains { $0.toolUseId == toolUseId }
                         if !exists {
                             newItems.append(ClaudeChatItem(
-                                id: "\(uuid)-tool-\(toolName)", role: .tool(name: toolName),
-                                content: summary, timestamp: Date()
+                                id: "\(uuid)-tool-\(toolUseId.prefix(8))",
+                                role: .tool(name: toolName),
+                                content: summary,
+                                timestamp: Date(),
+                                toolResult: result?.content,
+                                toolState: toolState,
+                                toolUseId: toolUseId
                             ))
                         }
                     default:
@@ -464,11 +532,24 @@ struct ClaudeChatView: View {
             }
         }
 
+        // 更新已有工具消息的状态和结果
+        var all = messageStore.claudeChats[surfaceID] ?? []
+        var updated = false
+        for (idx, item) in all.enumerated() {
+            guard let toolId = item.toolUseId, item.toolState == .running,
+                  let result = toolResults[toolId] else { continue }
+            all[idx].toolResult = result.content
+            all[idx].toolState = result.isError ? .error : .completed
+            updated = true
+        }
+
         if !newItems.isEmpty {
-            var all = messageStore.claudeChats[surfaceID] ?? []
             all.append(contentsOf: newItems)
+            updated = true
+        }
+
+        if updated {
             messageStore.claudeChats[surfaceID] = all
-            isThinking = false
         }
     }
 
