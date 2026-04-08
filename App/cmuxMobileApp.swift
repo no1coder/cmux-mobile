@@ -122,7 +122,7 @@ struct cmuxMobileApp: App {
                     .tag(2)
 
                 // 设置 Tab
-                PairingSettingsView()
+                SettingsView()
                     .environmentObject(relayConnection)
                     .tabItem {
                         Label(
@@ -280,7 +280,7 @@ private struct iPadSplitViewContent: View {
                 .environmentObject(relayConnection)
 
         case .settings:
-            PairingSettingsView()
+            SettingsView()
                 .environmentObject(relayConnection)
 
         case nil:

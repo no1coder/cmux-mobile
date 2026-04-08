@@ -140,6 +140,16 @@
 			PH10BUILD2F00000002 /* ActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000002 /* ActivityStore.swift */; };
 			PH10BUILD1F00000003 /* MCPToolRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000003 /* MCPToolRenderer.swift */; };
 			PH10BUILD2F00000003 /* MCPToolRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000003 /* MCPToolRenderer.swift */; };
+			PH13BUILD1F00000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000001 /* SettingsView.swift */; };
+			PH13BUILD2F00000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000001 /* SettingsView.swift */; };
+			PH13BUILD1F00000002 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000002 /* ThemeSettingsView.swift */; };
+			PH13BUILD2F00000002 /* ThemeSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000002 /* ThemeSettingsView.swift */; };
+			PH13BUILD1F00000003 /* VoiceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000003 /* VoiceSettingsView.swift */; };
+			PH13BUILD2F00000003 /* VoiceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000003 /* VoiceSettingsView.swift */; };
+			PH13BUILD1F00000004 /* ApprovalPolicySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000004 /* ApprovalPolicySettingsView.swift */; };
+			PH13BUILD2F00000004 /* ApprovalPolicySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000004 /* ApprovalPolicySettingsView.swift */; };
+			PH13BUILD1F00000005 /* TaskTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000005 /* TaskTreeView.swift */; };
+			PH13BUILD2F00000005 /* TaskTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH13FILEREF00000005 /* TaskTreeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -225,16 +235,25 @@
 			PH10FILEREF00000001 /* ApprovalPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalPolicy.swift; sourceTree = "<group>"; };
 			PH10FILEREF00000002 /* ActivityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityStore.swift; sourceTree = "<group>"; };
 			PH10FILEREF00000003 /* MCPToolRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPToolRenderer.swift; sourceTree = "<group>"; };
+			PH13FILEREF00000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+			PH13FILEREF00000002 /* ThemeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsView.swift; sourceTree = "<group>"; };
+			PH13FILEREF00000003 /* VoiceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettingsView.swift; sourceTree = "<group>"; };
+			PH13FILEREF00000004 /* ApprovalPolicySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalPolicySettingsView.swift; sourceTree = "<group>"; };
+			PH13FILEREF00000005 /* TaskTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTreeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		0CE643CE2897A23CD31F2A20 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				PH13FILEREF00000004 /* ApprovalPolicySettingsView.swift */,
 				04569613F9A6AA3E9EA322B6 /* DeviceListView.swift */,
 				489D61EC3B7EE5D14C55185C /* NotificationSettingsView.swift */,
 				E26E0EC0AE08CA4CECA5F2A7 /* PairingSettingsView.swift */,
 				18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */,
+				PH13FILEREF00000001 /* SettingsView.swift */,
+				PH13FILEREF00000002 /* ThemeSettingsView.swift */,
+				PH13FILEREF00000003 /* VoiceSettingsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -309,6 +328,7 @@
 				B122B3E1821092D4C3C78738 /* ClaudeMessage.swift */,
 				5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */,
 				7A1B2C3D4E5F60718293A4B5 /* MarkdownView.swift */,
+				PH13FILEREF00000005 /* TaskTreeView.swift */,
 				6718ADE8B1C24D9FA3E71B02 /* ToolDetailView.swift */,
 				TR00GROUP000000000001 /* ToolRenderers */,
 			);
@@ -604,6 +624,11 @@
 				PH10BUILD1F00000001 /* ApprovalPolicy.swift in Sources */,
 				PH10BUILD1F00000002 /* ActivityStore.swift in Sources */,
 				PH10BUILD1F00000003 /* MCPToolRenderer.swift in Sources */,
+				PH13BUILD1F00000001 /* SettingsView.swift in Sources */,
+				PH13BUILD1F00000002 /* ThemeSettingsView.swift in Sources */,
+				PH13BUILD1F00000003 /* VoiceSettingsView.swift in Sources */,
+				PH13BUILD1F00000004 /* ApprovalPolicySettingsView.swift in Sources */,
+				PH13BUILD1F00000005 /* TaskTreeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -673,6 +698,11 @@
 				PH10BUILD2F00000001 /* ApprovalPolicy.swift in Sources */,
 				PH10BUILD2F00000002 /* ActivityStore.swift in Sources */,
 				PH10BUILD2F00000003 /* MCPToolRenderer.swift in Sources */,
+				PH13BUILD2F00000001 /* SettingsView.swift in Sources */,
+				PH13BUILD2F00000002 /* ThemeSettingsView.swift in Sources */,
+				PH13BUILD2F00000003 /* VoiceSettingsView.swift in Sources */,
+				PH13BUILD2F00000004 /* ApprovalPolicySettingsView.swift in Sources */,
+				PH13BUILD2F00000005 /* TaskTreeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

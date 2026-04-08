@@ -13,66 +13,39 @@ struct PairingSettingsView: View {
 
     // MARK: - 状态
 
-    /// 主题偏好
-    @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.dark.rawValue
     /// 自托管服务器 URL（可编辑）
     @State private var selfHostedURL: String = ""
     /// 操作结果反馈信息
     @State private var feedbackMessage: String?
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // 设备列表（带自己的 List 和空状态）
-                DeviceListView()
-                    .environmentObject(relayConnection)
+        VStack(spacing: 0) {
+            // 设备列表（带自己的 List 和空状态）
+            DeviceListView()
+                .environmentObject(relayConnection)
 
-                // 主题与自托管服务器配置区域
-                Form {
-                    themeSection
-                    selfHostedSection
-                }
-                .frame(maxHeight: 320)
+            // 自托管服务器配置区域
+            Form {
+                selfHostedSection
             }
-            .navigationTitle(String(localized: "settings.pairing.title", defaultValue: "配对设置"))
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear { loadSelfHostedURL() }
-            .safeAreaInset(edge: .bottom) {
-                if let msg = feedbackMessage {
-                    Text(msg)
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                        .padding(8)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .padding()
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-            .animation(.easeInOut, value: feedbackMessage)
+            .frame(maxHeight: 200)
         }
-    }
-
-    // MARK: - Section：主题设置
-
-    private var themeSection: some View {
-        Section(
-            header: Text(String(
-                localized: "settings.theme.title",
-                defaultValue: "外观主题"
-            ))
-        ) {
-            Picker(
-                String(localized: "settings.theme.picker", defaultValue: "主题"),
-                selection: $appThemeRaw
-            ) {
-                ForEach(AppTheme.allCases) { theme in
-                    Label(theme.title, systemImage: theme.systemImage)
-                        .tag(theme.rawValue)
-                }
+        .navigationTitle(String(localized: "settings.pairing.title", defaultValue: "配对设置"))
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { loadSelfHostedURL() }
+        .safeAreaInset(edge: .bottom) {
+            if let msg = feedbackMessage {
+                Text(msg)
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                    .padding(8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .padding()
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            .pickerStyle(.segmented)
         }
+        .animation(.easeInOut, value: feedbackMessage)
     }
 
     // MARK: - Section：自托管服务器
