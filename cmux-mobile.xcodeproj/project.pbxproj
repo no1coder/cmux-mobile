@@ -134,6 +134,12 @@
 			TR00BUILD2F00000009 /* GenericToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000009 /* GenericToolView.swift */; };
 			TR00BUILD1F0000000A /* ToolInputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF0000000A /* ToolInputParser.swift */; };
 			TR00BUILD2F0000000A /* ToolInputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF0000000A /* ToolInputParser.swift */; };
+			PH10BUILD1F00000001 /* ApprovalPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000001 /* ApprovalPolicy.swift */; };
+			PH10BUILD2F00000001 /* ApprovalPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000001 /* ApprovalPolicy.swift */; };
+			PH10BUILD1F00000002 /* ActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000002 /* ActivityStore.swift */; };
+			PH10BUILD2F00000002 /* ActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000002 /* ActivityStore.swift */; };
+			PH10BUILD1F00000003 /* MCPToolRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000003 /* MCPToolRenderer.swift */; };
+			PH10BUILD2F00000003 /* MCPToolRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = PH10FILEREF00000003 /* MCPToolRenderer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -216,6 +222,9 @@
 			TR00FILEREF00000008 /* TodoToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoToolView.swift; sourceTree = "<group>"; };
 			TR00FILEREF00000009 /* GenericToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericToolView.swift; sourceTree = "<group>"; };
 			TR00FILEREF0000000A /* ToolInputParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolInputParser.swift; sourceTree = "<group>"; };
+			PH10FILEREF00000001 /* ApprovalPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalPolicy.swift; sourceTree = "<group>"; };
+			PH10FILEREF00000002 /* ActivityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityStore.swift; sourceTree = "<group>"; };
+			PH10FILEREF00000003 /* MCPToolRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPToolRenderer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -248,6 +257,7 @@
 				B55D14646F321994D5476EC6 /* RelayConnection.swift */,
 				SESS002FILEREF00000000001 /* SessionManager.swift */,
 				VOICE001FILEREF00000000001 /* SpeechRecognizer.swift */,
+				PH10FILEREF00000002 /* ActivityStore.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -269,6 +279,7 @@
 				EA3CB797631338A34584ACFE /* RelayMessage.swift */,
 				817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */,
 				60B77A75BFF2571D1EB22615 /* Surface.swift */,
+				PH10FILEREF00000001 /* ApprovalPolicy.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -426,6 +437,7 @@
 					TR00FILEREF00000008 /* TodoToolView.swift */,
 					TR00FILEREF00000009 /* GenericToolView.swift */,
 					TR00FILEREF0000000A /* ToolInputParser.swift */,
+					PH10FILEREF00000003 /* MCPToolRenderer.swift */,
 				);
 				path = ToolRenderers;
 				sourceTree = "<group>";
@@ -589,6 +601,9 @@
 				SESS001BUILDF1LE00000001 /* ClaudeSession.swift in Sources */,
 				SESS002BUILDF1LE00000001 /* SessionManager.swift in Sources */,
 				SESS003BUILDF1LE00000001 /* SessionListView.swift in Sources */,
+				PH10BUILD1F00000001 /* ApprovalPolicy.swift in Sources */,
+				PH10BUILD1F00000002 /* ActivityStore.swift in Sources */,
+				PH10BUILD1F00000003 /* MCPToolRenderer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -655,6 +670,9 @@
 				SESS001BUILDF1LE00000002 /* ClaudeSession.swift in Sources */,
 				SESS002BUILDF1LE00000002 /* SessionManager.swift in Sources */,
 				SESS003BUILDF1LE00000002 /* SessionListView.swift in Sources */,
+				PH10BUILD2F00000001 /* ApprovalPolicy.swift in Sources */,
+				PH10BUILD2F00000002 /* ActivityStore.swift in Sources */,
+				PH10BUILD2F00000003 /* MCPToolRenderer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

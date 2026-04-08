@@ -40,8 +40,20 @@ struct ClaudeChatView: View {
         messageStore.claudeChats[surfaceID] ?? []
     }
 
+    /// 检测是否处于 Plan 模式（通过 tool_use 名称推断）
+    private var isInPlanMode: Bool {
+        for msg in chatMessages.reversed() {
+            if case .tool(name: let name) = msg.role {
+                if name == "ExitPlanMode" { return false }
+                if name == "EnterPlanMode" { return true }
+            }
+        }
+        return false
+    }
+
     var body: some View {
         VStack(spacing: 0) {
+            if isInPlanMode { planModeBanner }
             chatArea
             offlineQueueBanner
             if showSlashMenu { slashCommandMenu }
@@ -254,6 +266,31 @@ struct ClaudeChatView: View {
         case "Agent": return "person.2"
         default: return "terminal"
         }
+    }
+
+    /// Plan 模式横幅
+    private var planModeBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "list.clipboard")
+                .font(.system(size: 13))
+            Text(String(localized: "claude.plan_mode", defaultValue: "Plan 模式 — Claude 正在规划而非执行"))
+                .font(.system(size: 13, weight: .medium))
+            Spacer()
+            Button {
+                sendDirect("/plan\n")
+            } label: {
+                Text(String(localized: "claude.exit_plan", defaultValue: "退出 Plan"))
+                    .font(.system(size: 11, weight: .semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(Color.purple.opacity(0.7))
     }
 
     private var claudeAvatar: some View {

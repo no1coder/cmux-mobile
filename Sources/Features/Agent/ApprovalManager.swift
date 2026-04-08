@@ -67,6 +67,26 @@ final class ApprovalManager: ObservableObject {
 
     @Published var pendingRequests: [ApprovalRequest] = []
     @Published var resolvedRequests: [ResolvedRequest] = []
+    @Published var policy: ApprovalPolicy = ApprovalPolicy.default
+
+    /// 从 UserDefaults 加载审批策略
+    func loadPolicy() {
+        let autoReadOnly = UserDefaults.standard.bool(forKey: "approvalAutoReadOnly")
+        let approveAll = UserDefaults.standard.bool(forKey: "approvalApproveAll")
+        var newPolicy = ApprovalPolicy.default
+        if !autoReadOnly {
+            newPolicy.autoApproveTools = []
+        }
+        newPolicy.approveAllForSession = approveAll
+        policy = newPolicy
+    }
+
+    /// 保存审批策略到 UserDefaults
+    func savePolicy() {
+        let hasReadOnly = policy.autoApproveTools.isSuperset(of: ApprovalPolicy.readOnlyTools)
+        UserDefaults.standard.set(hasReadOnly, forKey: "approvalAutoReadOnly")
+        UserDefaults.standard.set(policy.approveAllForSession, forKey: "approvalApproveAll")
+    }
 
     // MARK: - 请求管理
 

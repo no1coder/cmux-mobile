@@ -8,6 +8,7 @@ struct cmuxMobileApp: App {
     @StateObject private var inputManager = InputManager()
     @StateObject private var approvalManager = ApprovalManager()
     @StateObject private var sessionManager = SessionManager()
+    @StateObject private var activityStore = ActivityStore()
 
     var body: some Scene {
         WindowGroup {
@@ -78,6 +79,7 @@ struct cmuxMobileApp: App {
                 AgentDashboard()
                     .environmentObject(approvalManager)
                     .environmentObject(relayConnection)
+                    .environmentObject(activityStore)
                     .tabItem {
                         Label(
                             String(localized: "tab.agent", defaultValue: "Agent"),
@@ -181,6 +183,7 @@ struct cmuxMobileApp: App {
             .environmentObject(inputManager)
             .environmentObject(approvalManager)
             .environmentObject(sessionManager)
+            .environmentObject(activityStore)
     }
 }
 
@@ -193,6 +196,7 @@ private struct iPadSplitViewContent: View {
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var approvalManager: ApprovalManager
     @EnvironmentObject var sessionManager: SessionManager
+    @EnvironmentObject var activityStore: ActivityStore
 
     /// 当前选中的侧栏项
     @State private var selectedTab: SidebarTab? = .agent
@@ -252,6 +256,7 @@ private struct iPadSplitViewContent: View {
             AgentDashboard()
                 .environmentObject(approvalManager)
                 .environmentObject(relayConnection)
+                .environmentObject(activityStore)
 
         case .terminal:
             TerminalListView()

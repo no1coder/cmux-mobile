@@ -5,6 +5,8 @@ struct ApprovalRequestView: View {
     let request: ApprovalRequest
     let onApprove: () -> Void
     let onReject: () -> Void
+    /// 是否已自动批准（由外部根据策略设置）
+    var autoApproved: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

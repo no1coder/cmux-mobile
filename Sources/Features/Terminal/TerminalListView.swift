@@ -284,6 +284,18 @@ private struct SurfaceRowView: View {
         return surface.title.isEmpty ? "终端" : surface.title
     }
 
+    /// 从 workspaceName 中提取 git 分支名（如果包含分支信息）
+    private var gitBranch: String? {
+        guard let wsName = surface.workspaceName, !wsName.isEmpty else { return nil }
+        // workspaceName 可能是路径或包含分支信息
+        // 常见格式：项目路径中最后一段可能是分支名
+        // 如果 workspaceName 看起来像 git 分支名（不含 / 开头且非绝对路径）
+        if !wsName.hasPrefix("/") && !wsName.hasPrefix("~") {
+            return wsName
+        }
+        return nil
+    }
+
     /// 副标题：仅显示 surface 类型
     private var surfaceSubtitle: String {
         surface.type == .browser
@@ -326,10 +338,27 @@ private struct SurfaceRowView: View {
                     }
                 }
 
-                // 类型描述副标题
-                Text(surfaceSubtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    // 类型描述副标题
+                    Text(surfaceSubtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    // Git 分支标签（从 workspaceName 提取）
+                    if let branch = gitBranch {
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.triangle.branch")
+                                .font(.system(size: 9))
+                            Text(branch)
+                                .font(.system(size: 10, design: .monospaced))
+                        }
+                        .foregroundStyle(.orange.opacity(0.7))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.orange.opacity(0.1))
+                        .clipShape(Capsule())
+                    }
+                }
 
                 // 终端预览行（最后一行输出）
                 if let preview = previewLine, !preview.isEmpty {

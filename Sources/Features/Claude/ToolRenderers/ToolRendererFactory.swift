@@ -25,7 +25,12 @@ enum ToolRendererFactory {
         case "TodoWrite":
             TodoToolView(input: input, result: result, state: state)
         default:
-            GenericToolView(name: name, input: input, result: result, state: state)
+            // MCP 工具：名称以 mcp__ 开头
+            if name.hasPrefix("mcp__") {
+                MCPToolRenderer(name: name, input: input, result: result, state: state)
+            } else {
+                GenericToolView(name: name, input: input, result: result, state: state)
+            }
         }
     }
 }

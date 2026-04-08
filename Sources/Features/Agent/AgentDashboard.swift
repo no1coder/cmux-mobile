@@ -4,6 +4,12 @@ import SwiftUI
 struct AgentDashboard: View {
     @EnvironmentObject var approvalManager: ApprovalManager
     @EnvironmentObject var relayConnection: RelayConnection
+    @EnvironmentObject var activityStore: ActivityStore
+
+    /// 自动批准只读工具
+    @AppStorage("approvalAutoReadOnly") private var autoReadOnly = true
+    /// 本次会话全部自动批准
+    @AppStorage("approvalApproveAll") private var approveAll = false
 
     var body: some View {
         NavigationStack {
@@ -65,6 +71,9 @@ struct AgentDashboard: View {
                 // 连接状态指示器
                 connectionIndicator
 
+                // 审批策略设置
+                approvalPolicySection
+
                 // 待处理区块
                 if !approvalManager.pendingRequests.isEmpty {
                     sectionHeader(
@@ -111,8 +120,149 @@ struct AgentDashboard: View {
                         resolvedRow(resolved)
                     }
                 }
+
+                // 活动日志区块
+                if !activityStore.items.isEmpty {
+                    activitySection
+                }
             }
             .padding(16)
+        }
+        .onChange(of: approvalManager.pendingRequests) { _, pending in
+            // 根据策略自动批准
+            autoApprovePendingRequests(pending)
+        }
+    }
+
+    // MARK: - 审批策略
+
+    private var approvalPolicySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "gearshape")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(String(localized: "agent.policy.title", defaultValue: "审批策略"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+            }
+
+            VStack(spacing: 0) {
+                Toggle(isOn: $autoReadOnly) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "agent.policy.auto_readonly", defaultValue: "自动批准只读工具"))
+                            .font(.subheadline)
+                        Text("Read / Glob / Grep / WebSearch")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .tint(.green)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+
+                Divider().padding(.leading, 12)
+
+                Toggle(isOn: $approveAll) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "agent.policy.approve_all", defaultValue: "本次会话全部自动批准"))
+                            .font(.subheadline)
+                        Text(String(localized: "agent.policy.approve_all_desc", defaultValue: "所有工具调用自动批准，请谨慎使用"))
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                    }
+                }
+                .toggleStyle(.switch)
+                .tint(.orange)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+            }
+            .background(Color.secondary.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .onChange(of: autoReadOnly) { _, newValue in
+            syncPolicyFromToggles(readOnly: newValue, all: approveAll)
+        }
+        .onChange(of: approveAll) { _, newValue in
+            syncPolicyFromToggles(readOnly: autoReadOnly, all: newValue)
+        }
+    }
+
+    /// 同步 UI toggle 到 ApprovalManager 策略
+    private func syncPolicyFromToggles(readOnly: Bool, all: Bool) {
+        var newPolicy = ApprovalPolicy()
+        newPolicy.autoApproveTools = readOnly ? ApprovalPolicy.readOnlyTools : []
+        newPolicy.approveAllForSession = all
+        approvalManager.policy = newPolicy
+        approvalManager.savePolicy()
+    }
+
+    /// 自动批准符合策略的待处理请求
+    private func autoApprovePendingRequests(_ pending: [ApprovalRequest]) {
+        for request in pending {
+            if approvalManager.policy.shouldAutoApprove(toolName: request.action) {
+                handleApprove(request)
+                activityStore.add(
+                    type: .approval,
+                    title: String(localized: "activity.auto_approved", defaultValue: "自动批准"),
+                    detail: request.action
+                )
+            }
+        }
+    }
+
+    // MARK: - 活动日志
+
+    private var activitySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader(
+                title: String(localized: "agent.activity.title", defaultValue: "活动日志"),
+                count: activityStore.items.count
+            )
+            ForEach(activityStore.items.prefix(20)) { item in
+                activityRow(item)
+            }
+        }
+    }
+
+    private func activityRow(_ item: ActivityStore.ActivityItem) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: item.type.icon)
+                .foregroundStyle(activityColor(item.type))
+                .font(.body)
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                if !item.detail.isEmpty {
+                    Text(item.detail)
+                        .font(.system(.caption2, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            Text(item.timestamp, style: .relative)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.secondary.opacity(0.03))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func activityColor(_ type: ActivityStore.ActivityType) -> Color {
+        switch type {
+        case .approval: return .green
+        case .taskComplete: return .blue
+        case .taskFailed: return .red
+        case .info: return .gray
         }
     }
 
