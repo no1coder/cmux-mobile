@@ -9,9 +9,19 @@ struct ClaudeChatView: View {
 
     @State private var inputText = ""
     @State private var isThinking = false
+    /// Claude 当前活动状态（Thinking/Reading/Writing 等）
+    @State private var activityLabel = ""
     @State private var sessionInfo: (model: String, project: String, context: String) = ("", "", "")
     @State private var refreshTask: Task<Void, Never>?
     @FocusState private var isInputFocused: Bool
+    /// 上次扫描到的 assistant 消息数量
+    @State private var lastAssistantCount = 0
+    /// 是否显示 / 命令菜单
+    @State private var showSlashMenu = false
+    /// 是否显示 @ 文件选择器
+    @State private var showFilePicker = false
+    /// 文件列表（用于 @file 选择器）
+    @State private var fileList: [FileEntry] = []
 
     /// 从 MessageStore 读取持久化的消息
     private var chatMessages: [ClaudeChatItem] {
@@ -21,15 +31,31 @@ struct ClaudeChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             chatArea
+
+            // / 命令自动补全
+            if showSlashMenu {
+                slashCommandMenu
+            }
+
+            // @ 文件选择器
+            if showFilePicker {
+                filePickerView
+            }
+
             inputBar
         }
         .background(Color(red: 0.06, green: 0.06, blue: 0.08))
         .onAppear {
             fetchSessionInfo()
+            lastAssistantCount = chatMessages.filter { $0.role == .assistant }.count
             startPolling()
         }
         .onDisappear {
             stopPolling()
+        }
+        .onChange(of: inputText) { _, newValue in
+            // 检测 @ 和 / 触发自动补全
+            handleInputChange(newValue)
         }
     }
 
@@ -137,7 +163,7 @@ struct ClaudeChatView: View {
                 Color.clear.frame(width: 26)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
-                        Image(systemName: "terminal")
+                        Image(systemName: toolIcon(name))
                             .font(.system(size: 10))
                             .foregroundStyle(.green)
                         Text(name)
@@ -166,6 +192,20 @@ struct ClaudeChatView: View {
         }
     }
 
+    /// 根据工具名返回图标
+    private func toolIcon(_ name: String) -> String {
+        switch name {
+        case "Read": return "doc.text"
+        case "Write": return "doc.badge.plus"
+        case "Edit": return "pencil"
+        case "Bash": return "terminal"
+        case "Grep": return "magnifyingglass"
+        case "Glob": return "folder.badge.questionmark"
+        case "Agent": return "person.2"
+        default: return "terminal"
+        }
+    }
+
     private var claudeAvatar: some View {
         ZStack {
             Circle()
@@ -181,16 +221,148 @@ struct ClaudeChatView: View {
         HStack(alignment: .top, spacing: 8) {
             claudeAvatar
             HStack(spacing: 4) {
-                ForEach(0..<3, id: \.self) { _ in
-                    Circle().fill(Color.purple.opacity(0.4)).frame(width: 5, height: 5)
-                }
-                Text("思考中")
-                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.3)).italic()
+                ProgressView()
+                    .scaleEffect(0.6)
+                    .tint(.purple.opacity(0.6))
+                Text(activityLabel.isEmpty ? "思考中…" : activityLabel)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.3))
+                    .italic()
             }
-            .padding(.top, 5)
+            .padding(.top, 3)
             Spacer()
         }
-        .padding(.horizontal, 14)
+    }
+
+    // MARK: - / 命令自动补全
+
+    /// Claude Code 常用命令
+    private let slashCommands: [(cmd: String, desc: String)] = [
+        ("/compact", "压缩上下文"),
+        ("/status", "查看状态"),
+        ("/help", "帮助"),
+        ("/clear", "清空对话"),
+        ("/review", "代码审查"),
+        ("/init", "初始化项目"),
+        ("/bug", "报告 bug"),
+        ("/config", "配置"),
+        ("/cost", "费用统计"),
+        ("/login", "登录"),
+        ("/logout", "登出"),
+        ("/doctor", "诊断"),
+        ("/permissions", "权限管理"),
+        ("/memory", "记忆管理"),
+        ("/mcp", "MCP 服务"),
+    ]
+
+    private var slashCommandMenu: some View {
+        let query = String(inputText.dropFirst()).lowercased()
+        let filtered = query.isEmpty
+            ? slashCommands
+            : slashCommands.filter { $0.cmd.lowercased().contains(query) }
+
+        return ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(filtered, id: \.cmd) { item in
+                    Button {
+                        inputText = item.cmd
+                        showSlashMenu = false
+                        isInputFocused = true
+                    } label: {
+                        HStack {
+                            Text(item.cmd)
+                                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.orange)
+                            Spacer()
+                            Text(item.desc)
+                                .font(.system(size: 12))
+                                .foregroundStyle(.white.opacity(0.3))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                    }
+                    Divider().background(Color.white.opacity(0.05))
+                }
+            }
+        }
+        .frame(maxHeight: 200)
+        .background(Color(red: 0.1, green: 0.1, blue: 0.12))
+    }
+
+    // MARK: - @ 文件选择器
+
+    private var filePickerView: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Image(systemName: "doc.text")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.blue)
+                Text("选择文件")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.6))
+                Spacer()
+                Button {
+                    showFilePicker = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.white.opacity(0.3))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            if fileList.isEmpty {
+                HStack {
+                    ProgressView().scaleEffect(0.6).tint(.blue)
+                    Text("加载文件列表…")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.3))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(fileList, id: \.name) { file in
+                            Button {
+                                // 将 @文件路径 插入输入框
+                                let atRef = "@\(file.name) "
+                                if inputText.hasSuffix("@") {
+                                    inputText = String(inputText.dropLast()) + atRef
+                                } else {
+                                    inputText += atRef
+                                }
+                                showFilePicker = false
+                                isInputFocused = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: file.isDirectory ? "folder.fill" : "doc.text")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(file.isDirectory ? .yellow : .blue)
+                                        .frame(width: 16)
+                                    Text(file.name)
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(.white.opacity(0.8))
+                                        .lineLimit(1)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                            }
+                        }
+                    }
+                }
+                .frame(maxHeight: 200)
+            }
+        }
+        .background(Color(red: 0.1, green: 0.1, blue: 0.12))
+    }
+
+    /// 简单的文件条目
+    struct FileEntry {
+        let name: String
+        let isDirectory: Bool
     }
 
     // MARK: - 输入区域
@@ -201,8 +373,19 @@ struct ClaudeChatView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    chip("@", color: .blue) { inputText += "@"; isInputFocused = true }
-                    chip("/", color: .orange) { inputText += "/"; isInputFocused = true }
+                    chip("@", color: .blue) {
+                        inputText += "@"
+                        isInputFocused = true
+                        loadFileList()
+                        showFilePicker = true
+                        showSlashMenu = false
+                    }
+                    chip("/", color: .orange) {
+                        inputText = "/"
+                        showSlashMenu = true
+                        showFilePicker = false
+                        isInputFocused = true
+                    }
                     Rectangle().fill(Color.white.opacity(0.1)).frame(width: 1, height: 16)
                     chip("^C", color: .red) { sendKey("c", "ctrl") }
                     chip("Esc", color: .gray) { sendKey("escape", "") }
@@ -252,15 +435,57 @@ struct ClaudeChatView: View {
         }
     }
 
+    /// 输入内容变化时检测 @ 和 / 触发
+    private func handleInputChange(_ text: String) {
+        if text == "/" {
+            showSlashMenu = true
+            showFilePicker = false
+        } else if text.hasPrefix("/") && text.count > 1 {
+            showSlashMenu = true
+            showFilePicker = false
+        } else {
+            showSlashMenu = false
+        }
+
+        if text.hasSuffix("@") && !showFilePicker {
+            loadFileList()
+            showFilePicker = true
+        }
+    }
+
+    // MARK: - 文件列表加载
+
+    private func loadFileList() {
+        // 使用 session 中的项目路径
+        let path = sessionInfo.project.isEmpty ? "~" : sessionInfo.project
+        relayConnection.sendWithResponse([
+            "method": "file.list",
+            "params": ["path": path],
+        ]) { result in
+            let resultDict = result["result"] as? [String: Any] ?? result
+            if let entries = resultDict["entries"] as? [[String: Any]] {
+                fileList = entries.compactMap { entry in
+                    guard let name = entry["name"] as? String else { return nil }
+                    let isDir = (entry["type"] as? String) == "directory"
+                    return FileEntry(name: name, isDirectory: isDir)
+                }
+                // 排序：目录在前，按名称排序
+                fileList.sort { a, b in
+                    if a.isDirectory != b.isDirectory { return a.isDirectory }
+                    return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+                }
+            }
+        }
+    }
+
     // MARK: - 发送
 
     private func send() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         inputText = ""
-
-        // 保存当前终端内容快照，用于后续对比
-        saveCurrentSnapshot()
+        showSlashMenu = false
+        showFilePicker = false
 
         // 添加用户消息到持久化存储
         appendMessage(ClaudeChatItem(
@@ -273,6 +498,7 @@ struct ClaudeChatView: View {
         // 发送到终端
         sendDirect(text + "\n")
         isThinking = true
+        activityLabel = ""
     }
 
     private func sendDirect(_ text: String) {
@@ -283,7 +509,6 @@ struct ClaudeChatView: View {
     }
 
     private func sendKey(_ key: String, _ mods: String) {
-        // Mac 端期望 key 格式为 "ctrl-c"，不是分开的 key+mods
         let combinedKey = mods.isEmpty ? key : "\(mods)-\(key)"
         relayConnection.send([
             "method": "surface.send_key",
@@ -304,7 +529,6 @@ struct ClaudeChatView: View {
     private func fetchSessionInfo() {
         readTerminal { lines in
             sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
-            // 首次进入时，扫描屏幕上已有的对话作为历史
             if chatMessages.isEmpty {
                 loadHistoryFromScreen(lines)
             }
@@ -339,85 +563,136 @@ struct ClaudeChatView: View {
         }
     }
 
-    /// 保存当前终端快照
-    private func saveCurrentSnapshot() {
-        readTerminal { lines in
-            messageStore.lastTerminalHash[surfaceID] = lines.joined().hashValue
-        }
-    }
-
     /// 从屏幕内容加载已有对话历史
     private func loadHistoryFromScreen(_ lines: [String]) {
         let conversations = Self.scanConversations(lines)
         if !conversations.isEmpty {
             messageStore.claudeChats[surfaceID] = conversations
+            lastAssistantCount = conversations.filter { $0.role == .assistant }.count
         }
     }
 
-    /// 轮询检测新回复
+    /// 轮询检测新回复 — 基于状态机
     private func pollForResponse() {
         readTerminal { lines in
             sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
 
-            let hash = lines.joined().hashValue
-            let prevHash = messageStore.lastTerminalHash[surfaceID] ?? 0
-            guard hash != prevHash else { return }
-            messageStore.lastTerminalHash[surfaceID] = hash
+            let cleaned = lines.map { Self.stripAnsi($0) }
+            let joinedText = cleaned.joined(separator: " ")
 
-            // 从屏幕扫描所有对话
-            let scanned = Self.scanConversations(lines)
+            // 检测 Claude 活动状态
+            let activity = detectActivity(joinedText)
+            activityLabel = activity
 
-            // 如果扫描到的回复比当前存储的多，追加新的
-            let existingAssistantCount = chatMessages.filter { $0.role == .assistant }.count
-            let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
+            // 检测是否有 idle prompt（Claude 完成回复的标志）
+            let hasIdlePrompt = detectIdlePrompt(cleaned)
 
-            print("[claude-poll] scanned=\(scanned.count) (user=\(scanned.filter { $0.role == .user }.count), assist=\(scannedAssistantCount)) existing=\(chatMessages.count) (assist=\(existingAssistantCount)) thinking=\(isThinking)")
-
-            if scannedAssistantCount > existingAssistantCount {
-                // 有新回复
-                isThinking = false
-                // 取最后一个新回复
-                if let lastAssistant = scanned.last(where: { $0.role == .assistant }) {
-                    let alreadyHas = chatMessages.contains { $0.role == .assistant && $0.content == lastAssistant.content }
-                    if !alreadyHas {
-                        appendMessage(lastAssistant)
-                    }
-                }
-            }
-
-            // 如果内容变化了但 thinking 状态，检查是否 Claude 已完成（出现新的 prompt）
             if isThinking {
-                let cleanText = lines.map { Self.stripAnsi($0) }.joined()
-                // Claude 完成的标志：出现了新的输入 prompt（❯ 后面没内容）
-                let hasIdlePrompt = cleanText.contains("❯") && !cleanText.contains("Perusing") && !cleanText.contains("Harmonizing") && !cleanText.contains("Thinking")
-                if hasIdlePrompt && scannedAssistantCount >= existingAssistantCount {
-                    // Claude 已完成但可能回复太长滚出了屏幕
-                    // 再次全量扫描获取完整对话
-                    let fullScan = Self.scanConversations(lines)
-                    mergeScannedMessages(fullScan)
+                if hasIdlePrompt {
+                    // Claude 已完成回复，提取新的回复内容
+                    let scanned = Self.scanConversations(lines)
+                    let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
+
+                    if scannedAssistantCount > lastAssistantCount {
+                        // 有新回复，追加最后一条
+                        if let newReply = scanned.last(where: { $0.role == .assistant }) {
+                            let alreadyHas = chatMessages.contains {
+                                $0.role == .assistant && $0.content == newReply.content
+                            }
+                            if !alreadyHas {
+                                appendMessage(newReply)
+                            }
+                        }
+                        lastAssistantCount = scannedAssistantCount
+                    } else if scannedAssistantCount == lastAssistantCount {
+                        // 回复可能太长滚出屏幕了，添加一个提示
+                        let hasNewContent = cleaned.contains { line in
+                            let t = line.trimmingCharacters(in: .whitespaces)
+                            return !t.isEmpty && !Self.isNoiseLine(t) && Self.extractUserPrompt(t) == nil
+                        }
+                        if hasNewContent {
+                            appendMessage(ClaudeChatItem(
+                                id: UUID().uuidString,
+                                role: .assistant,
+                                content: "（回复已完成，内容较长请在终端中查看）",
+                                timestamp: Date()
+                            ))
+                            lastAssistantCount += 1
+                        }
+                    }
+
                     isThinking = false
+                    activityLabel = ""
+                }
+            } else {
+                // 非 thinking 状态，检查是否有从屏幕扫描到的新消息
+                let scanned = Self.scanConversations(lines)
+                let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
+
+                if scannedAssistantCount > lastAssistantCount {
+                    if let newReply = scanned.last(where: { $0.role == .assistant }) {
+                        let alreadyHas = chatMessages.contains {
+                            $0.role == .assistant && $0.content == newReply.content
+                        }
+                        if !alreadyHas {
+                            appendMessage(newReply)
+                        }
+                    }
+                    lastAssistantCount = scannedAssistantCount
                 }
             }
         }
     }
 
-    /// 合并扫描到的消息和本地消息
-    private func mergeScannedMessages(_ scanned: [ClaudeChatItem]) {
-        var merged = chatMessages
-        for item in scanned {
-            let exists = merged.contains { $0.content == item.content && $0.role == item.role }
-            if !exists {
-                merged.append(item)
+    /// 检测 Claude 当前活动状态
+    private func detectActivity(_ text: String) -> String {
+        let activities: [(pattern: String, label: String)] = [
+            ("Thinking", "思考中…"),
+            ("Reasoning", "推理中…"),
+            ("Analyzing", "分析中…"),
+            ("Searching", "搜索中…"),
+            ("Reading", "读取文件…"),
+            ("Writing", "写入文件…"),
+            ("Editing", "编辑中…"),
+            ("Compiling", "编译中…"),
+            ("Generating", "生成中…"),
+            ("Processing", "处理中…"),
+            ("Harmonizing", "整合中…"),
+            ("Perusing", "审阅中…"),
+            ("Hashing", "计算中…"),
+            ("Initializing", "初始化…"),
+            ("Connecting", "连接中…"),
+        ]
+        for (pattern, label) in activities {
+            if text.contains(pattern) { return label }
+        }
+        return ""
+    }
+
+    /// 检测 idle prompt — Claude 回复完成的标志
+    /// 屏幕最后几行出现 ❯ 且后面没有活动指示
+    private func detectIdlePrompt(_ lines: [String]) -> Bool {
+        let lastLines = lines.suffix(5)
+        for line in lastLines {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            // 空的 prompt 或带光标的 prompt
+            if t == "❯" || t.hasPrefix("❯ ") {
+                // 确认不在活动中
+                let joinedLast = lastLines.joined(separator: " ")
+                let activePatterns = ["Thinking", "Reasoning", "Analyzing", "Searching",
+                                      "Reading", "Writing", "Editing", "Compiling",
+                                      "Generating", "Processing", "Harmonizing", "Perusing",
+                                      "Hashing", "Initializing", "Connecting"]
+                let isActive = activePatterns.contains { joinedLast.contains($0) }
+                return !isActive
             }
         }
-        if merged.count != chatMessages.count {
-            messageStore.claudeChats[surfaceID] = merged
-        }
+        return false
     }
 
     // MARK: - 屏幕内容扫描
 
-    /// 去除 ANSI 转义码
+    /// 去除 ANSI 转义码和特殊字符
     static func stripAnsi(_ line: String) -> String {
         var result = ""
         var i = line.startIndex
@@ -472,11 +747,12 @@ struct ClaudeChatView: View {
             "Accessing workspace", "safety check", "trust this folder",
             "Security guide", "Tip:", "Usage", "Weekly", "resets in",
             "Enter to confirm", "Esc to cancel",
+            "Reading", "Writing", "Editing",
         ]
         return noisePatterns.contains { t.contains($0) }
     }
 
-    /// 从终端屏幕扫描对话（user prompt + assistant response 对）
+    /// 从终端屏幕扫描对话
     static func scanConversations(_ lines: [String]) -> [ClaudeChatItem] {
         var items: [ClaudeChatItem] = []
         var i = 0
@@ -485,7 +761,6 @@ struct ClaudeChatView: View {
         while i < cleaned.count {
             let line = cleaned[i].trimmingCharacters(in: .whitespaces)
 
-            // 检测用户输入行：以 ❯ 开头后跟文本
             if let userText = extractUserPrompt(line) {
                 if !userText.isEmpty {
                     items.append(ClaudeChatItem(
@@ -497,13 +772,11 @@ struct ClaudeChatView: View {
                 }
                 i += 1
 
-                // 收集接下来的 Claude 回复（直到下一个 prompt 或屏幕结束）
+                // 收集 Claude 回复
                 var responseLines: [String] = []
                 while i < cleaned.count {
                     let nextLine = cleaned[i].trimmingCharacters(in: .whitespaces)
-                    // 遇到下一个 prompt，结束收集
                     if extractUserPrompt(nextLine) != nil { break }
-                    // 跳过噪音行
                     if !isNoiseLine(nextLine) {
                         responseLines.append(nextLine)
                     }
@@ -527,19 +800,14 @@ struct ClaudeChatView: View {
         return items
     }
 
-    /// 从行中提取用户 prompt 文本（如果是 prompt 行的话）
     static func extractUserPrompt(_ line: String) -> String? {
         let t = line.trimmingCharacters(in: .whitespaces)
-        // Claude Code prompt: ❯ text 或 > text（确保是 prompt，不是 Claude 回复中的引用）
         if t.hasPrefix("❯ ") && t.count > 2 { return String(t.dropFirst(2)) }
-        // 注意：不匹配 "> " 因为 Claude 回复中可能有 "> 引用" 格式
         return nil
     }
 
-    /// 清理 Claude 回复中的 bullet 前缀（● ✦ 等）
     static func cleanAssistantText(_ text: String) -> String {
         var result = text
-        // 移除行首的 bullet 字符
         let bulletPrefixes = ["● ", "✦ ", "• ", "○ ", "◉ "]
         for prefix in bulletPrefixes {
             if result.hasPrefix(prefix) {
