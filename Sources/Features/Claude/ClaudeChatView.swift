@@ -8,20 +8,20 @@ struct ClaudeChatView: View {
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
 
-    /// 本地对话消息列表
+    /// 本地对话消息列表（纯本地维护，不从终端解析）
     @State private var chatMessages: [ChatItem] = []
     /// 输入文本
     @State private var inputText = ""
     /// Claude 是否正在处理
     @State private var isThinking = false
-    /// 上一次终端内容的行数（用于检测新输出）
-    @State private var lastLineCount = 0
-    /// 上一次终端内容的哈希（用于检测变化）
+    /// 上一次终端内容哈希
     @State private var lastContentHash = 0
     /// 会话信息
     @State private var sessionInfo: (model: String, project: String, context: String) = ("", "", "")
     /// 自动刷新任务
     @State private var refreshTask: Task<Void, Never>?
+    /// 上一次终端纯文本（用于提取 Claude 回复）
+    @State private var lastCleanText = ""
     @FocusState private var isInputFocused: Bool
 
     /// 聊天消息项
@@ -379,16 +379,19 @@ struct ClaudeChatView: View {
     // MARK: - 终端内容监控
 
     private func loadInitialContent() {
-        fetchTerminalContent()
+        // 只加载会话信息，不解析消息
+        fetchSessionInfo()
     }
 
     private func startWatching() {
         stopWatching()
         refreshTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 2_500_000_000)
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
                 guard !Task.isCancelled else { break }
-                fetchTerminalContent()
+                if isThinking {
+                    checkForResponse()
+                }
             }
         }
     }
@@ -398,8 +401,23 @@ struct ClaudeChatView: View {
         refreshTask = nil
     }
 
-    /// 从终端读取内容并更新聊天
-    private func fetchTerminalContent() {
+    /// 只获取会话信息（模型、项目路径、上下文）
+    private func fetchSessionInfo() {
+        relayConnection.sendWithResponse([
+            "method": "read_screen",
+            "params": ["surface_id": surfaceID],
+        ]) { result in
+            let resultDict = result["result"] as? [String: Any] ?? result
+            guard let lines = resultDict["lines"] as? [String] else { return }
+            sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
+            // 保存当前内容用于后续对比
+            lastCleanText = extractCleanText(lines)
+            lastContentHash = lines.joined().hashValue
+        }
+    }
+
+    /// 检查终端是否有新输出（Claude 的回复）
+    private func checkForResponse() {
         relayConnection.sendWithResponse([
             "method": "read_screen",
             "params": ["surface_id": surfaceID],
@@ -407,70 +425,53 @@ struct ClaudeChatView: View {
             let resultDict = result["result"] as? [String: Any] ?? result
             guard let lines = resultDict["lines"] as? [String] else { return }
 
-            // 更新会话信息
-            sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
-
-            // 检测内容变化
             let contentHash = lines.joined().hashValue
             guard contentHash != lastContentHash else { return }
             lastContentHash = contentHash
 
-            // 解析终端输出为消息
-            let parsed = ClaudeOutputParser.extractMessages(lines)
+            // 更新会话信息
+            sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
 
-            // 如果有新的 assistant 消息，停止思考状态
-            if parsed.contains(where: { $0.kind == .agentText || $0.kind == .toolCall }) {
-                isThinking = false
+            // 提取干净的文本内容
+            let cleanText = extractCleanText(lines)
+
+            // 如果内容和发送前不同，说明 Claude 有新回复
+            if cleanText != lastCleanText && !cleanText.isEmpty {
+                // 找出新增的内容（发送消息后新出现的文本）
+                let newContent = extractNewContent(old: lastCleanText, new: cleanText)
+                if !newContent.isEmpty {
+                    isThinking = false
+                    chatMessages.append(ChatItem(
+                        id: UUID().uuidString,
+                        role: .assistant,
+                        content: newContent,
+                        timestamp: Date()
+                    ))
+                    lastCleanText = cleanText
+                }
             }
-
-            // 将解析结果转换为 ChatItem，和本地消息合并
-            updateChatFromParsed(parsed)
         }
     }
 
-    /// 将解析的终端消息合并到本地聊天
-    private func updateChatFromParsed(_ parsed: [ClaudeMessage]) {
-        // 保留所有本地用户消息
-        let localUserMessages = chatMessages.filter {
-            if case .user = $0.role { return true }
-            return false
-        }
-
-        // 从解析结果构建远端消息
-        var remoteMsgs: [ChatItem] = []
-        for msg in parsed {
-            switch msg.kind {
-            case .userText:
-                remoteMsgs.append(ChatItem(id: msg.id, role: .user, content: msg.content, timestamp: msg.timestamp))
-            case .agentText:
-                remoteMsgs.append(ChatItem(id: msg.id, role: .assistant, content: msg.content, timestamp: msg.timestamp))
-            case .toolCall:
-                let state = msg.toolState ?? .completed
-                remoteMsgs.append(ChatItem(id: msg.id, role: .tool(name: msg.toolName ?? "Tool", state: state), content: msg.content, timestamp: msg.timestamp))
-            case .systemEvent:
-                remoteMsgs.append(ChatItem(id: msg.id, role: .system, content: msg.content, timestamp: msg.timestamp))
-            case .thinking:
-                break
-            }
-        }
-
-        // 合并：远端消息 + 本地独有的用户消息
-        var merged = remoteMsgs
-        for local in localUserMessages {
-            if !merged.contains(where: { $0.content == local.content && isUser($0) }) {
-                merged.append(local)
-            }
-        }
-
-        // 只有内容真正变化时才更新
-        if merged.map(\.content) != chatMessages.map(\.content) {
-            chatMessages = merged
-        }
+    /// 从终端行中提取干净的文本（去除所有 TUI 装饰）
+    private func extractCleanText(_ lines: [String]) -> String {
+        let parsed = ClaudeOutputParser.extractMessages(lines)
+        return parsed
+            .filter { $0.kind == .agentText || $0.kind == .toolCall }
+            .map(\.content)
+            .joined(separator: "\n")
     }
 
-    private func isUser(_ item: ChatItem) -> Bool {
-        if case .user = item.role { return true }
-        return false
+    /// 提取新增内容（对比前后文本差异）
+    private func extractNewContent(old: String, new: String) -> String {
+        // 简单策略：如果新文本包含旧文本，取差集；否则取全部新内容
+        if new.hasPrefix(old) {
+            let diff = String(new.dropFirst(old.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+            return diff
+        }
+        // 如果完全不同，返回新内容（但排除太短的片段）
+        let trimmed = new.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.count > 5 ? trimmed : ""
     }
 
     // MARK: - 工具辅助
