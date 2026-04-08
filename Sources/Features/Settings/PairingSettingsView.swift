@@ -13,6 +13,8 @@ struct PairingSettingsView: View {
 
     // MARK: - 状态
 
+    /// 主题偏好
+    @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.dark.rawValue
     /// 自托管服务器 URL（可编辑）
     @State private var selfHostedURL: String = ""
     /// 操作结果反馈信息
@@ -25,11 +27,12 @@ struct PairingSettingsView: View {
                 DeviceListView()
                     .environmentObject(relayConnection)
 
-                // 自托管服务器配置区域
+                // 主题与自托管服务器配置区域
                 Form {
+                    themeSection
                     selfHostedSection
                 }
-                .frame(maxHeight: 200)
+                .frame(maxHeight: 320)
             }
             .navigationTitle(String(localized: "settings.pairing.title", defaultValue: "配对设置"))
             .navigationBarTitleDisplayMode(.inline)
@@ -47,6 +50,28 @@ struct PairingSettingsView: View {
                 }
             }
             .animation(.easeInOut, value: feedbackMessage)
+        }
+    }
+
+    // MARK: - Section：主题设置
+
+    private var themeSection: some View {
+        Section(
+            header: Text(String(
+                localized: "settings.theme.title",
+                defaultValue: "外观主题"
+            ))
+        ) {
+            Picker(
+                String(localized: "settings.theme.picker", defaultValue: "主题"),
+                selection: $appThemeRaw
+            ) {
+                ForEach(AppTheme.allCases) { theme in
+                    Label(theme.title, systemImage: theme.systemImage)
+                        .tag(theme.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
         }
     }
 

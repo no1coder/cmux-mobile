@@ -10,6 +10,13 @@ struct cmuxMobileApp: App {
     @StateObject private var sessionManager = SessionManager()
     @StateObject private var activityStore = ActivityStore()
 
+    /// 主题偏好：跟随系统 / 亮色 / 暗色
+    @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.dark.rawValue
+
+    private var appTheme: AppTheme {
+        AppTheme(rawValue: appThemeRaw) ?? .dark
+    }
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -21,7 +28,7 @@ struct cmuxMobileApp: App {
                     iPhoneTabView
                 }
             }
-            .preferredColorScheme(.dark)
+            .preferredColorScheme(appTheme.colorScheme)
             .onAppear {
                 // 注册 Nerd Font
                 FontLoader.registerFonts()
@@ -232,9 +239,12 @@ private struct iPadSplitViewContent: View {
         NavigationSplitView {
             sidebarList
                 .navigationTitle(String(localized: "sidebar.title", defaultValue: "cmux"))
+                .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 320)
         } detail: {
             detailView
+                .navigationSplitViewColumnWidth(min: 400, ideal: 600, max: .infinity)
         }
+        .navigationSplitViewStyle(.balanced)
     }
 
     // MARK: - 侧栏
