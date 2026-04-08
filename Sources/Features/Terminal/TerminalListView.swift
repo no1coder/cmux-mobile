@@ -54,19 +54,8 @@ struct TerminalListView: View {
         case .browser:
             BrowserPreviewView(surfaceID: surface.id, connection: relayConnection)
         case .terminal:
-            // 如果终端标题包含 Claude Code 相关关键词，使用聊天模式
-            if isClaudeSurface(surface) {
-                ClaudeChatView(surfaceID: surface.id)
-            } else {
-                TerminalView(surfaceID: surface.id)
-            }
+            TerminalDetailView(surfaceID: surface.id, surfaceTitle: surface.title)
         }
-    }
-
-    /// 判断 surface 是否运行 Claude Code
-    private func isClaudeSurface(_ surface: Surface) -> Bool {
-        let title = surface.title.lowercased()
-        return title.contains("claude") || title.contains("claude code")
     }
 
     // MARK: - 列表
