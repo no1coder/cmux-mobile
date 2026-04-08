@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct cmuxMobileApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var messageStore = MessageStore()
     @StateObject private var relayConnection = RelayConnection()
     @StateObject private var inputManager = InputManager()
@@ -45,6 +46,10 @@ struct cmuxMobileApp: App {
                         messageStore?.surfaces = decoded
                     }
                 }
+
+                // 初始化推送通知
+                PushNotificationManager.shared.relayConnection = relayConnection
+                PushNotificationManager.shared.requestAuthorization()
 
                 // 如果已配对，自动连接
                 autoConnectIfPaired()

@@ -15,6 +15,10 @@
 		1961798322AE3F69A162C266 /* Surface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B77A75BFF2571D1EB22615 /* Surface.swift */; };
 		2141E78ABDD40410E1F19D21 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */; };
 		25C1738C8D887586715C91C8 /* MesloLGSNerdFontMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4035B4AFCAD2BA015D82A08 /* MesloLGSNerdFontMono-Bold.ttf */; };
+				AA11BB22CC33DD44EE550002 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550001 /* PushNotificationManager.swift */; };
+				AA11BB22CC33DD44EE550003 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550001 /* PushNotificationManager.swift */; };
+				AA11BB22CC33DD44EE550005 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550004 /* AppDelegate.swift */; };
+				AA11BB22CC33DD44EE550006 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550004 /* AppDelegate.swift */; };
 		2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697189AF6714DB55223B968 /* InputManager.swift */; };
 		30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */; };
 		32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
@@ -105,6 +109,8 @@
 /* Begin PBXFileReference section */
 		01095C093AB07DC9F57E1E91 /* TerminalListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalListView.swift; sourceTree = "<group>"; };
 		04569613F9A6AA3E9EA322B6 /* DeviceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListView.swift; sourceTree = "<group>"; };
+				AA11BB22CC33DD44EE550001 /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
+				AA11BB22CC33DD44EE550004 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0697189AF6714DB55223B968 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
 		0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParserTests.swift; sourceTree = "<group>"; };
 		0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeChatItem.swift; sourceTree = "<group>"; };
@@ -172,6 +178,8 @@
 				97BEC8EC3601C191DFB8BB6B /* DisconnectRecovery.swift */,
 				A8BF77D802A5642E9BB7C267 /* FontLoader.swift */,
 				0697189AF6714DB55223B968 /* InputManager.swift */,
+				AA11BB22CC33DD44EE550004 /* AppDelegate.swift */,
+				AA11BB22CC33DD44EE550001 /* PushNotificationManager.swift */,
 				DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */,
 				BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */,
 				AEB7EC70AC6330E71E686A7C /* PairingManager.swift */,
@@ -446,6 +454,8 @@
 				7F9DEFAD0FA57F0A67C403C3 /* FilePreviewView.swift in Sources */,
 				92C0ADD29D44D996759AC351 /* FontLoader.swift in Sources */,
 				2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */,
+				AA11BB22CC33DD44EE550005 /* AppDelegate.swift in Sources */,
+				AA11BB22CC33DD44EE550002 /* PushNotificationManager.swift in Sources */,
 				45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */,
 				83E2A62343A9D5313570BD90 /* KeychainHelper.swift in Sources */,
 				9B1B2B94231330A76CF50FD3 /* MessageStore.swift in Sources */,
@@ -492,6 +502,8 @@
 				5410AEBF6F261CCA142FE720 /* FilePreviewView.swift in Sources */,
 				49123810093D59CE96B8AB39 /* FontLoader.swift in Sources */,
 				E721F20B55E8A204FAAE6E24 /* InputManager.swift in Sources */,
+				AA11BB22CC33DD44EE550006 /* AppDelegate.swift in Sources */,
+				AA11BB22CC33DD44EE550003 /* PushNotificationManager.swift in Sources */,
 				D9C8C8BFE08F26122FA286A6 /* KeychainHelper.swift in Sources */,
 				E8C746AA8AE3E8C485E36B9A /* MessageStore.swift in Sources */,
 				6DD7DF466F966763799922E3 /* NotificationSettingsView.swift in Sources */,
