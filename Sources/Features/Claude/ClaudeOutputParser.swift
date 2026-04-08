@@ -197,10 +197,15 @@ enum ClaudeOutputParser {
                 continue
             }
 
-            // 跳过 PUA 字符
+            // 跳过 PUA 字符、盲文、方块元素
             if let scalar = char.unicodeScalars.first {
                 let v = scalar.value
-                if (v >= 0xE000 && v <= 0xF8FF) || (v >= 0xF0000) {
+                if (v >= 0xE000 && v <= 0xF8FF)   // PUA
+                    || (v >= 0xF0000)               // Supplementary PUA
+                    || (v >= 0x2580 && v <= 0x259F) // Block Elements
+                    || (v >= 0x2800 && v <= 0x28FF) // Braille
+                    || (v >= 0x2500 && v <= 0x257F) // Box Drawing
+                {
                     i = line.index(after: i)
                     continue
                 }
@@ -213,55 +218,79 @@ enum ClaudeOutputParser {
         return result.trimmingCharacters(in: .whitespaces)
     }
 
-    /// 判断是否为 TUI 装饰行（边框、分隔线等）
+    /// 判断是否为 TUI 装饰行或无意义内容
     private static func isTUIDecoration(_ line: String) -> Bool {
         if line.isEmpty { return false }
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return true }
 
-        // 计算装饰字符占比
-        let decorChars: Set<Character> = ["─", "━", "═", "│", "┃", "║",
+        // 装饰字符集（边框、方块、盲文、箭头等）
+        let decorChars: Set<Character> = [
+            "─", "━", "═", "│", "┃", "║",
             "╭", "╮", "╰", "╯", "┌", "┐", "└", "┘",
             "├", "┤", "┬", "┴", "┼", "╔", "╗", "╚", "╝",
-            "▀", "▄", "█", "▐", "▌", "░", "▒", "▓",
-            "╶", "╴", "╵", "╷", "─", "━"]
+            "▀", "▄", "█", "▐", "▌", "░", "▒", "▓", "■", "□",
+            "╶", "╴", "╵", "╷",
+            "❯", "›", "❮", "‹", "▶", "◀", "▷", "◁",
+            "⣿", "⣀", "⠀", "⠿", // 盲文字符
+        ]
 
-        let decorCount = line.filter { decorChars.contains($0) }.count
-        let totalChars = line.count
+        let decorCount = trimmed.filter { decorChars.contains($0) }.count
 
-        // 超过 50% 是装饰字符就跳过
-        if totalChars > 0 && Double(decorCount) / Double(totalChars) > 0.5 {
+        // 超过 40% 是装饰字符就跳过
+        if trimmed.count > 0 && Double(decorCount) / Double(trimmed.count) > 0.4 {
             return true
         }
 
-        // 全是横线/下划线
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        if trimmed.allSatisfy({ $0 == "─" || $0 == "━" || $0 == "_" || $0 == "=" || $0 == "-" }) && trimmed.count > 3 {
+        // 极短且只有特殊字符（如单独的 ❯、_、>）
+        if trimmed.count <= 3 {
+            let meaningful = trimmed.filter { $0.isLetter || $0.isNumber }
+            if meaningful.isEmpty { return true }
+        }
+
+        // 全是横线/下划线/等号
+        if trimmed.allSatisfy({ "─━_=-~".contains($0) }) && trimmed.count > 2 {
             return true
         }
 
         return false
     }
 
-    /// 判断是否为 Claude Code 启动信息
+    /// 判断是否为 Claude Code 启动信息或装饰内容
     private static func isStartupInfo(_ line: String) -> Bool {
         return line.contains("Claude Code v")
             || line.contains("with medium effort")
             || line.contains("with high effort")
+            || line.contains("with low effort")
             || line.contains("Claude Max")
             || line.contains("Claude API")
             || line.contains("Loamwaddle")
-            || line.contains("<(")  // ASCII 艺术
-            || line.contains("._>") // ASCII 艺术
-            || line.contains("`--'") // ASCII 艺术
-            || line.contains("\\^^^/") // ASCII 艺术
+            || line.contains("<(")
+            || line.contains("._>")
+            || line.contains("`--'")
+            || line.contains("\\^^^/")
+            || line.contains("^^^")
+            || line.contains("1M context")
+            || line.contains("200K context")
+            || line.contains("Claude Pro")
+            || line.contains("Accessing workspace")
+            || line.contains("safety check")
+            || line.contains("trust this folder")
+            || line.contains("Security guide")
     }
 
-    /// 判断是否为状态栏
+    /// 判断是否为状态栏或元信息
     private static func isStatusBar(_ line: String) -> Bool {
         return (line.contains("Context") && (line.contains("%") || line.contains("token")))
             || (line.contains("Opus") && line.contains("context"))
             || (line.contains("Sonnet") && line.contains("context"))
             || line.hasPrefix("[Opus") || line.hasPrefix("[Sonnet") || line.hasPrefix("[Haiku")
             || line.contains("git:(")
+            || line.contains("git:")
+            || line.contains("main*)")
+            || line.contains("main!?")
+            || (line.contains("Opus") && line.contains("1M"))
+            || (line.contains("Sonnet") && line.contains("200K"))
     }
 
     /// 判断是否为 prompt 行
