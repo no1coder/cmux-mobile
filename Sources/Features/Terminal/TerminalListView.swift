@@ -171,12 +171,17 @@ private struct SurfaceRowView: View {
     /// 聚焦指示灯脉冲动画
     @State private var isPulsing = false
 
-    /// 是否为 Claude Code 会话（通过预览行或标题检测）
+    /// 是否为 Claude Code 会话（标题包含 Claude Code）
     private var isClaudeSession: Bool {
-        if let preview = previewLine {
-            return ClaudeOutputParser.isClaudeSession([preview])
+        surface.title.contains("Claude Code")
+    }
+
+    /// 行标题：Claude Code 运行时显示目录路径而非 "Claude Code"
+    private var displayTitle: String {
+        if isClaudeSession, let wsName = surface.workspaceName, !wsName.isEmpty {
+            return wsName
         }
-        return false
+        return surface.title.isEmpty ? "终端" : surface.title
     }
 
     /// 副标题：显示类型和引用标识
@@ -197,13 +202,13 @@ private struct SurfaceRowView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
-                    // 如果是 Claude Code 会话，显示 Claude 图标 + 原始标题
+                    // Claude Code 会话标记
                     if isClaudeSession {
                         Image(systemName: "sparkles")
                             .font(.system(size: 11))
                             .foregroundStyle(.purple)
                     }
-                    Text(surface.title)
+                    Text(displayTitle)
                         .font(.body)
                         .fontWeight(.medium)
                         .lineLimit(1)
