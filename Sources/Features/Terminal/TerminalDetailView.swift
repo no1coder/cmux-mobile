@@ -21,6 +21,8 @@ struct TerminalDetailView: View {
     @State private var sessionContext = ""
     /// 模式检测定时器
     @State private var modeDetectTask: Task<Void, Never>?
+    /// 用户手动退出后，暂停自动检测 10 秒（等 Claude 进程退出）
+    @State private var suppressAutoDetectUntil: Date = .distantPast
 
     /// 从标题中提取项目名
     private var projectName: String {
@@ -132,6 +134,9 @@ struct TerminalDetailView: View {
     // MARK: - 检测模式
 
     private func detectMode() {
+        // 用户手动退出后暂停检测，等 Claude 进程退出
+        guard Date() > suppressAutoDetectUntil else { return }
+
         relayConnection.sendWithResponse([
             "method": "read_screen",
             "params": ["surface_id": surfaceID],
@@ -152,7 +157,10 @@ struct TerminalDetailView: View {
     // MARK: - 退出 Claude
 
     private func exitClaude() {
-        // 发送 Ctrl+C 退出 Claude Code（Mac 端期望 "ctrl-c" 格式）
+        // 暂停自动检测 10 秒，防止 Claude 还没退出就被重新检测到
+        suppressAutoDetectUntil = Date().addingTimeInterval(10)
+
+        // 发送 Ctrl+C 退出 Claude Code
         relayConnection.send([
             "method": "surface.send_key",
             "params": ["surface_id": surfaceID, "key": "ctrl-c"],
