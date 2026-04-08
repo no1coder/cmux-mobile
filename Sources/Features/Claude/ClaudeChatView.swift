@@ -459,12 +459,15 @@ struct ClaudeChatView: View {
         let noisePatterns = [
             "Claude Code v", "with medium effort", "with high effort", "with low effort",
             "Claude Max", "Claude API", "Loamwaddle",
-            "Context", "git:(", "git:", "main*)",
+            "Context", "git:(", "git:", "main*)", "main!?",
             "<(", "._>", "`--'", "^^^",
             "1M context", "200K context",
-            "Harmonizing", "Perusing", "Thinking",
+            "Harmonizing", "Perusing", "Thinking", "Hashing",
+            "Compiling", "Reasoning", "Analyzing", "Generating",
+            "Initializing", "Processing", "Connecting", "Searching",
             "Accessing workspace", "safety check", "trust this folder",
             "Security guide", "Tip:", "Usage", "Weekly", "resets in",
+            "Enter to confirm", "Esc to cancel",
         ]
         return noisePatterns.contains { t.contains($0) }
     }
@@ -503,7 +506,7 @@ struct ClaudeChatView: View {
                     i += 1
                 }
 
-                let response = responseLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                let response = cleanAssistantText(responseLines.joined(separator: "\n"))
                 if !response.isEmpty && response.count > 3 {
                     items.append(ClaudeChatItem(
                         id: "scan-assist-\(items.count)",
@@ -523,13 +526,22 @@ struct ClaudeChatView: View {
     /// 从行中提取用户 prompt 文本（如果是 prompt 行的话）
     static func extractUserPrompt(_ line: String) -> String? {
         let t = line.trimmingCharacters(in: .whitespaces)
-        // Claude Code prompt: ❯ text 或 > text
+        // Claude Code prompt: ❯ text 或 > text（确保是 prompt，不是 Claude 回复中的引用）
         if t.hasPrefix("❯ ") && t.count > 2 { return String(t.dropFirst(2)) }
-        if t.hasPrefix("> ") && t.count > 2 {
-            let text = String(t.dropFirst(2))
-            // 排除 markdown 引用块（Claude 回复可能包含 >）
-            if !text.hasPrefix(" ") && !text.hasPrefix(">") { return text }
-        }
+        // 注意：不匹配 "> " 因为 Claude 回复中可能有 "> 引用" 格式
         return nil
+    }
+
+    /// 清理 Claude 回复中的 bullet 前缀（● ✦ 等）
+    static func cleanAssistantText(_ text: String) -> String {
+        var result = text
+        // 移除行首的 bullet 字符
+        let bulletPrefixes = ["● ", "✦ ", "• ", "○ ", "◉ "]
+        for prefix in bulletPrefixes {
+            if result.hasPrefix(prefix) {
+                result = String(result.dropFirst(prefix.count))
+            }
+        }
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
