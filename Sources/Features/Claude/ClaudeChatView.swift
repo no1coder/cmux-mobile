@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Claude Code 聊天模式 — 直接从 JSONL 会话文件读取结构化消息
 /// 跟 happy 项目一样，不解析终端输出
@@ -24,6 +25,14 @@ struct ClaudeChatView: View {
     /// 是否显示 @ 文件选择器
     @State private var showFilePicker = false
     @State private var fileList: [FileEntry] = []
+    /// @ 提及过滤查询（@后输入的字符）
+    @State private var mentionQuery = ""
+    /// @ 提及当前路径前缀（支持路径遍历）
+    @State private var mentionBasePath = ""
+    /// 最近使用的 / 命令（持久化）
+    @AppStorage("recentSlashCommands") private var recentCommandsData = ""
+    /// 是否有图片在粘贴板
+    @State private var hasPastedImage = false
 
     private var chatMessages: [ClaudeChatItem] {
         messageStore.claudeChats[surfaceID] ?? []
@@ -269,45 +278,166 @@ struct ClaudeChatView: View {
 
     // MARK: - / 命令菜单
 
-    private let slashCommands: [(cmd: String, desc: String)] = [
-        ("/compact", "压缩上下文"), ("/status", "查看状态"), ("/help", "帮助"),
-        ("/clear", "清空对话"), ("/review", "代码审查"), ("/init", "初始化项目"),
-        ("/config", "配置"), ("/cost", "费用统计"), ("/doctor", "诊断"),
-        ("/permissions", "权限管理"), ("/memory", "记忆管理"), ("/mcp", "MCP 服务"),
+    /// 命令分类定义
+    private struct SlashCommand {
+        let cmd: String
+        let desc: String
+        let category: String
+        let shortcut: String?
+
+        init(_ cmd: String, _ desc: String, _ category: String, shortcut: String? = nil) {
+            self.cmd = cmd; self.desc = desc; self.category = category; self.shortcut = shortcut
+        }
+    }
+
+    private let slashCommands: [SlashCommand] = [
+        // 常用
+        SlashCommand("/compact", "压缩上下文", "常用", shortcut: "⌘⇧C"),
+        SlashCommand("/status", "查看状态", "常用"),
+        SlashCommand("/clear", "清空对话", "常用"),
+        SlashCommand("/help", "帮助", "常用"),
+        SlashCommand("/cost", "费用统计", "常用"),
+        // 项目
+        SlashCommand("/init", "初始化项目", "项目"),
+        SlashCommand("/review", "代码审查", "项目"),
+        SlashCommand("/bug", "报告/调试 Bug", "项目"),
+        SlashCommand("/terminal-setup", "终端环境配置", "项目"),
+        // 配置
+        SlashCommand("/config", "配置", "配置"),
+        SlashCommand("/permissions", "权限管理", "配置"),
+        SlashCommand("/memory", "记忆管理", "配置"),
+        SlashCommand("/allowed-tools", "管理允许的工具", "配置"),
+        // 工具
+        SlashCommand("/mcp", "MCP 服务", "工具"),
+        SlashCommand("/model", "切换模型", "工具"),
+        SlashCommand("/vim", "Vim 模式", "工具"),
+        SlashCommand("/doctor", "诊断", "工具"),
+        SlashCommand("/listen", "监听模式", "工具"),
+        SlashCommand("/install-github-app", "安装 GitHub App", "工具"),
     ]
+
+    /// 最近使用的命令列表
+    private var recentCommands: [String] {
+        recentCommandsData.isEmpty ? [] : recentCommandsData.components(separatedBy: ",")
+    }
+
+    /// 记录最近使用的命令
+    private func trackRecentCommand(_ cmd: String) {
+        var recents = recentCommands.filter { $0 != cmd }
+        recents.insert(cmd, at: 0)
+        let trimmed = Array(recents.prefix(5))
+        recentCommandsData = trimmed.joined(separator: ",")
+    }
 
     private var slashCommandMenu: some View {
         let query = String(inputText.dropFirst()).lowercased()
         let filtered = query.isEmpty ? slashCommands : slashCommands.filter { $0.cmd.contains(query) }
+
+        // 按分类分组
+        let categories = ["常用", "项目", "配置", "工具"]
+        let grouped = Dictionary(grouping: filtered) { $0.category }
+
+        // 最近使用的命令（仅在无搜索时显示）
+        let recentItems: [SlashCommand] = query.isEmpty
+            ? recentCommands.compactMap { cmd in slashCommands.first { $0.cmd == cmd } }
+            : []
+
         return ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                ForEach(filtered, id: \.cmd) { item in
-                    Button {
-                        inputText = item.cmd; showSlashMenu = false; isInputFocused = true
-                    } label: {
-                        HStack {
-                            Text(item.cmd).font(.system(size: 14, weight: .medium, design: .monospaced)).foregroundStyle(.orange)
-                            Spacer()
-                            Text(item.desc).font(.system(size: 12)).foregroundStyle(.white.opacity(0.3))
-                        }.padding(.horizontal, 16).padding(.vertical, 10)
+                // 最近使用
+                if !recentItems.isEmpty {
+                    sectionHeader("最近使用")
+                    ForEach(recentItems, id: \.cmd) { item in
+                        slashCommandRow(item)
                     }
-                    Divider().background(Color.white.opacity(0.05))
+                }
+
+                // 分类列表
+                ForEach(categories, id: \.self) { category in
+                    if let items = grouped[category], !items.isEmpty {
+                        sectionHeader(category)
+                        ForEach(items, id: \.cmd) { item in
+                            slashCommandRow(item)
+                        }
+                    }
                 }
             }
-        }.frame(maxHeight: 200).background(CMColors.menuBackground)
+        }.frame(maxHeight: 260).background(CMColors.menuBackground)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.white.opacity(0.25))
+            .textCase(.uppercase)
+            .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 4)
+    }
+
+    private func slashCommandRow(_ item: SlashCommand) -> some View {
+        Button {
+            inputText = item.cmd
+            showSlashMenu = false
+            isInputFocused = true
+            trackRecentCommand(item.cmd)
+        } label: {
+            HStack {
+                Text(item.cmd)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.orange)
+                Spacer()
+                if let shortcut = item.shortcut {
+                    Text(shortcut)
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.2))
+                        .padding(.trailing, 4)
+                }
+                Text(item.desc)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.3))
+            }.padding(.horizontal, 16).padding(.vertical, 10)
+        }
     }
 
     // MARK: - @ 文件选择器
 
-    struct FileEntry { let name: String; let isDirectory: Bool }
+    struct FileEntry: Equatable { let name: String; let isDirectory: Bool }
+
+    /// 根据 mentionQuery 模糊过滤的文件列表
+    private var filteredFileList: [FileEntry] {
+        guard !mentionQuery.isEmpty else { return fileList }
+        let query = mentionQuery.lowercased()
+        return fileList.filter { fuzzyMatch(query: query, target: $0.name.lowercased()) }
+    }
+
+    /// 简单模糊匹配：查询字符按顺序出现在目标中
+    private func fuzzyMatch(query: String, target: String) -> Bool {
+        var targetIdx = target.startIndex
+        for ch in query {
+            guard let found = target[targetIdx...].firstIndex(of: ch) else { return false }
+            targetIdx = target.index(after: found)
+        }
+        return true
+    }
 
     private var filePickerView: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Image(systemName: "doc.text").font(.system(size: 12)).foregroundStyle(.blue)
-                Text("选择文件").font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+                if mentionBasePath.isEmpty {
+                    Text("选择文件").font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.6))
+                } else {
+                    Text(mentionBasePath)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.blue.opacity(0.6))
+                        .lineLimit(1)
+                }
                 Spacer()
-                Button { showFilePicker = false } label: {
+                if !mentionQuery.isEmpty {
+                    Text("\(filteredFileList.count) 个结果")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.white.opacity(0.2))
+                }
+                Button { dismissMentionPicker() } label: {
                     Image(systemName: "xmark").font(.system(size: 10)).foregroundStyle(.white.opacity(0.3))
                 }
             }.padding(.horizontal, 16).padding(.vertical, 8)
@@ -317,20 +447,33 @@ struct ClaudeChatView: View {
                     ProgressView().scaleEffect(0.6).tint(.blue)
                     Text("加载…").font(.system(size: 12)).foregroundStyle(.white.opacity(0.3))
                 }.padding(.horizontal, 16).padding(.vertical, 12)
+            } else if filteredFileList.isEmpty {
+                HStack {
+                    Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.white.opacity(0.2))
+                    Text("无匹配文件").font(.system(size: 12)).foregroundStyle(.white.opacity(0.3))
+                }.padding(.horizontal, 16).padding(.vertical, 12)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(fileList, id: \.name) { file in
+                        ForEach(filteredFileList, id: \.name) { file in
                             Button {
-                                let atRef = "@\(file.name) "
-                                inputText = inputText.hasSuffix("@") ? String(inputText.dropLast()) + atRef : inputText + atRef
-                                showFilePicker = false; isInputFocused = true
+                                if file.isDirectory {
+                                    // 路径遍历：进入子目录
+                                    navigateToSubdirectory(file.name)
+                                } else {
+                                    selectFile(file)
+                                }
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: file.isDirectory ? "folder.fill" : "doc.text")
                                         .font(.system(size: 12)).foregroundStyle(file.isDirectory ? .yellow : .blue).frame(width: 16)
                                     Text(file.name).font(.system(size: 13)).foregroundStyle(.white.opacity(0.8)).lineLimit(1)
                                     Spacer()
+                                    if file.isDirectory {
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.white.opacity(0.2))
+                                    }
                                 }.padding(.horizontal, 16).padding(.vertical, 8)
                             }
                         }
@@ -338,6 +481,45 @@ struct ClaudeChatView: View {
                 }.frame(maxHeight: 200)
             }
         }.background(CMColors.menuBackground)
+    }
+
+    /// 进入子目录
+    private func navigateToSubdirectory(_ dirName: String) {
+        let newBase = mentionBasePath.isEmpty ? dirName + "/" : mentionBasePath + dirName + "/"
+        mentionBasePath = newBase
+        mentionQuery = ""
+        // 更新输入框中的 @ 引用
+        updateMentionInInput(newBase)
+        loadFileList(subpath: newBase)
+    }
+
+    /// 选中文件，插入到输入框
+    private func selectFile(_ file: FileEntry) {
+        let fullPath = mentionBasePath + file.name
+        // 替换输入框中 @ 开始的部分
+        let textBeforeAt = extractTextBeforeLastAt(inputText)
+        inputText = textBeforeAt + "@" + fullPath + " "
+        dismissMentionPicker()
+        isInputFocused = true
+    }
+
+    /// 关闭提及选择器并重置状态
+    private func dismissMentionPicker() {
+        showFilePicker = false
+        mentionQuery = ""
+        mentionBasePath = ""
+    }
+
+    /// 更新输入框中 @ 后的文本
+    private func updateMentionInInput(_ path: String) {
+        let textBeforeAt = extractTextBeforeLastAt(inputText)
+        inputText = textBeforeAt + "@" + path
+    }
+
+    /// 提取输入框中最后一个 @ 之前的文本
+    private func extractTextBeforeLastAt(_ text: String) -> String {
+        guard let atRange = text.range(of: "@", options: .backwards) else { return text }
+        return String(text[text.startIndex..<atRange.lowerBound])
     }
 
     // MARK: - 输入栏
@@ -354,19 +536,43 @@ struct ClaudeChatView: View {
                     Rectangle().fill(Color.white.opacity(0.1)).frame(width: 1, height: 16)
                     chip("^C", color: .red) { sendKey("c", "ctrl") }
                     chip("Esc", color: .gray) { sendKey("escape", "") }
-                    chip("/compact", color: .purple) { sendDirect("/compact\n") }
-                    chip("/status", color: .green) { sendDirect("/status\n") }
+                    chip("/compact", color: .purple) { sendDirect("/compact\n"); trackRecentCommand("/compact") }
+                    chip("/status", color: .green) { sendDirect("/status\n"); trackRecentCommand("/status") }
                 }.padding(.horizontal, 12).padding(.vertical, 6)
             }
+            // 粘贴板图片提示
+            if hasPastedImage {
+                HStack(spacing: 6) {
+                    Image(systemName: "photo.badge.plus").font(.system(size: 11)).foregroundStyle(.blue)
+                    Text("粘贴板包含图片").font(.system(size: 11)).foregroundStyle(.white.opacity(0.4))
+                    Spacer()
+                    Button {
+                        hasPastedImage = false
+                    } label: {
+                        Image(systemName: "xmark").font(.system(size: 9)).foregroundStyle(.white.opacity(0.3))
+                    }
+                }
+                .padding(.horizontal, 16).padding(.vertical, 4)
+                .background(Color.blue.opacity(0.06))
+            }
             HStack(spacing: 8) {
-                TextField("", text: $inputText, prompt: Text("消息...").foregroundStyle(.gray.opacity(0.6)), axis: .vertical)
-                    .font(.system(size: 15)).foregroundStyle(.white)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .lineLimit(1...4).focused($isInputFocused)
-                    .padding(.horizontal, 14).padding(.vertical, 9)
-                    .background(Color.white.opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .onSubmit { send() }
+                ZStack(alignment: .bottomTrailing) {
+                    TextField("", text: $inputText, prompt: Text("消息...").foregroundStyle(.gray.opacity(0.6)), axis: .vertical)
+                        .font(.system(size: 15)).foregroundStyle(.white)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .lineLimit(1...8).focused($isInputFocused)
+                        .padding(.horizontal, 14).padding(.vertical, 9)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .onSubmit { send() }
+                    // 字符计数（超过 500 字符时显示）
+                    if inputText.count > 500 {
+                        Text("\(inputText.count)")
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .foregroundStyle(inputText.count > 10000 ? .red.opacity(0.6) : .white.opacity(0.2))
+                            .padding(.trailing, 10).padding(.bottom, 6)
+                    }
+                }
                 VoiceInputButton(isRecording: speechRecognizer.isRecording) {
                     handleVoiceTap()
                 }
@@ -375,7 +581,14 @@ struct ClaudeChatView: View {
                         .foregroundStyle(inputText.isEmpty ? .gray.opacity(0.3) : .purple)
                 }.disabled(inputText.isEmpty)
             }.padding(.horizontal, 12).padding(.bottom, 8)
-        }.background(CMColors.inputBarBackground)
+        }
+        .background(CMColors.inputBarBackground)
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+            hasPastedImage = UIPasteboard.general.hasImages
+        }
+        .onAppear {
+            hasPastedImage = UIPasteboard.general.hasImages
+        }
     }
 
     private func chip(_ label: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -408,12 +621,55 @@ struct ClaudeChatView: View {
 
     private func handleInputChange(_ text: String) {
         showSlashMenu = text.hasPrefix("/") && !text.contains(" ")
-        if text.hasSuffix("@") && !showFilePicker { loadFileList(); showFilePicker = true }
+
+        // @ 提及检测与实时过滤
+        if let atRange = text.range(of: "@", options: .backwards) {
+            let afterAt = String(text[atRange.upperBound...])
+            // 如果 @ 后没有空格，视为正在输入提及
+            if !afterAt.contains(" ") {
+                if !showFilePicker {
+                    // 首次触发 @，加载文件列表
+                    mentionBasePath = ""
+                    mentionQuery = ""
+                    loadFileList()
+                    showFilePicker = true
+                    showSlashMenu = false
+                }
+                // 检查是否有路径遍历（包含 /）
+                if afterAt.contains("/") {
+                    let components = afterAt.components(separatedBy: "/")
+                    let dirPath = components.dropLast().joined(separator: "/") + "/"
+                    let query = components.last ?? ""
+                    // 路径变化时重新加载子目录
+                    if dirPath != mentionBasePath {
+                        mentionBasePath = dirPath
+                        mentionQuery = query
+                        loadFileList(subpath: dirPath)
+                    } else {
+                        mentionQuery = query
+                    }
+                } else {
+                    mentionQuery = afterAt
+                }
+            } else {
+                // @ 后有空格，关闭选择器
+                if showFilePicker { dismissMentionPicker() }
+            }
+        } else {
+            // 没有 @，关闭选择器
+            if showFilePicker { dismissMentionPicker() }
+        }
+
+        // 检测退格键删除 @ 时关闭选择器
+        if showFilePicker && !text.contains("@") {
+            dismissMentionPicker()
+        }
     }
 
-    private func loadFileList() {
-        let path = sessionInfo.project.isEmpty ? "~" : sessionInfo.project
-        relayConnection.sendWithResponse(["method": "file.list", "params": ["path": path]]) { result in
+    private func loadFileList(subpath: String = "") {
+        let basePath = sessionInfo.project.isEmpty ? "~" : sessionInfo.project
+        let fullPath = subpath.isEmpty ? basePath : basePath + "/" + subpath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        relayConnection.sendWithResponse(["method": "file.list", "params": ["path": fullPath]]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
             if let entries = resultDict["entries"] as? [[String: Any]] {
                 fileList = entries.compactMap {
