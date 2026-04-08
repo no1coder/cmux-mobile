@@ -369,6 +369,8 @@ struct ClaudeChatView: View {
             let existingAssistantCount = chatMessages.filter { $0.role == .assistant }.count
             let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
 
+            print("[claude-poll] scanned=\(scanned.count) (user=\(scanned.filter { $0.role == .user }.count), assist=\(scannedAssistantCount)) existing=\(chatMessages.count) (assist=\(existingAssistantCount)) thinking=\(isThinking)")
+
             if scannedAssistantCount > existingAssistantCount {
                 // 有新回复
                 isThinking = false

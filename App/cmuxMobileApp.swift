@@ -107,9 +107,29 @@ struct cmuxMobileApp: App {
     /// 如果已配对（DeviceStore 中有活跃设备），自动发起 WebSocket 连接
     private func autoConnectIfPaired() {
         #if canImport(Security)
-        guard let activeDevice = DeviceStore.getActiveDevice() else {
+        // 调试：检查设备存储状态
+        let devices = DeviceStore.getDevices()
+        let activeDevice = DeviceStore.getActiveDevice()
+        print("[autoConnect] 设备数=\(devices.count) 活跃设备=\(activeDevice?.name ?? "nil")")
+
+        // 兜底：如果 DeviceStore 为空，尝试用旧的 Keychain 数据直接连接
+        if activeDevice == nil {
+            if let deviceID = KeychainHelper.load(key: "pairedDeviceID"),
+               let serverURL = KeychainHelper.load(key: "pairedServerURL"),
+               let pairSecret = KeychainHelper.load(key: "pairSecret_\(deviceID)") {
+                print("[autoConnect] 使用旧版凭据连接: \(deviceID)")
+                let phoneID = KeychainHelper.load(key: "phoneID") ?? "phone-unknown"
+                relayConnection.serverURL = serverURL
+                relayConnection.phoneID = phoneID
+                relayConnection.pairSecret = pairSecret
+                relayConnection.connect()
+                return
+            }
+            print("[autoConnect] 无任何配对凭据")
             return
         }
+
+        guard let activeDevice else { return }
 
         // 获取或生成 phoneID
         let phoneID = KeychainHelper.load(key: "phoneID") ?? {
