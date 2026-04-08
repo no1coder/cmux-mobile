@@ -1,232 +1,314 @@
 import Foundation
 
-/// 解析终端原始文本输出为 Claude Code 结构化消息
-/// 通过识别 Claude Code 终端输出的特征模式来分割消息
+/// 解析终端原始文本输出，提取有意义的内容
+/// 过滤掉所有 TUI 装饰（边框、ASCII 艺术、状态栏等）
 enum ClaudeOutputParser {
 
     /// 检测终端输出是否包含 Claude Code 会话
     static func isClaudeSession(_ lines: [String]) -> Bool {
-        let joinedPrefix = lines.prefix(30).joined(separator: "\n")
-        return joinedPrefix.contains("Claude Code")
-            || joinedPrefix.contains("Opus")
-            || joinedPrefix.contains("Sonnet")
-            || joinedPrefix.contains("claude>")
-            || joinedPrefix.contains("╭") // Claude Code TUI 边框
-            || joinedPrefix.contains("❯") // Claude prompt
+        let joined = lines.prefix(40).joined(separator: " ")
+        return joined.contains("Claude Code")
+            || joined.contains("Opus")
+            || joined.contains("Sonnet")
     }
 
-    /// 将终端行解析为 Claude 消息列表
-    static func parse(_ lines: [String]) -> [ClaudeMessage] {
+    /// 从终端输出中提取 Claude 会话信息
+    static func parseSessionInfo(_ lines: [String]) -> (model: String, project: String, context: String) {
+        var model = ""
+        var project = ""
+        var context = ""
+
+        for line in lines {
+            let clean = stripAll(line)
+            if clean.isEmpty { continue }
+
+            // 模型信息
+            if clean.contains("Opus") && model.isEmpty {
+                model = "Opus"
+                if clean.contains("1M") { model += " (1M)" }
+            } else if clean.contains("Sonnet") && model.isEmpty {
+                model = "Sonnet"
+            } else if clean.contains("Haiku") && model.isEmpty {
+                model = "Haiku"
+            }
+
+            // 项目路径（~/开头）
+            if clean.hasPrefix("~/") && project.isEmpty {
+                project = clean
+            }
+
+            // 上下文用量
+            if clean.contains("Context") && clean.contains("%") {
+                // 提取百分比
+                if let range = clean.range(of: #"\d+%"#, options: .regularExpression) {
+                    context = String(clean[range])
+                }
+            }
+        }
+
+        return (model, project, context)
+    }
+
+    /// 从终端输出提取对话内容（过滤所有 TUI 装饰）
+    static func extractMessages(_ lines: [String]) -> [ClaudeMessage] {
         var messages: [ClaudeMessage] = []
         var currentBlock: [String] = []
-        var currentKind: ClaudeMessageKind = .systemEvent
-        var blockIndex = 0
+        var isInResponse = false
+        var msgIndex = 0
 
-        // 过滤掉空白行和控制字符
-        let cleanLines = lines.map { stripControlChars($0) }
+        for line in lines {
+            let clean = stripAll(line)
 
-        for line in cleanLines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-
-            // 跳过完全空白的行（但保留段落间距）
-            if trimmed.isEmpty {
-                if !currentBlock.isEmpty {
+            // 跳过 TUI 装饰行
+            if isTUIDecoration(clean) { continue }
+            // 跳过空行（但在响应中保留段落间隔）
+            if clean.isEmpty {
+                if isInResponse && !currentBlock.isEmpty {
                     currentBlock.append("")
                 }
                 continue
             }
+            // 跳过 Claude Code 启动信息
+            if isStartupInfo(clean) { continue }
+            // 跳过状态栏信息
+            if isStatusBar(clean) { continue }
 
-            // 检测用户输入行（以 > 或 ❯ 开头的 prompt）
-            if isUserPrompt(trimmed) {
+            // 检测用户输入（以 ❯ 或 > 开头的 prompt 行）
+            if isPromptLine(clean) {
                 // 保存之前的块
-                if !currentBlock.isEmpty {
-                    messages.append(makeMessage(kind: currentKind, lines: currentBlock, index: &blockIndex))
+                if !currentBlock.isEmpty && isInResponse {
+                    let content = currentBlock.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !content.isEmpty {
+                        messages.append(ClaudeMessage(
+                            id: "msg-\(msgIndex)",
+                            kind: .agentText,
+                            content: content,
+                            timestamp: Date()
+                        ))
+                        msgIndex += 1
+                    }
                     currentBlock = []
                 }
-                let userText = extractUserInput(trimmed)
-                if !userText.isEmpty {
+
+                let userInput = extractPromptInput(clean)
+                if !userInput.isEmpty {
                     messages.append(ClaudeMessage(
-                        id: "msg-\(blockIndex)",
+                        id: "msg-\(msgIndex)",
                         kind: .userText,
-                        content: userText,
+                        content: userInput,
                         timestamp: Date()
                     ))
-                    blockIndex += 1
+                    msgIndex += 1
+                    isInResponse = true
                 }
-                currentKind = .agentText
                 continue
             }
 
-            // 检测工具调用开始（常见模式）
-            if isToolCallLine(trimmed) {
+            // 检测工具调用
+            if let toolMsg = parseToolLine(clean, index: &msgIndex) {
+                // 先保存之前的文本块
                 if !currentBlock.isEmpty {
-                    messages.append(makeMessage(kind: currentKind, lines: currentBlock, index: &blockIndex))
+                    let content = currentBlock.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !content.isEmpty {
+                        messages.append(ClaudeMessage(
+                            id: "msg-\(msgIndex)",
+                            kind: .agentText,
+                            content: content,
+                            timestamp: Date()
+                        ))
+                        msgIndex += 1
+                    }
                     currentBlock = []
                 }
-                let (toolName, toolContent) = parseToolCall(trimmed)
-                currentKind = .toolCall
-                currentBlock = [toolContent]
-                // 如果是单行工具调用，立即生成消息
-                if isCompletedToolLine(trimmed) {
-                    var msg = makeMessage(kind: .toolCall, lines: currentBlock, index: &blockIndex)
-                    msg.toolName = toolName
-                    msg.toolState = .completed
-                    messages.append(msg)
-                    currentBlock = []
-                    currentKind = .agentText
-                }
+                messages.append(toolMsg)
                 continue
             }
 
-            // 检测状态栏信息
-            if isStatusLine(trimmed) {
-                if !currentBlock.isEmpty {
-                    messages.append(makeMessage(kind: currentKind, lines: currentBlock, index: &blockIndex))
-                    currentBlock = []
-                }
-                currentKind = .systemEvent
-                currentBlock = [trimmed]
-                messages.append(makeMessage(kind: .systemEvent, lines: currentBlock, index: &blockIndex))
-                currentBlock = []
-                currentKind = .agentText
-                continue
-            }
-
-            // 检测思考状态
-            if trimmed.contains("Thinking") || trimmed.contains("thinking") {
-                if !currentBlock.isEmpty {
-                    messages.append(makeMessage(kind: currentKind, lines: currentBlock, index: &blockIndex))
-                    currentBlock = []
-                }
-                messages.append(ClaudeMessage(
-                    id: "msg-\(blockIndex)",
-                    kind: .thinking,
-                    content: trimmed,
-                    timestamp: Date()
-                ))
-                blockIndex += 1
-                currentKind = .agentText
-                continue
-            }
-
-            // 普通文本行
-            currentBlock.append(trimmed)
+            // 普通文本内容
+            currentBlock.append(clean)
+            isInResponse = true
         }
 
         // 处理最后一个块
         if !currentBlock.isEmpty {
-            messages.append(makeMessage(kind: currentKind, lines: currentBlock, index: &blockIndex))
+            let content = currentBlock.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            if !content.isEmpty {
+                messages.append(ClaudeMessage(
+                    id: "msg-\(msgIndex)",
+                    kind: .agentText,
+                    content: content,
+                    timestamp: Date()
+                ))
+            }
         }
 
         return messages
     }
 
-    /// 提取会话状态信息
-    static func parseSessionStatus(_ lines: [String]) -> ClaudeSessionStatus {
-        var status = ClaudeSessionStatus()
-        let joined = lines.joined(separator: " ")
+    // MARK: - 字符串清理
 
-        // 检测模型信息
-        if joined.contains("Opus") {
-            status.model = "Claude Opus"
-        } else if joined.contains("Sonnet") {
-            status.model = "Claude Sonnet"
-        } else if joined.contains("Haiku") {
-            status.model = "Claude Haiku"
-        }
-
-        // 检测上下文用量
-        if let range = joined.range(of: "Context ") {
-            let after = String(joined[range.upperBound...])
-            let contextPart = after.prefix(30).trimmingCharacters(in: .whitespaces)
-            status.contextUsage = String(contextPart.prefix(while: { $0 != "\n" && $0 != "|" }))
-        }
-
-        status.isActive = joined.contains("claude>") || joined.contains("❯") || joined.contains("Claude Code")
-        return status
-    }
-
-    // MARK: - 私有辅助方法
-
-    /// 去除控制字符和 PUA 字符
-    private static func stripControlChars(_ line: String) -> String {
+    /// 去除所有控制字符、ANSI 转义码、PUA 字符
+    private static func stripAll(_ line: String) -> String {
         var result = ""
-        for char in line {
-            guard let scalar = char.unicodeScalars.first else { continue }
-            let v = scalar.value
-            // 跳过控制字符（保留空格、换行、制表符）
-            if v < 0x20 && v != 0x0A && v != 0x0D && v != 0x09 { continue }
+        var i = line.startIndex
+
+        while i < line.endIndex {
+            let char = line[i]
+
+            // 跳过 ESC 序列
+            if char == "\u{1B}" {
+                i = line.index(after: i)
+                guard i < line.endIndex else { break }
+                let next = line[i]
+                if next == "[" {
+                    // CSI 序列：跳到终止符
+                    i = line.index(after: i)
+                    while i < line.endIndex {
+                        let c = line[i]
+                        if c.asciiValue.map({ $0 >= 0x40 && $0 <= 0x7E }) == true {
+                            i = line.index(after: i)
+                            break
+                        }
+                        i = line.index(after: i)
+                    }
+                } else if next == "]" {
+                    // OSC 序列：跳到 BEL 或 ST
+                    i = line.index(after: i)
+                    while i < line.endIndex {
+                        if line[i] == "\u{07}" { i = line.index(after: i); break }
+                        if line[i] == "\u{1B}" {
+                            let ni = line.index(after: i)
+                            if ni < line.endIndex && line[ni] == "\\" {
+                                i = line.index(after: ni)
+                                break
+                            }
+                        }
+                        i = line.index(after: i)
+                    }
+                } else {
+                    i = line.index(after: i)
+                }
+                continue
+            }
+
+            // 跳过控制字符
+            if let ascii = char.asciiValue, ascii < 0x20, ascii != 0x09 {
+                i = line.index(after: i)
+                continue
+            }
+
             // 跳过 PUA 字符
-            if (v >= 0xE000 && v <= 0xF8FF) || (v >= 0xF0000 && v <= 0x10FFFD) { continue }
+            if let scalar = char.unicodeScalars.first {
+                let v = scalar.value
+                if (v >= 0xE000 && v <= 0xF8FF) || (v >= 0xF0000) {
+                    i = line.index(after: i)
+                    continue
+                }
+            }
+
             result.append(char)
+            i = line.index(after: i)
         }
-        return result
+
+        return result.trimmingCharacters(in: .whitespaces)
     }
 
-    /// 判断是否为用户输入行
-    private static func isUserPrompt(_ line: String) -> Bool {
-        // Claude Code 的 prompt 通常以 > 或 ❯ 开头
-        return line.hasPrefix("> ") || line.hasPrefix("❯ ") || line.hasPrefix("claude> ")
+    /// 判断是否为 TUI 装饰行（边框、分隔线等）
+    private static func isTUIDecoration(_ line: String) -> Bool {
+        if line.isEmpty { return false }
+
+        // 计算装饰字符占比
+        let decorChars: Set<Character> = ["─", "━", "═", "│", "┃", "║",
+            "╭", "╮", "╰", "╯", "┌", "┐", "└", "┘",
+            "├", "┤", "┬", "┴", "┼", "╔", "╗", "╚", "╝",
+            "▀", "▄", "█", "▐", "▌", "░", "▒", "▓",
+            "╶", "╴", "╵", "╷", "─", "━"]
+
+        let decorCount = line.filter { decorChars.contains($0) }.count
+        let totalChars = line.count
+
+        // 超过 50% 是装饰字符就跳过
+        if totalChars > 0 && Double(decorCount) / Double(totalChars) > 0.5 {
+            return true
+        }
+
+        // 全是横线/下划线
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.allSatisfy({ $0 == "─" || $0 == "━" || $0 == "_" || $0 == "=" || $0 == "-" }) && trimmed.count > 3 {
+            return true
+        }
+
+        return false
+    }
+
+    /// 判断是否为 Claude Code 启动信息
+    private static func isStartupInfo(_ line: String) -> Bool {
+        return line.contains("Claude Code v")
+            || line.contains("with medium effort")
+            || line.contains("with high effort")
+            || line.contains("Claude Max")
+            || line.contains("Claude API")
+            || line.contains("Loamwaddle")
+            || line.contains("<(")  // ASCII 艺术
+            || line.contains("._>") // ASCII 艺术
+            || line.contains("`--'") // ASCII 艺术
+            || line.contains("\\^^^/") // ASCII 艺术
+    }
+
+    /// 判断是否为状态栏
+    private static func isStatusBar(_ line: String) -> Bool {
+        return (line.contains("Context") && (line.contains("%") || line.contains("token")))
+            || (line.contains("Opus") && line.contains("context"))
+            || (line.contains("Sonnet") && line.contains("context"))
+            || line.hasPrefix("[Opus") || line.hasPrefix("[Sonnet") || line.hasPrefix("[Haiku")
+            || line.contains("git:(")
+    }
+
+    /// 判断是否为 prompt 行
+    private static func isPromptLine(_ line: String) -> Bool {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        return trimmed.hasPrefix("> ") || trimmed.hasPrefix("> ")
+            || trimmed == ">" || trimmed == ">"
     }
 
     /// 从 prompt 行提取用户输入
-    private static func extractUserInput(_ line: String) -> String {
-        if line.hasPrefix("claude> ") { return String(line.dropFirst(8)) }
-        if line.hasPrefix("> ") { return String(line.dropFirst(2)) }
-        if line.hasPrefix("❯ ") { return String(line.dropFirst(2)) }
-        return line
+    private static func extractPromptInput(_ line: String) -> String {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasPrefix("> ") { return String(trimmed.dropFirst(2)) }
+        if trimmed.hasPrefix("> ") { return String(trimmed.dropFirst(2)) }
+        if trimmed == ">" || trimmed == ">" { return "" }
+        return ""
     }
 
-    /// 判断是否为工具调用行
-    private static func isToolCallLine(_ line: String) -> Bool {
-        let toolPatterns = [
-            "Read(", "Write(", "Edit(", "Bash(",
-            "Grep(", "Glob(", "Read file:", "Write file:",
-            "Execute:", "Running:", "$ ",
+    /// 尝试解析工具调用行
+    private static func parseToolLine(_ line: String, index: inout Int) -> ClaudeMessage? {
+        let toolPatterns: [(pattern: String, name: String)] = [
+            ("Read(", "Read"),
+            ("Write(", "Write"),
+            ("Edit(", "Edit"),
+            ("Bash(", "Bash"),
+            ("Grep(", "Grep"),
+            ("Glob(", "Glob"),
+            ("WebSearch(", "WebSearch"),
+            ("WebFetch(", "WebFetch"),
+            ("Agent(", "Agent"),
         ]
-        return toolPatterns.contains { line.contains($0) }
-    }
 
-    /// 判断工具调用是否已完成（单行结果）
-    private static func isCompletedToolLine(_ line: String) -> Bool {
-        return line.contains("✓") || line.contains("✗") || line.contains("Done")
-    }
-
-    /// 解析工具调用名称和内容
-    private static func parseToolCall(_ line: String) -> (name: String, content: String) {
-        if line.contains("Read(") || line.contains("Read file:") {
-            return ("Read", line)
-        } else if line.contains("Write(") || line.contains("Write file:") {
-            return ("Write", line)
-        } else if line.contains("Edit(") {
-            return ("Edit", line)
-        } else if line.contains("Bash(") || line.contains("$ ") || line.contains("Execute:") || line.contains("Running:") {
-            return ("Bash", line)
-        } else if line.contains("Grep(") {
-            return ("Grep", line)
-        } else if line.contains("Glob(") {
-            return ("Glob", line)
+        for (pattern, name) in toolPatterns {
+            if line.contains(pattern) {
+                let msg = ClaudeMessage(
+                    id: "msg-\(index)",
+                    kind: .toolCall,
+                    content: line,
+                    timestamp: Date(),
+                    toolName: name,
+                    toolState: line.contains("✓") ? .completed : (line.contains("✗") ? .error : .running)
+                )
+                index += 1
+                return msg
+            }
         }
-        return ("Tool", line)
-    }
 
-    /// 判断是否为状态栏行
-    private static func isStatusLine(_ line: String) -> Bool {
-        return line.contains("Context") && (line.contains("%") || line.contains("token"))
-            || line.contains("Opus") && line.contains("context")
-            || line.contains("Sonnet") && line.contains("context")
-    }
-
-    /// 从行数组构建消息
-    private static func makeMessage(kind: ClaudeMessageKind, lines: [String], index: inout Int) -> ClaudeMessage {
-        let content = lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
-        let msg = ClaudeMessage(
-            id: "msg-\(index)",
-            kind: kind,
-            content: content,
-            timestamp: Date()
-        )
-        index += 1
-        return msg
+        return nil
     }
 }
