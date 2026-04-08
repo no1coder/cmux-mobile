@@ -446,8 +446,12 @@ struct ClaudeChatView: View {
             let stopReason = msg["stop_reason"] as? String
 
             if type == "user" {
-                // 用户消息：只显示纯文本
+                // 用户消息：只显示纯文本，跳过 tool_result
                 let textBlocks = blocks.filter { ($0["type"] as? String) == "text" }
+                let hasToolResult = blocks.contains { ($0["type"] as? String) == "tool_result" }
+                // 纯 tool_result 消息不显示为用户消息
+                if hasToolResult && textBlocks.isEmpty { continue }
+
                 if !textBlocks.isEmpty {
                     let text = textBlocks.compactMap { $0["text"] as? String }.joined()
                     if !text.isEmpty {
@@ -458,6 +462,8 @@ struct ClaudeChatView: View {
                     }
                 }
             } else if type == "assistant" {
+                // 跳过中间状态消息（stop_reason 为 null 表示 Claude 还在生成）
+                if stopReason == nil { continue }
                 for block in blocks {
                     let blockType = block["type"] as? String ?? ""
                     switch blockType {
