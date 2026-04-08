@@ -752,12 +752,21 @@ struct ClaudeChatView: View {
         return noisePatterns.contains { t.contains($0) }
     }
 
-    /// 从终端屏幕扫描对话
+    /// 从终端屏幕扫描对话（只扫描 Claude Code 启动之后的内容）
     static func scanConversations(_ lines: [String]) -> [ClaudeChatItem] {
         var items: [ClaudeChatItem] = []
-        var i = 0
         let cleaned = lines.map { stripAnsi($0) }
 
+        // 找到 Claude Code 启动标志，只扫描之后的内容
+        var startIndex = 0
+        for (idx, line) in cleaned.enumerated() {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            if t.contains("Claude Code v") || t.contains("Opus") || t.contains("Sonnet") || t.contains("Haiku") {
+                startIndex = idx + 1
+            }
+        }
+
+        var i = startIndex
         while i < cleaned.count {
             let line = cleaned[i].trimmingCharacters(in: .whitespaces)
 
