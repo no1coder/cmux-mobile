@@ -201,25 +201,9 @@ struct ClaudeChatView: View {
         }
     }
 
-    /// Markdown 渲染
-    @ViewBuilder
+    /// Markdown 渲染（支持 # 标题、代码块、表格、列表等块级元素）
     private func markdownText(_ content: String) -> some View {
-        if let attributed = try? AttributedString(
-            markdown: content,
-            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-        ) {
-            Text(attributed)
-                .font(.system(size: 15))
-                .foregroundStyle(.white.opacity(0.9))
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-        } else {
-            Text(content)
-                .font(.system(size: 15))
-                .foregroundStyle(.white.opacity(0.9))
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        MarkdownView(content: content)
     }
 
     private var thinkingView: some View {
@@ -589,7 +573,7 @@ struct ClaudeChatView: View {
         stopPolling()
         refreshTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
                 guard !Task.isCancelled else { break }
                 fetchMessages()
             }

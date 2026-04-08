@@ -20,6 +20,7 @@
 		32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
 		3757ED27F56257392E9220F7 /* ConnectionStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69698D3DABA01AC3792159DF /* ConnectionStatusBar.swift */; };
 				A1B2C3D4E5F647891234AB01 /* ToolDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6718ADE8B1C24D9FA3E71B02 /* ToolDetailView.swift */; };
+				B2C3D4E5F6071829A4B5C601 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1B2C3D4E5F60718293A4B5 /* MarkdownView.swift */; };
 		3CCE97C9FA614389E11916BA /* ClaudeOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */; };
 		45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4416396E67D1C2014948459 /* InputManagerTests.swift */; };
 		47C16D641B1285F2C3C3DAB0 /* DeviceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04569613F9A6AA3E9EA322B6 /* DeviceListView.swift */; };
@@ -73,6 +74,7 @@
 		C551226171555ACC1D81D59E /* Surface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B77A75BFF2571D1EB22615 /* Surface.swift */; };
 		C7D9C093D21EB94567DC3659 /* ClaudeChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC89DC2D923FB8CD4113640 /* ClaudeChatView.swift */; };
 				A1B2C3D4E5F647891234AB02 /* ToolDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6718ADE8B1C24D9FA3E71B02 /* ToolDetailView.swift */; };
+				B2C3D4E5F6071829A4B5C602 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1B2C3D4E5F60718293A4B5 /* MarkdownView.swift */; };
 		CE6ECE0D0460CC75BCA43BCE /* ClaudeOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */; };
 		D0939651CFB37D2D30B0D992 /* ClaudeChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC89DC2D923FB8CD4113640 /* ClaudeChatView.swift */; };
 		D37ECAE20DF175BAB4D582DB /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8281D9CAA5152412FA0AAF63 /* TerminalView.swift */; };
@@ -118,6 +120,7 @@
 		52B0CE3FBD21CD697976F1D9 /* PairingManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingManagerTests.swift; sourceTree = "<group>"; };
 		551A081B1B439F1FE30B2A7A /* TerminalDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalDetailView.swift; sourceTree = "<group>"; };
 				6718ADE8B1C24D9FA3E71B02 /* ToolDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolDetailView.swift; sourceTree = "<group>"; };
+				7A1B2C3D4E5F60718293A4B5 /* MarkdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownView.swift; sourceTree = "<group>"; };
 		5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeOutputParser.swift; sourceTree = "<group>"; };
 		60B77A75BFF2571D1EB22615 /* Surface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Surface.swift; sourceTree = "<group>"; };
 		69698D3DABA01AC3792159DF /* ConnectionStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionStatusBar.swift; sourceTree = "<group>"; };
@@ -221,6 +224,7 @@
 				8FC89DC2D923FB8CD4113640 /* ClaudeChatView.swift */,
 				B122B3E1821092D4C3C78738 /* ClaudeMessage.swift */,
 				5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */,
+				7A1B2C3D4E5F60718293A4B5 /* MarkdownView.swift */,
 				6718ADE8B1C24D9FA3E71B02 /* ToolDetailView.swift */,
 			);
 			path = Claude;
@@ -429,6 +433,7 @@
 				D0939651CFB37D2D30B0D992 /* ClaudeChatView.swift in Sources */,
 				AA2740DAEE87B019E9A3A597 /* ClaudeMessage.swift in Sources */,
 				CE6ECE0D0460CC75BCA43BCE /* ClaudeOutputParser.swift in Sources */,
+				B2C3D4E5F6071829A4B5C602 /* MarkdownView.swift in Sources */,
 				A1B2C3D4E5F647891234AB02 /* ToolDetailView.swift in Sources */,
 				910E19A9E281AF4ADD857F8D /* ConnectionStatus.swift in Sources */,
 				30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */,
@@ -475,6 +480,7 @@
 				C7D9C093D21EB94567DC3659 /* ClaudeChatView.swift in Sources */,
 				B7BB592B87AE1CE957C5D431 /* ClaudeMessage.swift in Sources */,
 				3CCE97C9FA614389E11916BA /* ClaudeOutputParser.swift in Sources */,
+				B2C3D4E5F6071829A4B5C601 /* MarkdownView.swift in Sources */,
 				A1B2C3D4E5F647891234AB01 /* ToolDetailView.swift in Sources */,
 				7F3CCAE8644AEB66C0B48902 /* ConnectionStatus.swift in Sources */,
 				EA9397173B55EDE9BAED58AB /* ConnectionStatusBadge.swift in Sources */,
