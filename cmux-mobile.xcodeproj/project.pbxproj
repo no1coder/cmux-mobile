@@ -21,6 +21,7 @@
 				AA11BB22CC33DD44EE550006 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550004 /* AppDelegate.swift */; };
 		E2E0000100000001E2E00001 /* E2ECryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0000100000000E2E00001 /* E2ECryptoManager.swift */; };
 		E2E0000100000002E2E00001 /* E2ECryptoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0000100000000E2E00001 /* E2ECryptoManager.swift */; };
+		0FF1A1B2C3D4E5F607080901 /* OfflineMessageQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1A1B2C3D4E5F600000000 /* OfflineMessageQueue.swift */; };
 		2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697189AF6714DB55223B968 /* InputManager.swift */; };
 		30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964F1C7EDEC970F7012DC2D4 /* ConnectionStatusBadge.swift */; };
 		32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6CA06A135637401D02C38 /* ApprovalRequestView.swift */; };
@@ -91,6 +92,7 @@
 		DCBD24AE0495A58F9648F6D7 /* ScreenSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */; };
 		DD0FC2B5861B6CC2E2661715 /* cmuxMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484641BAA51734ADE37A34CD /* cmuxMobileApp.swift */; };
 		E4BF6AD42F7FB27E0E48067B /* BrowserPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8F0766C6D1A7B8751C5C29 /* BrowserPreviewView.swift */; };
+		0FF1A1B2C3D4E5F607080902 /* OfflineMessageQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF1A1B2C3D4E5F600000000 /* OfflineMessageQueue.swift */; };
 		E721F20B55E8A204FAAE6E24 /* InputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0697189AF6714DB55223B968 /* InputManager.swift */; };
 		E78BA8DD1C6FE7F0C9AF453F /* ANSIParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7718FF64F18F50A9F2A73BE /* ANSIParser.swift */; };
 		E8C746AA8AE3E8C485E36B9A /* MessageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */; };
@@ -117,6 +119,7 @@
 				AA11BB22CC33DD44EE550004 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E2E0000100000000E2E00001 /* E2ECryptoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = E2ECryptoManager.swift; sourceTree = "<group>"; };
 		0697189AF6714DB55223B968 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
+		0FF1A1B2C3D4E5F600000000 /* OfflineMessageQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineMessageQueue.swift; sourceTree = "<group>"; };
 		0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParserTests.swift; sourceTree = "<group>"; };
 		0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeChatItem.swift; sourceTree = "<group>"; };
 		100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "MesloLGSNerdFontMono-Regular.ttf"; sourceTree = "<group>"; };
@@ -185,6 +188,7 @@
 				E2E0000100000000E2E00001 /* E2ECryptoManager.swift */,
 				A8BF77D802A5642E9BB7C267 /* FontLoader.swift */,
 				0697189AF6714DB55223B968 /* InputManager.swift */,
+				0FF1A1B2C3D4E5F600000000 /* OfflineMessageQueue.swift */,
 				AA11BB22CC33DD44EE550004 /* AppDelegate.swift */,
 				AA11BB22CC33DD44EE550001 /* PushNotificationManager.swift */,
 				DCD264B37C2E9401E54A5E48 /* KeychainHelper.swift */,
@@ -464,6 +468,7 @@
 				92C0ADD29D44D996759AC351 /* FontLoader.swift in Sources */,
 				E2E0000100000001E2E00001 /* E2ECryptoManager.swift in Sources */,
 				2CAE427F8A3AE0E3CD5AB97F /* InputManager.swift in Sources */,
+				0FF1A1B2C3D4E5F607080901 /* OfflineMessageQueue.swift in Sources */,
 				AA11BB22CC33DD44EE550005 /* AppDelegate.swift in Sources */,
 				AA11BB22CC33DD44EE550002 /* PushNotificationManager.swift in Sources */,
 				45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */,
@@ -514,6 +519,7 @@
 				49123810093D59CE96B8AB39 /* FontLoader.swift in Sources */,
 				E2E0000100000002E2E00001 /* E2ECryptoManager.swift in Sources */,
 				E721F20B55E8A204FAAE6E24 /* InputManager.swift in Sources */,
+				0FF1A1B2C3D4E5F607080902 /* OfflineMessageQueue.swift in Sources */,
 				AA11BB22CC33DD44EE550006 /* AppDelegate.swift in Sources */,
 				AA11BB22CC33DD44EE550003 /* PushNotificationManager.swift in Sources */,
 				D9C8C8BFE08F26122FA286A6 /* KeychainHelper.swift in Sources */,

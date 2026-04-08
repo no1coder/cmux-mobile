@@ -19,6 +19,9 @@ final class RelayConnection: NSObject, ObservableObject {
     /// E2E 加密管理器，设置后自动加密发送载荷、解密接收载荷
     var e2eCrypto: E2ECryptoManager?
 
+    /// 离线消息队列：断线时缓存，重连后自动发送
+    let offlineQueue = OfflineMessageQueue()
+
     /// 收到消息时的回调（在主线程调用）
     var onMessage: ((Data) -> Void)?
 
@@ -101,8 +104,19 @@ final class RelayConnection: NSObject, ObservableObject {
 
     // MARK: - 消息发送
 
-    /// 发送 RPC 请求消息
+    /// 发送 RPC 请求消息（断线时自动入队，重连后批量发送）
     func send(_ payload: [String: Any]) {
+        // 离线时入队，等待重连后发送
+        guard status == .connected else {
+            offlineQueue.enqueue(payload)
+            return
+        }
+
+        sendPayload(payload)
+    }
+
+    /// 内部发送逻辑：加密 + 封装 envelope
+    private func sendPayload(_ payload: [String: Any]) {
         // E2E: 如果加密管理器已配置，加密内层载荷
         let finalPayload: [String: Any]
         if let crypto = e2eCrypto, let encrypted = crypto.encrypt(payload) {
@@ -247,6 +261,10 @@ final class RelayConnection: NSObject, ObservableObject {
                     if r.lastSeq > 0 {
                         sendResume(lastSeq: r.lastSeq)
                     }
+                }
+                // 重连后批量发送离线队列中的消息
+                offlineQueue.flush { [weak self] msg in
+                    self?.sendPayload(msg)
                 }
                 // 连接成功后，主动请求 surface 列表（带重试）
                 requestSurfaceList()

@@ -31,6 +31,7 @@ struct ClaudeChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             chatArea
+            offlineQueueBanner
             if showSlashMenu { slashCommandMenu }
             if showFilePicker { filePickerView }
             inputBar
@@ -368,6 +369,26 @@ struct ClaudeChatView: View {
             Text(label).font(.system(size: 11, weight: .medium, design: .monospaced))
                 .padding(.horizontal, 8).padding(.vertical, 8)
                 .background(color.opacity(0.1)).foregroundStyle(color.opacity(0.7)).clipShape(Capsule())
+        }
+    }
+
+    // MARK: - 离线队列提示
+
+    @ViewBuilder
+    private var offlineQueueBanner: some View {
+        let count = relayConnection.offlineQueue.pendingCount
+        if count > 0 {
+            HStack(spacing: 6) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 11))
+                Text("\(count) 条消息待发送")
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .foregroundStyle(.orange)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity)
+            .background(Color.orange.opacity(0.08))
         }
     }
 
