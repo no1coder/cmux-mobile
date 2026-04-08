@@ -9,7 +9,7 @@ struct ClaudeChatView: View {
 
     @State private var inputText = ""
     @State private var isThinking = false
-    /// Claude 当前活动状态（Thinking/Reading/Writing 等）
+    /// Claude 当前活动状态
     @State private var activityLabel = ""
     @State private var sessionInfo: (model: String, project: String, context: String) = ("", "", "")
     @State private var refreshTask: Task<Void, Never>?
@@ -20,10 +20,9 @@ struct ClaudeChatView: View {
     @State private var showSlashMenu = false
     /// 是否显示 @ 文件选择器
     @State private var showFilePicker = false
-    /// 文件列表（用于 @file 选择器）
+    /// 文件列表
     @State private var fileList: [FileEntry] = []
 
-    /// 从 MessageStore 读取持久化的消息
     private var chatMessages: [ClaudeChatItem] {
         messageStore.claudeChats[surfaceID] ?? []
     }
@@ -31,17 +30,8 @@ struct ClaudeChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             chatArea
-
-            // / 命令自动补全
-            if showSlashMenu {
-                slashCommandMenu
-            }
-
-            // @ 文件选择器
-            if showFilePicker {
-                filePickerView
-            }
-
+            if showSlashMenu { slashCommandMenu }
+            if showFilePicker { filePickerView }
             inputBar
         }
         .background(Color(red: 0.06, green: 0.06, blue: 0.08))
@@ -50,13 +40,8 @@ struct ClaudeChatView: View {
             lastAssistantCount = chatMessages.filter { $0.role == .assistant }.count
             startPolling()
         }
-        .onDisappear {
-            stopPolling()
-        }
-        .onChange(of: inputText) { _, newValue in
-            // 检测 @ 和 / 触发自动补全
-            handleInputChange(newValue)
-        }
+        .onDisappear { stopPolling() }
+        .onChange(of: inputText) { _, newValue in handleInputChange(newValue) }
     }
 
     // MARK: - 聊天区域
@@ -65,8 +50,7 @@ struct ClaudeChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 6) {
-                    sessionHeader
-                        .padding(.bottom, 8)
+                    sessionHeader.padding(.bottom, 8)
 
                     if chatMessages.isEmpty {
                         Text("向 Claude 发送消息开始对话")
@@ -113,7 +97,6 @@ struct ClaudeChatView: View {
                         .padding(.vertical, 3)
                         .background(Color.purple.opacity(0.12))
                         .clipShape(Capsule())
-
                     if !sessionInfo.context.isEmpty {
                         Text(sessionInfo.context)
                             .font(.system(size: 11))
@@ -192,7 +175,6 @@ struct ClaudeChatView: View {
         }
     }
 
-    /// 根据工具名返回图标
     private func toolIcon(_ name: String) -> String {
         switch name {
         case "Read": return "doc.text"
@@ -208,12 +190,8 @@ struct ClaudeChatView: View {
 
     private var claudeAvatar: some View {
         ZStack {
-            Circle()
-                .fill(Color.purple.opacity(0.15))
-                .frame(width: 26, height: 26)
-            Image(systemName: "sparkles")
-                .font(.system(size: 11))
-                .foregroundStyle(.purple)
+            Circle().fill(Color.purple.opacity(0.15)).frame(width: 26, height: 26)
+            Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.purple)
         }
     }
 
@@ -221,46 +199,27 @@ struct ClaudeChatView: View {
         HStack(alignment: .top, spacing: 8) {
             claudeAvatar
             HStack(spacing: 4) {
-                ProgressView()
-                    .scaleEffect(0.6)
-                    .tint(.purple.opacity(0.6))
+                ProgressView().scaleEffect(0.6).tint(.purple.opacity(0.6))
                 Text(activityLabel.isEmpty ? "思考中…" : activityLabel)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.3))
-                    .italic()
+                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.3)).italic()
             }
             .padding(.top, 3)
             Spacer()
         }
     }
 
-    // MARK: - / 命令自动补全
+    // MARK: - / 命令菜单
 
-    /// Claude Code 常用命令
     private let slashCommands: [(cmd: String, desc: String)] = [
-        ("/compact", "压缩上下文"),
-        ("/status", "查看状态"),
-        ("/help", "帮助"),
-        ("/clear", "清空对话"),
-        ("/review", "代码审查"),
-        ("/init", "初始化项目"),
-        ("/bug", "报告 bug"),
-        ("/config", "配置"),
-        ("/cost", "费用统计"),
-        ("/login", "登录"),
-        ("/logout", "登出"),
-        ("/doctor", "诊断"),
-        ("/permissions", "权限管理"),
-        ("/memory", "记忆管理"),
-        ("/mcp", "MCP 服务"),
+        ("/compact", "压缩上下文"), ("/status", "查看状态"), ("/help", "帮助"),
+        ("/clear", "清空对话"), ("/review", "代码审查"), ("/init", "初始化项目"),
+        ("/config", "配置"), ("/cost", "费用统计"), ("/doctor", "诊断"),
+        ("/permissions", "权限管理"), ("/memory", "记忆管理"), ("/mcp", "MCP 服务"),
     ]
 
     private var slashCommandMenu: some View {
         let query = String(inputText.dropFirst()).lowercased()
-        let filtered = query.isEmpty
-            ? slashCommands
-            : slashCommands.filter { $0.cmd.lowercased().contains(query) }
-
+        let filtered = query.isEmpty ? slashCommands : slashCommands.filter { $0.cmd.contains(query) }
         return ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
                 ForEach(filtered, id: \.cmd) { item in
@@ -270,16 +229,11 @@ struct ClaudeChatView: View {
                         isInputFocused = true
                     } label: {
                         HStack {
-                            Text(item.cmd)
-                                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.orange)
+                            Text(item.cmd).font(.system(size: 14, weight: .medium, design: .monospaced)).foregroundStyle(.orange)
                             Spacer()
-                            Text(item.desc)
-                                .font(.system(size: 12))
-                                .foregroundStyle(.white.opacity(0.3))
+                            Text(item.desc).font(.system(size: 12)).foregroundStyle(.white.opacity(0.3))
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16).padding(.vertical, 10)
                     }
                     Divider().background(Color.white.opacity(0.05))
                 }
@@ -291,48 +245,32 @@ struct ClaudeChatView: View {
 
     // MARK: - @ 文件选择器
 
+    struct FileEntry { let name: String; let isDirectory: Bool }
+
     private var filePickerView: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Image(systemName: "doc.text")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.blue)
-                Text("选择文件")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
+                Image(systemName: "doc.text").font(.system(size: 12)).foregroundStyle(.blue)
+                Text("选择文件").font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.6))
                 Spacer()
-                Button {
-                    showFilePicker = false
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.white.opacity(0.3))
+                Button { showFilePicker = false } label: {
+                    Image(systemName: "xmark").font(.system(size: 10)).foregroundStyle(.white.opacity(0.3))
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 16).padding(.vertical, 8)
 
             if fileList.isEmpty {
                 HStack {
                     ProgressView().scaleEffect(0.6).tint(.blue)
-                    Text("加载文件列表…")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.3))
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                    Text("加载文件列表…").font(.system(size: 12)).foregroundStyle(.white.opacity(0.3))
+                }.padding(.horizontal, 16).padding(.vertical, 12)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(fileList, id: \.name) { file in
                             Button {
-                                // 将 @文件路径 插入输入框
                                 let atRef = "@\(file.name) "
-                                if inputText.hasSuffix("@") {
-                                    inputText = String(inputText.dropLast()) + atRef
-                                } else {
-                                    inputText += atRef
-                                }
+                                inputText = inputText.hasSuffix("@") ? String(inputText.dropLast()) + atRef : inputText + atRef
                                 showFilePicker = false
                                 isInputFocused = true
                             } label: {
@@ -341,50 +279,31 @@ struct ClaudeChatView: View {
                                         .font(.system(size: 12))
                                         .foregroundStyle(file.isDirectory ? .yellow : .blue)
                                         .frame(width: 16)
-                                    Text(file.name)
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(.white.opacity(0.8))
-                                        .lineLimit(1)
+                                    Text(file.name).font(.system(size: 13)).foregroundStyle(.white.opacity(0.8)).lineLimit(1)
                                     Spacer()
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
+                                }.padding(.horizontal, 16).padding(.vertical, 8)
                             }
                         }
                     }
-                }
-                .frame(maxHeight: 200)
+                }.frame(maxHeight: 200)
             }
         }
         .background(Color(red: 0.1, green: 0.1, blue: 0.12))
     }
 
-    /// 简单的文件条目
-    struct FileEntry {
-        let name: String
-        let isDirectory: Bool
-    }
-
-    // MARK: - 输入区域
+    // MARK: - 输入栏
 
     private var inputBar: some View {
         VStack(spacing: 0) {
             Divider().background(Color.white.opacity(0.08))
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     chip("@", color: .blue) {
-                        inputText += "@"
-                        isInputFocused = true
-                        loadFileList()
-                        showFilePicker = true
-                        showSlashMenu = false
+                        inputText += "@"; isInputFocused = true
+                        loadFileList(); showFilePicker = true; showSlashMenu = false
                     }
                     chip("/", color: .orange) {
-                        inputText = "/"
-                        showSlashMenu = true
-                        showFilePicker = false
-                        isInputFocused = true
+                        inputText = "/"; showSlashMenu = true; showFilePicker = false; isInputFocused = true
                     }
                     Rectangle().fill(Color.white.opacity(0.1)).frame(width: 1, height: 16)
                     chip("^C", color: .red) { sendKey("c", "ctrl") }
@@ -392,75 +311,46 @@ struct ClaudeChatView: View {
                     chip("/compact", color: .purple) { sendDirect("/compact\n") }
                     chip("/status", color: .green) { sendDirect("/status\n") }
                     chip("回车", color: .white.opacity(0.6)) { sendKey("return", "") }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                }.padding(.horizontal, 12).padding(.vertical, 6)
             }
-
             HStack(spacing: 8) {
                 TextField("", text: $inputText, prompt: Text("消息...").foregroundStyle(.gray.opacity(0.6)), axis: .vertical)
-                    .font(.system(size: 15))
-                    .foregroundStyle(.white)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .lineLimit(1...4)
-                    .focused($isInputFocused)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
+                    .font(.system(size: 15)).foregroundStyle(.white)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .lineLimit(1...4).focused($isInputFocused)
+                    .padding(.horizontal, 14).padding(.vertical, 9)
                     .background(Color.white.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .onSubmit { send() }
-
                 Button(action: send) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 30))
+                    Image(systemName: "arrow.up.circle.fill").font(.system(size: 30))
                         .foregroundStyle(inputText.isEmpty ? .gray.opacity(0.3) : .purple)
-                }
-                .disabled(inputText.isEmpty)
-            }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 8)
+                }.disabled(inputText.isEmpty)
+            }.padding(.horizontal, 12).padding(.bottom, 8)
         }
         .background(Color(red: 0.08, green: 0.08, blue: 0.1))
     }
 
     private func chip(_ label: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(label)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+            Text(label).font(.system(size: 11, weight: .medium, design: .monospaced))
                 .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(color.opacity(0.1))
-                .foregroundStyle(color.opacity(0.7))
+                .background(color.opacity(0.1)).foregroundStyle(color.opacity(0.7))
                 .clipShape(Capsule())
         }
     }
 
-    /// 输入内容变化时检测 @ 和 / 触发
     private func handleInputChange(_ text: String) {
-        if text == "/" {
-            showSlashMenu = true
-            showFilePicker = false
-        } else if text.hasPrefix("/") && text.count > 1 {
-            showSlashMenu = true
-            showFilePicker = false
-        } else {
-            showSlashMenu = false
-        }
-
+        showSlashMenu = text.hasPrefix("/") && !text.contains(" ")
         if text.hasSuffix("@") && !showFilePicker {
-            loadFileList()
-            showFilePicker = true
+            loadFileList(); showFilePicker = true
         }
     }
 
-    // MARK: - 文件列表加载
-
     private func loadFileList() {
-        // 使用 session 中的项目路径
         let path = sessionInfo.project.isEmpty ? "~" : sessionInfo.project
         relayConnection.sendWithResponse([
-            "method": "file.list",
-            "params": ["path": path],
+            "method": "file.list", "params": ["path": path],
         ]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
             if let entries = resultDict["entries"] as? [[String: Any]] {
@@ -468,9 +358,7 @@ struct ClaudeChatView: View {
                     guard let name = entry["name"] as? String else { return nil }
                     let isDir = (entry["type"] as? String) == "directory"
                     return FileEntry(name: name, isDirectory: isDir)
-                }
-                // 排序：目录在前，按名称排序
-                fileList.sort { a, b in
+                }.sorted { a, b in
                     if a.isDirectory != b.isDirectory { return a.isDirectory }
                     return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
                 }
@@ -484,36 +372,20 @@ struct ClaudeChatView: View {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         inputText = ""
-        showSlashMenu = false
-        showFilePicker = false
+        showSlashMenu = false; showFilePicker = false
 
-        // 添加用户消息到持久化存储
-        appendMessage(ClaudeChatItem(
-            id: UUID().uuidString,
-            role: .user,
-            content: text,
-            timestamp: Date()
-        ))
-
-        // 发送到终端
+        appendMessage(ClaudeChatItem(id: UUID().uuidString, role: .user, content: text, timestamp: Date()))
         sendDirect(text + "\n")
-        isThinking = true
-        activityLabel = ""
+        isThinking = true; activityLabel = ""
     }
 
     private func sendDirect(_ text: String) {
-        relayConnection.send([
-            "method": "surface.send_text",
-            "params": ["surface_id": surfaceID, "text": text],
-        ])
+        relayConnection.send(["method": "surface.send_text", "params": ["surface_id": surfaceID, "text": text]])
     }
 
     private func sendKey(_ key: String, _ mods: String) {
         let combinedKey = mods.isEmpty ? key : "\(mods)-\(key)"
-        relayConnection.send([
-            "method": "surface.send_key",
-            "params": ["surface_id": surfaceID, "key": combinedKey],
-        ])
+        relayConnection.send(["method": "surface.send_key", "params": ["surface_id": surfaceID, "key": combinedKey]])
     }
 
     // MARK: - 消息持久化
@@ -524,14 +396,12 @@ struct ClaudeChatView: View {
         messageStore.claudeChats[surfaceID] = msgs
     }
 
-    // MARK: - 终端轮询
+    // MARK: - 轮询
 
     private func fetchSessionInfo() {
         readTerminal { lines in
             sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
-            if chatMessages.isEmpty {
-                loadHistoryFromScreen(lines)
-            }
+            if chatMessages.isEmpty { loadHistoryFromScreen(lines) }
         }
     }
 
@@ -539,31 +409,24 @@ struct ClaudeChatView: View {
         stopPolling()
         refreshTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
                 guard !Task.isCancelled else { break }
                 pollForResponse()
             }
         }
     }
 
-    private func stopPolling() {
-        refreshTask?.cancel()
-        refreshTask = nil
-    }
+    private func stopPolling() { refreshTask?.cancel(); refreshTask = nil }
 
     private func readTerminal(completion: @escaping ([String]) -> Void) {
         relayConnection.sendWithResponse([
-            "method": "read_screen",
-            "params": ["surface_id": surfaceID],
+            "method": "read_screen", "params": ["surface_id": surfaceID],
         ]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
-            if let lines = resultDict["lines"] as? [String] {
-                completion(lines)
-            }
+            if let lines = resultDict["lines"] as? [String] { completion(lines) }
         }
     }
 
-    /// 从屏幕内容加载已有对话历史
     private func loadHistoryFromScreen(_ lines: [String]) {
         let conversations = Self.scanConversations(lines)
         if !conversations.isEmpty {
@@ -572,127 +435,151 @@ struct ClaudeChatView: View {
         }
     }
 
-    /// 轮询检测新回复 — 基于状态机
+    /// 轮询检测新回复
     private func pollForResponse() {
         readTerminal { lines in
             sessionInfo = ClaudeOutputParser.parseSessionInfo(lines)
-
             let cleaned = lines.map { Self.stripAnsi($0) }
-            let joinedText = cleaned.joined(separator: " ")
 
-            // 检测 Claude 活动状态
-            let activity = detectActivity(joinedText)
+            // 检测活动状态
+            let activity = Self.detectActivity(cleaned)
             activityLabel = activity
 
-            // 检测是否有 idle prompt（Claude 完成回复的标志）
-            let hasIdlePrompt = detectIdlePrompt(cleaned)
+            // 检测 idle prompt（Claude 完成的标志）
+            let isIdle = Self.detectIdlePrompt(cleaned)
 
-            if isThinking {
-                if hasIdlePrompt {
-                    // Claude 已完成回复，提取新的回复内容
-                    let scanned = Self.scanConversations(lines)
-                    let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
+            // 扫描对话
+            let scanned = Self.scanConversations(lines)
+            let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
 
-                    if scannedAssistantCount > lastAssistantCount {
-                        // 有新回复，追加最后一条
-                        if let newReply = scanned.last(where: { $0.role == .assistant }) {
-                            let alreadyHas = chatMessages.contains {
-                                $0.role == .assistant && $0.content == newReply.content
-                            }
-                            if !alreadyHas {
-                                appendMessage(newReply)
-                            }
-                        }
-                        lastAssistantCount = scannedAssistantCount
-                    } else if scannedAssistantCount == lastAssistantCount {
-                        // 回复可能太长滚出屏幕了，添加一个提示
-                        let hasNewContent = cleaned.contains { line in
-                            let t = line.trimmingCharacters(in: .whitespaces)
-                            return !t.isEmpty && !Self.isNoiseLine(t) && Self.extractUserPrompt(t) == nil
-                        }
-                        if hasNewContent {
-                            appendMessage(ClaudeChatItem(
-                                id: UUID().uuidString,
-                                role: .assistant,
-                                content: "（回复已完成，内容较长请在终端中查看）",
-                                timestamp: Date()
-                            ))
-                            lastAssistantCount += 1
-                        }
-                    }
-
-                    isThinking = false
-                    activityLabel = ""
+            if scannedAssistantCount > lastAssistantCount {
+                // 有新回复
+                if let newReply = scanned.last(where: { $0.role == .assistant }) {
+                    let alreadyHas = chatMessages.contains { $0.role == .assistant && $0.content == newReply.content }
+                    if !alreadyHas { appendMessage(newReply) }
                 }
-            } else {
-                // 非 thinking 状态，检查是否有从屏幕扫描到的新消息
-                let scanned = Self.scanConversations(lines)
-                let scannedAssistantCount = scanned.filter { $0.role == .assistant }.count
-
-                if scannedAssistantCount > lastAssistantCount {
-                    if let newReply = scanned.last(where: { $0.role == .assistant }) {
-                        let alreadyHas = chatMessages.contains {
-                            $0.role == .assistant && $0.content == newReply.content
-                        }
-                        if !alreadyHas {
-                            appendMessage(newReply)
-                        }
+                lastAssistantCount = scannedAssistantCount
+                isThinking = false; activityLabel = ""
+            } else if isThinking && isIdle {
+                // thinking 状态但检测到 idle，回复可能滚出屏幕
+                if scannedAssistantCount == lastAssistantCount {
+                    // 尝试从屏幕提取内容
+                    let extracted = Self.extractLastResponse(cleaned)
+                    if !extracted.isEmpty {
+                        appendMessage(ClaudeChatItem(
+                            id: UUID().uuidString, role: .assistant,
+                            content: extracted, timestamp: Date()
+                        ))
+                        lastAssistantCount += 1
                     }
-                    lastAssistantCount = scannedAssistantCount
                 }
+                isThinking = false; activityLabel = ""
             }
         }
     }
 
-    /// 检测 Claude 当前活动状态
-    private func detectActivity(_ text: String) -> String {
-        let activities: [(pattern: String, label: String)] = [
-            ("Thinking", "思考中…"),
-            ("Reasoning", "推理中…"),
-            ("Analyzing", "分析中…"),
-            ("Searching", "搜索中…"),
-            ("Reading", "读取文件…"),
-            ("Writing", "写入文件…"),
-            ("Editing", "编辑中…"),
-            ("Compiling", "编译中…"),
-            ("Generating", "生成中…"),
-            ("Processing", "处理中…"),
-            ("Harmonizing", "整合中…"),
-            ("Perusing", "审阅中…"),
-            ("Hashing", "计算中…"),
-            ("Initializing", "初始化…"),
-            ("Connecting", "连接中…"),
+    // MARK: - 终端解析
+
+    /// 检测 Claude 活动状态
+    static func detectActivity(_ lines: [String]) -> String {
+        let activities: [(String, String)] = [
+            ("Thinking", "思考中…"), ("Reasoning", "推理中…"), ("Analyzing", "分析中…"),
+            ("Searching", "搜索中…"), ("Reading", "读取文件…"), ("Writing", "写入文件…"),
+            ("Editing", "编辑中…"), ("Compiling", "编译中…"), ("Generating", "生成中…"),
+            ("Processing", "处理中…"), ("Harmonizing", "整合中…"), ("Perusing", "审阅中…"),
+            ("Hashing", "计算中…"), ("Initializing", "初始化…"), ("Connecting", "连接中…"),
         ]
+        // 只检查屏幕中间区域（跳过顶部启动信息和底部状态栏）
+        let midLines = lines.dropFirst(3).dropLast(8)
+        let text = midLines.joined(separator: " ")
         for (pattern, label) in activities {
             if text.contains(pattern) { return label }
         }
         return ""
     }
 
-    /// 检测 idle prompt — Claude 回复完成的标志
-    /// 屏幕最后几行出现 ❯ 且后面没有活动指示
-    private func detectIdlePrompt(_ lines: [String]) -> Bool {
-        let lastLines = lines.suffix(5)
-        for line in lastLines {
+    /// 检测 idle prompt — 从底部向上搜索，跳过状态栏/鸭子区域
+    /// Claude 完成回复后屏幕结构：
+    ///   ❯ user_input       ← 用户输入
+    ///   ● response...      ← Claude 回复
+    ///   ❯                  ← idle prompt（空的，等待输入）
+    ///   ────────────        ← 分隔线
+    ///   [Opus 4.6 ...]     ← 状态栏
+    ///   Context 4%         ← 上下文用量
+    ///   ...Loamwaddle...   ← 鸭子
+    static func detectIdlePrompt(_ lines: [String]) -> Bool {
+        // 从底部向上搜索，跳过空行和状态栏噪音
+        for line in lines.reversed() {
             let t = line.trimmingCharacters(in: .whitespaces)
-            // 空的 prompt 或带光标的 prompt
-            if t == "❯" || t.hasPrefix("❯ ") {
-                // 确认不在活动中
-                let joinedLast = lastLines.joined(separator: " ")
-                let activePatterns = ["Thinking", "Reasoning", "Analyzing", "Searching",
-                                      "Reading", "Writing", "Editing", "Compiling",
-                                      "Generating", "Processing", "Harmonizing", "Perusing",
-                                      "Hashing", "Initializing", "Connecting"]
-                let isActive = activePatterns.contains { joinedLast.contains($0) }
-                return !isActive
-            }
+
+            // 跳过空行
+            if t.isEmpty { continue }
+
+            // 跳过状态栏/鸭子区域的噪音
+            if isStatusOrDecoration(t) { continue }
+
+            // 找到了有意义的行
+            // idle prompt：单独的 ❯ 或 ❯ 后面只有空白/光标
+            if t == "❯" || t == ">" { return true }
+
+            // 如果找到了 ❯ 开头后面有文本，说明正在输入，也算 idle
+            if t.hasPrefix("❯ ") || t.hasPrefix("> ") { return true }
+
+            // 如果找到了 ● 开头（Claude 回复行），且后面没有活动指示，可能 Claude 刚回复完
+            if t.hasPrefix("●") { return true }
+
+            // 找到其他内容，不是 idle
+            return false
         }
         return false
     }
 
-    // MARK: - 屏幕内容扫描
+    /// 判断是否为状态栏、分隔线、鸭子等装饰内容
+    static func isStatusOrDecoration(_ line: String) -> Bool {
+        let t = line.trimmingCharacters(in: .whitespaces)
+        if t.isEmpty { return true }
+        // 纯装饰字符
+        if t.allSatisfy({ "─━═_=-~│┃".contains($0) }) { return true }
+        // 状态栏关键词
+        let statusPatterns = [
+            "Context", "Usage", "Weekly", "resets in", "git:(", "git:",
+            "Opus", "Sonnet", "Haiku", "1M context", "200K context",
+            "Loamwaddle", "<(", "._>", "`--'", "^^^", "___",
+            "main*)", "main!?", "main)",
+        ]
+        return statusPatterns.contains { t.contains($0) }
+    }
 
-    /// 去除 ANSI 转义码和特殊字符
+    /// 从屏幕提取最后一个回复（当 scanConversations 没找到时的兜底）
+    static func extractLastResponse(_ lines: [String]) -> String {
+        // 从底部向上找到最后一个 ❯ prompt（idle），然后向上收集直到遇到上一个 ❯（用户输入）
+        var idleIdx = -1
+        for i in stride(from: lines.count - 1, through: 0, by: -1) {
+            let t = lines[i].trimmingCharacters(in: .whitespaces)
+            if isStatusOrDecoration(t) || t.isEmpty { continue }
+            if t == "❯" || t.hasPrefix("❯ ") {
+                idleIdx = i
+                break
+            }
+            break
+        }
+        guard idleIdx > 0 else { return "" }
+
+        // 从 idle prompt 向上收集回复行
+        var responseLines: [String] = []
+        for i in stride(from: idleIdx - 1, through: 0, by: -1) {
+            let t = lines[i].trimmingCharacters(in: .whitespaces)
+            // 遇到用户 prompt，停止
+            if t.hasPrefix("❯ ") && t.count > 2 { break }
+            if !t.isEmpty && !isNoiseLine(t) {
+                responseLines.insert(t, at: 0)
+            }
+        }
+
+        let response = cleanAssistantText(responseLines.joined(separator: "\n"))
+        return response.count > 2 ? response : ""
+    }
+
     static func stripAnsi(_ line: String) -> String {
         var result = ""
         var i = line.startIndex
@@ -729,17 +616,15 @@ struct ClaudeChatView: View {
         return result.trimmingCharacters(in: .whitespaces)
     }
 
-    /// 判断行是否为 Claude TUI 噪音
     static func isNoiseLine(_ line: String) -> Bool {
         let t = line.trimmingCharacters(in: .whitespaces)
         if t.isEmpty || t.count <= 2 { return true }
         if t.allSatisfy({ "─━_=-~".contains($0) }) { return true }
-
         let noisePatterns = [
             "Claude Code v", "with medium effort", "with high effort", "with low effort",
             "Claude Max", "Claude API", "Loamwaddle",
             "Context", "git:(", "git:", "main*)", "main!?",
-            "<(", "._>", "`--'", "^^^",
+            "<(", "._>", "`--'", "^^^", "___",
             "1M context", "200K context",
             "Harmonizing", "Perusing", "Thinking", "Hashing",
             "Compiling", "Reasoning", "Analyzing", "Generating",
@@ -757,11 +642,11 @@ struct ClaudeChatView: View {
         var items: [ClaudeChatItem] = []
         let cleaned = lines.map { stripAnsi($0) }
 
-        // 找到 Claude Code 启动标志，只扫描之后的内容
+        // 找到 Claude Code 启动标志
         var startIndex = 0
         for (idx, line) in cleaned.enumerated() {
             let t = line.trimmingCharacters(in: .whitespaces)
-            if t.contains("Claude Code v") || t.contains("Opus") || t.contains("Sonnet") || t.contains("Haiku") {
+            if t.contains("Claude Code v") {
                 startIndex = idx + 1
             }
         }
@@ -770,35 +655,41 @@ struct ClaudeChatView: View {
         while i < cleaned.count {
             let line = cleaned[i].trimmingCharacters(in: .whitespaces)
 
+            // 检测用户输入：❯ text
             if let userText = extractUserPrompt(line) {
                 if !userText.isEmpty {
                     items.append(ClaudeChatItem(
-                        id: "scan-user-\(items.count)",
-                        role: .user,
-                        content: userText,
-                        timestamp: Date()
+                        id: "scan-user-\(items.count)", role: .user,
+                        content: userText, timestamp: Date()
                     ))
                 }
                 i += 1
 
-                // 收集 Claude 回复
+                // 收集 Claude 回复（直到下一个 ❯ 或屏幕结束）
                 var responseLines: [String] = []
                 while i < cleaned.count {
                     let nextLine = cleaned[i].trimmingCharacters(in: .whitespaces)
                     if extractUserPrompt(nextLine) != nil { break }
+                    // 空的 ❯（idle prompt），停止
+                    if nextLine == "❯" || nextLine == ">" { i += 1; break }
+                    // 跳过状态栏
+                    if isStatusOrDecoration(nextLine) { i += 1; continue }
+                    // 跳过噪音
                     if !isNoiseLine(nextLine) {
-                        responseLines.append(nextLine)
+                        // 去掉 ● 前缀（Claude 回复标记）
+                        let content = nextLine.hasPrefix("●") ? String(nextLine.dropFirst()).trimmingCharacters(in: .whitespaces) : nextLine
+                        if !content.isEmpty {
+                            responseLines.append(content)
+                        }
                     }
                     i += 1
                 }
 
                 let response = cleanAssistantText(responseLines.joined(separator: "\n"))
-                if !response.isEmpty && response.count > 3 {
+                if !response.isEmpty && response.count > 1 {
                     items.append(ClaudeChatItem(
-                        id: "scan-assist-\(items.count)",
-                        role: .assistant,
-                        content: response,
-                        timestamp: Date()
+                        id: "scan-assist-\(items.count)", role: .assistant,
+                        content: response, timestamp: Date()
                     ))
                 }
             } else {
@@ -819,9 +710,7 @@ struct ClaudeChatView: View {
         var result = text
         let bulletPrefixes = ["● ", "✦ ", "• ", "○ ", "◉ "]
         for prefix in bulletPrefixes {
-            if result.hasPrefix(prefix) {
-                result = String(result.dropFirst(prefix.count))
-            }
+            if result.hasPrefix(prefix) { result = String(result.dropFirst(prefix.count)) }
         }
         return result.trimmingCharacters(in: .whitespacesAndNewlines)
     }
