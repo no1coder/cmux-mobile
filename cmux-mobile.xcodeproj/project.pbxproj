@@ -49,6 +49,7 @@
 		8B663AA0F946AAB067B312AF /* MesloLGSNerdFontMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */; };
 		910E19A9E281AF4ADD857F8D /* ConnectionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE66DDACD8A2A2355AEA418 /* ConnectionStatus.swift */; };
 		92C0ADD29D44D996759AC351 /* FontLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8BF77D802A5642E9BB7C267 /* FontLoader.swift */; };
+		9918385E852B8F779D84C16C /* ClaudeChatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */; };
 		9B1B2B94231330A76CF50FD3 /* MessageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACAD2F7EFC4E1C9552D9D50 /* MessageStore.swift */; };
 		9E715B8C84C212893A8A9118 /* DisconnectRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFEF7F60ACF11F278EBA58F3 /* DisconnectRecoveryTests.swift */; };
 		A190F7FE73EAC45D1CF61419 /* MesloLGSNerdFontMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */; };
@@ -58,6 +59,7 @@
 		AA2740DAEE87B019E9A3A597 /* ClaudeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B122B3E1821092D4C3C78738 /* ClaudeMessage.swift */; };
 		AA4382ACC31E0C3AC3001FC7 /* DeviceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D844DDB482FC6F9572686EFD /* DeviceStore.swift */; };
 		ADC3B0B1C58061ACB4ACA158 /* TerminalListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01095C093AB07DC9F57E1E91 /* TerminalListView.swift */; };
+		AEAE4988335C2C4B8B80030B /* ClaudeChatItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */; };
 		B3839D5501ED5B28624F792C /* ApprovalManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209D8E1A48C17AFC907DA8A3 /* ApprovalManagerTests.swift */; };
 		B7BB592B87AE1CE957C5D431 /* ClaudeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B122B3E1821092D4C3C78738 /* ClaudeMessage.swift */; };
 		B81B4FD5566A7D3620F44513 /* MesloLGSNerdFontMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4035B4AFCAD2BA015D82A08 /* MesloLGSNerdFontMono-Bold.ttf */; };
@@ -101,8 +103,9 @@
 		04569613F9A6AA3E9EA322B6 /* DeviceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListView.swift; sourceTree = "<group>"; };
 		0697189AF6714DB55223B968 /* InputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputManager.swift; sourceTree = "<group>"; };
 		0DF6F7FFA1C6736D16036F97 /* ANSIParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParserTests.swift; sourceTree = "<group>"; };
+		0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeChatItem.swift; sourceTree = "<group>"; };
 		100C1F13A405120827D8A0B8 /* MesloLGSNerdFontMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "MesloLGSNerdFontMono-Regular.ttf"; sourceTree = "<group>"; };
-		1699BAEF2B052C22C6A66CD8 /* cmux mobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "cmux mobile.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1699BAEF2B052C22C6A66CD8 /* cmux-mobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "cmux-mobile.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		18BF90B99BCFA6517E1CAFCE /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		209D8E1A48C17AFC907DA8A3 /* ApprovalManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalManagerTests.swift; sourceTree = "<group>"; };
 		23877578361466A0A1163EA2 /* cmux-mobileTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = "cmux-mobileTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -183,6 +186,7 @@
 			isa = PBXGroup;
 			children = (
 				BC23E6B02ABB80410D7E3BD4 /* AnyCodable.swift */,
+				0F29A929A96C20E14ADD6AC2 /* ClaudeChatItem.swift */,
 				EA3CB797631338A34584ACFE /* RelayMessage.swift */,
 				817D23190DC1C620511B8C3C /* ScreenSnapshot.swift */,
 				60B77A75BFF2571D1EB22615 /* Surface.swift */,
@@ -308,7 +312,7 @@
 		F0A163C1F7E3439ECB8F0603 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1699BAEF2B052C22C6A66CD8 /* cmux mobile.app */,
+				1699BAEF2B052C22C6A66CD8 /* cmux-mobile.app */,
 				23877578361466A0A1163EA2 /* cmux-mobileTests.xctest */,
 			);
 			name = Products;
@@ -351,7 +355,7 @@
 			packageProductDependencies = (
 			);
 			productName = "cmux-mobile";
-			productReference = 1699BAEF2B052C22C6A66CD8 /* cmux mobile.app */;
+			productReference = 1699BAEF2B052C22C6A66CD8 /* cmux-mobile.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -362,6 +366,11 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					C60F5F21CF796CC40CC09CF6 = {
+						DevelopmentTeam = "";
+					};
+				};
 			};
 			buildConfigurationList = DE08A8FB38048A63F8E87158 /* Build configuration list for PBXProject "cmux-mobile" */;
 			developmentRegion = en;
@@ -417,6 +426,7 @@
 				B3839D5501ED5B28624F792C /* ApprovalManagerTests.swift in Sources */,
 				32299DF6F0C608EAB8079A5A /* ApprovalRequestView.swift in Sources */,
 				0032D90423878E794A25F0CD /* BrowserPreviewView.swift in Sources */,
+				9918385E852B8F779D84C16C /* ClaudeChatItem.swift in Sources */,
 				D0939651CFB37D2D30B0D992 /* ClaudeChatView.swift in Sources */,
 				AA2740DAEE87B019E9A3A597 /* ClaudeMessage.swift in Sources */,
 				CE6ECE0D0460CC75BCA43BCE /* ClaudeOutputParser.swift in Sources */,
@@ -461,6 +471,7 @@
 				F654864958D7829CFA79764F /* ApprovalManager.swift in Sources */,
 				589B0DB7975913F0F4F00A8F /* ApprovalRequestView.swift in Sources */,
 				E4BF6AD42F7FB27E0E48067B /* BrowserPreviewView.swift in Sources */,
+				AEAE4988335C2C4B8B80030B /* ClaudeChatItem.swift in Sources */,
 				C7D9C093D21EB94567DC3659 /* ClaudeChatView.swift in Sources */,
 				B7BB592B87AE1CE957C5D431 /* ClaudeMessage.swift in Sources */,
 				3CCE97C9FA614389E11916BA /* ClaudeOutputParser.swift in Sources */,
@@ -509,7 +520,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "SupportingFiles/cmux-mobile.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 69A75B6U2B;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = SupportingFiles/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -529,7 +540,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "SupportingFiles/cmux-mobile.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 69A75B6U2B;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = SupportingFiles/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -8,6 +8,14 @@ final class MessageStore: ObservableObject {
     @Published var snapshots: [String: ScreenSnapshot] = [:]
     @Published var lastSeq: UInt64 = 0
 
+    /// Claude 聊天消息（按 surfaceID 索引，跨视图持久化）
+    @Published var claudeChats: [String: [ClaudeChatItem]] = [:]
+
+    /// 上一次终端内容哈希（按 surfaceID 索引）
+    var lastTerminalHash: [String: Int] = [:]
+    /// 上一次干净文本（按 surfaceID 索引）
+    var lastCleanText: [String: String] = [:]
+
     /// 关联的审批管理器，由外部注入（弱引用避免循环）
     weak var approvalManager: ApprovalManager?
 
