@@ -10,6 +10,7 @@ struct ClaudeChatView: View {
 
     @State private var inputText = ""
     @State private var isThinking = false
+    @State private var activityLabel = ""
     @State private var sessionInfo: (model: String, project: String, context: String) = ("", "", "")
     @State private var refreshTask: Task<Void, Never>?
     @FocusState private var isInputFocused: Bool
@@ -186,11 +187,21 @@ struct ClaudeChatView: View {
     private var thinkingView: some View {
         HStack(alignment: .top, spacing: 8) {
             claudeAvatar
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 ProgressView().scaleEffect(0.6).tint(.purple.opacity(0.6))
-                Text("思考中…").font(.system(size: 12)).foregroundStyle(.white.opacity(0.3)).italic()
+                Text(statusLabel)
+                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.4)).italic()
             }.padding(.top, 3)
             Spacer()
+        }
+    }
+
+    /// 当前状态显示文本
+    private var statusLabel: String {
+        switch activityLabel {
+        case "tool_running": return "执行工具中…"
+        case "thinking": return "思考中…"
+        default: return "处理中…"
         }
     }
 
@@ -377,6 +388,11 @@ struct ClaudeChatView: View {
                 lastSeq = totalSeq
             }
 
+            // 更新整体状态
+            let status = resultDict["status"] as? String ?? "idle"
+            activityLabel = status
+            isThinking = (status == "thinking" || status == "tool_running")
+
             processJsonlMessages(messages)
         }
     }
@@ -391,13 +407,15 @@ struct ClaudeChatView: View {
             let blocks = msg["content"] as? [[String: Any]] ?? []
 
             if type == "user" {
-                // 用户消息
-                let text = blocks.compactMap { $0["text"] as? String }.joined()
-                if !text.isEmpty {
-                    // 检查是否已存在（本地发送时已添加）
-                    let exists = chatMessages.contains { $0.role == .user && $0.content == text }
-                    if !exists {
-                        newItems.append(ClaudeChatItem(id: uuid, role: .user, content: text, timestamp: Date()))
+                // 用户消息：只显示纯文本，跳过 tool_result
+                let textBlocks = blocks.filter { ($0["type"] as? String) == "text" }
+                if !textBlocks.isEmpty {
+                    let text = textBlocks.compactMap { $0["text"] as? String }.joined()
+                    if !text.isEmpty {
+                        let exists = chatMessages.contains { $0.role == .user && $0.content == text }
+                        if !exists {
+                            newItems.append(ClaudeChatItem(id: uuid, role: .user, content: text, timestamp: Date()))
+                        }
                     }
                 }
             } else if type == "assistant" {
