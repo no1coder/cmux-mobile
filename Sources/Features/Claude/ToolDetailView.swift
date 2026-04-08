@@ -13,32 +13,13 @@ struct ToolDetailView: View {
                 // 工具头部
                 header
 
-                // 输入参数
-                if !input.isEmpty {
-                    section(title: "输入") {
-                        codeBlock(input)
-                    }
-                }
-
-                // 执行结果
-                if let result, !result.isEmpty {
-                    section(title: state == .error ? "错误" : "输出") {
-                        codeBlock(result, isError: state == .error)
-                    }
-                } else if state == .running {
-                    HStack(spacing: 8) {
-                        ProgressView().scaleEffect(0.7).tint(.purple)
-                        Text("执行中…")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.4))
-                    }
-                    .padding(.horizontal, 16)
-                } else if state == .completed && (result == nil || result?.isEmpty == true) {
-                    Text("执行完成，无输出")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.3))
-                        .padding(.horizontal, 16)
-                }
+                // 专属工具渲染器
+                ToolRendererFactory.renderer(
+                    name: toolName,
+                    input: input,
+                    result: result,
+                    state: state
+                )
 
                 Spacer()
             }

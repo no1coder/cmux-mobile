@@ -110,6 +110,26 @@
 		SESS002BUILDF1LE00000002 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS002FILEREF00000000001 /* SessionManager.swift */; };
 		SESS003BUILDF1LE00000001 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS003FILEREF00000000001 /* SessionListView.swift */; };
 		SESS003BUILDF1LE00000002 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SESS003FILEREF00000000001 /* SessionListView.swift */; };
+			TR00BUILD1F00000001 /* ToolRendererFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000001 /* ToolRendererFactory.swift */; };
+			TR00BUILD2F00000001 /* ToolRendererFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000001 /* ToolRendererFactory.swift */; };
+			TR00BUILD1F00000002 /* BashToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000002 /* BashToolView.swift */; };
+			TR00BUILD2F00000002 /* BashToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000002 /* BashToolView.swift */; };
+			TR00BUILD1F00000003 /* ReadToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000003 /* ReadToolView.swift */; };
+			TR00BUILD2F00000003 /* ReadToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000003 /* ReadToolView.swift */; };
+			TR00BUILD1F00000004 /* EditToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000004 /* EditToolView.swift */; };
+			TR00BUILD2F00000004 /* EditToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000004 /* EditToolView.swift */; };
+			TR00BUILD1F00000005 /* WriteToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000005 /* WriteToolView.swift */; };
+			TR00BUILD2F00000005 /* WriteToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000005 /* WriteToolView.swift */; };
+			TR00BUILD1F00000006 /* GrepToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000006 /* GrepToolView.swift */; };
+			TR00BUILD2F00000006 /* GrepToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000006 /* GrepToolView.swift */; };
+			TR00BUILD1F00000007 /* GlobToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000007 /* GlobToolView.swift */; };
+			TR00BUILD2F00000007 /* GlobToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000007 /* GlobToolView.swift */; };
+			TR00BUILD1F00000008 /* TodoToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000008 /* TodoToolView.swift */; };
+			TR00BUILD2F00000008 /* TodoToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000008 /* TodoToolView.swift */; };
+			TR00BUILD1F00000009 /* GenericToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000009 /* GenericToolView.swift */; };
+			TR00BUILD2F00000009 /* GenericToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF00000009 /* GenericToolView.swift */; };
+			TR00BUILD1F0000000A /* ToolInputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF0000000A /* ToolInputParser.swift */; };
+			TR00BUILD2F0000000A /* ToolInputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = TR00FILEREF0000000A /* ToolInputParser.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -180,6 +200,16 @@
 		SESS001FILEREF00000000001 /* ClaudeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSession.swift; sourceTree = "<group>"; };
 		SESS002FILEREF00000000001 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		SESS003FILEREF00000000001 /* SessionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000001 /* ToolRendererFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRendererFactory.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000002 /* BashToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BashToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000003 /* ReadToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000004 /* EditToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000005 /* WriteToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WriteToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000006 /* GrepToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrepToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000007 /* GlobToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000008 /* TodoToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF00000009 /* GenericToolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericToolView.swift; sourceTree = "<group>"; };
+			TR00FILEREF0000000A /* ToolInputParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolInputParser.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -263,6 +293,7 @@
 				5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */,
 				7A1B2C3D4E5F60718293A4B5 /* MarkdownView.swift */,
 				6718ADE8B1C24D9FA3E71B02 /* ToolDetailView.swift */,
+				TR00GROUP000000000001 /* ToolRenderers */,
 			);
 			path = Claude;
 			sourceTree = "<group>";
@@ -374,6 +405,23 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+			TR00GROUP000000000001 /* ToolRenderers */ = {
+				isa = PBXGroup;
+				children = (
+					TR00FILEREF00000001 /* ToolRendererFactory.swift */,
+					TR00FILEREF00000002 /* BashToolView.swift */,
+					TR00FILEREF00000003 /* ReadToolView.swift */,
+					TR00FILEREF00000004 /* EditToolView.swift */,
+					TR00FILEREF00000005 /* WriteToolView.swift */,
+					TR00FILEREF00000006 /* GrepToolView.swift */,
+					TR00FILEREF00000007 /* GlobToolView.swift */,
+					TR00FILEREF00000008 /* TodoToolView.swift */,
+					TR00FILEREF00000009 /* GenericToolView.swift */,
+					TR00FILEREF0000000A /* ToolInputParser.swift */,
+				);
+				path = ToolRenderers;
+				sourceTree = "<group>";
+			};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -483,6 +531,16 @@
 				CE6ECE0D0460CC75BCA43BCE /* ClaudeOutputParser.swift in Sources */,
 				B2C3D4E5F6071829A4B5C602 /* MarkdownView.swift in Sources */,
 				A1B2C3D4E5F647891234AB02 /* ToolDetailView.swift in Sources */,
+				TR00BUILD1F00000001 /* ToolRendererFactory.swift in Sources */,
+				TR00BUILD1F00000002 /* BashToolView.swift in Sources */,
+				TR00BUILD1F00000003 /* ReadToolView.swift in Sources */,
+				TR00BUILD1F00000004 /* EditToolView.swift in Sources */,
+				TR00BUILD1F00000005 /* WriteToolView.swift in Sources */,
+				TR00BUILD1F00000006 /* GrepToolView.swift in Sources */,
+				TR00BUILD1F00000007 /* GlobToolView.swift in Sources */,
+				TR00BUILD1F00000008 /* TodoToolView.swift in Sources */,
+				TR00BUILD1F00000009 /* GenericToolView.swift in Sources */,
+				TR00BUILD1F0000000A /* ToolInputParser.swift in Sources */,
 				910E19A9E281AF4ADD857F8D /* ConnectionStatus.swift in Sources */,
 				30A73A7556EEDAB9EDBFD79F /* ConnectionStatusBadge.swift in Sources */,
 				752311638DD7AC78B651021F /* ConnectionStatusBar.swift in Sources */,
@@ -540,6 +598,16 @@
 				3CCE97C9FA614389E11916BA /* ClaudeOutputParser.swift in Sources */,
 				B2C3D4E5F6071829A4B5C601 /* MarkdownView.swift in Sources */,
 				A1B2C3D4E5F647891234AB01 /* ToolDetailView.swift in Sources */,
+				TR00BUILD2F00000001 /* ToolRendererFactory.swift in Sources */,
+				TR00BUILD2F00000002 /* BashToolView.swift in Sources */,
+				TR00BUILD2F00000003 /* ReadToolView.swift in Sources */,
+				TR00BUILD2F00000004 /* EditToolView.swift in Sources */,
+				TR00BUILD2F00000005 /* WriteToolView.swift in Sources */,
+				TR00BUILD2F00000006 /* GrepToolView.swift in Sources */,
+				TR00BUILD2F00000007 /* GlobToolView.swift in Sources */,
+				TR00BUILD2F00000008 /* TodoToolView.swift in Sources */,
+				TR00BUILD2F00000009 /* GenericToolView.swift in Sources */,
+				TR00BUILD2F0000000A /* ToolInputParser.swift in Sources */,
 				7F3CCAE8644AEB66C0B48902 /* ConnectionStatus.swift in Sources */,
 				EA9397173B55EDE9BAED58AB /* ConnectionStatusBadge.swift in Sources */,
 				3757ED27F56257392E9220F7 /* ConnectionStatusBar.swift in Sources */,
