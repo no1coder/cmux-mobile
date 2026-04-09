@@ -459,13 +459,22 @@ struct ClaudeChatView: View {
         approvalManager.markResolved(requestID: request.requestID, resolution: .rejected)
     }
 
-    /// 通过 Mac 端 RPC 切换模型（Mac 自动操作 /model TUI 菜单）
+    /// 通过 Mac 端 RPC 切换模型（Ctrl+C → --resume + --model 重启）
     private func selectModel(key: String, name: String) {
+        // 立即显示"切换中"反馈
+        withAnimation { modelSwitchFeedback = "正在切换到 \(name)..." }
+
         relayConnection.sendWithResponse([
             "method": "claude.switch_model",
             "params": ["surface_id": surfaceID, "model": key],
         ]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
+            if resultDict["switching"] as? Bool == true {
+                // 异步切换已开始，等待 claude.model_switched 事件
+                // 反馈已在上面显示，事件到达时会更新
+                return
+            }
+            // 旧版 Mac 端或错误响应
             if resultDict["ok"] as? Bool == true {
                 withAnimation { modelSwitchFeedback = "已切换到 \(name)" }
             } else {
@@ -769,7 +778,32 @@ struct ClaudeChatView: View {
 
         // 监听推送事件
         let sid = surfaceID
-        relayConnection.onClaudeUpdate = { payload in
+        relayConnection.onClaudeUpdate = { [weak relayConnection] payload in
+            // 模型切换事件（不含 surface_id 过滤，因为是全局事件）
+            if let event = payload["event"] as? String {
+                switch event {
+                case "claude.model_switching":
+                    let model = payload["model"] as? String ?? ""
+                    withAnimation { modelSwitchFeedback = "正在切换到 \(model)..." }
+                    return
+                case "claude.model_switched":
+                    let model = payload["model"] as? String ?? ""
+                    let ok = payload["ok"] as? Bool ?? false
+                    if ok {
+                        withAnimation { modelSwitchFeedback = "已切换到 \(model)" }
+                    } else {
+                        let error = payload["error"] as? String ?? "切换失败"
+                        withAnimation { modelSwitchFeedback = "⚠️ \(error)" }
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        withAnimation { modelSwitchFeedback = nil }
+                    }
+                    return
+                default:
+                    break
+                }
+            }
+
             let payloadSid = payload["surface_id"] as? String ?? ""
             guard payloadSid == sid else { return }
 
