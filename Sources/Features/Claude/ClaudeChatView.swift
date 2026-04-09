@@ -6,10 +6,10 @@ import UIKit
 struct ClaudeChatView: View {
     let surfaceID: String
     @EnvironmentObject var messageStore: MessageStore
-    @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
+    @EnvironmentObject var approvalManager: ApprovalManager
 
-    @StateObject private var speechRecognizer = SpeechRecognizer()
+    @StateObject private var composeViewModel = ComposeInputViewModel()
     @State private var inputText = ""
     @State private var isThinking = false
     @State private var activityLabel = ""
@@ -24,31 +24,23 @@ struct ClaudeChatView: View {
     @State private var showSlashMenu = false
     /// 是否显示 @ 文件选择器
     @State private var showFilePicker = false
-    @State private var fileList: [FileEntry] = []
+    @State private var fileList: [MentionFileEntry] = []
     /// @ 提及过滤查询（@后输入的字符）
     @State private var mentionQuery = ""
     /// @ 提及当前路径前缀（支持路径遍历）
     @State private var mentionBasePath = ""
-    /// 最近使用的 / 命令（持久化）
-    @AppStorage("recentSlashCommands") private var recentCommandsData = ""
     /// 是否有图片在粘贴板
     @State private var hasPastedImage = false
     /// Token 用量统计
     @State private var tokenUsage: [String: Int] = [:]
-
+    /// Plan 模式缓存（避免每次重新遍历消息列表）
+    @State private var isInPlanMode = false
+    /// 显示模型选择器
+    @State private var showModelPicker = false
+    /// 模型切换成功反馈（非 nil 时显示 toast）
+    @State private var modelSwitchFeedback: String?
     private var chatMessages: [ClaudeChatItem] {
         messageStore.claudeChats[surfaceID] ?? []
-    }
-
-    /// 检测是否处于 Plan 模式（通过 tool_use 名称推断）
-    private var isInPlanMode: Bool {
-        for msg in chatMessages.reversed() {
-            if case .tool(name: let name) = msg.role {
-                if name == "ExitPlanMode" { return false }
-                if name == "EnterPlanMode" { return true }
-            }
-        }
-        return false
     }
 
     var body: some View {
@@ -56,9 +48,58 @@ struct ClaudeChatView: View {
             if isInPlanMode { planModeBanner }
             chatArea
             offlineQueueBanner
-            if showSlashMenu { slashCommandMenu }
-            if showFilePicker { filePickerView }
-            inputBar
+            if showSlashMenu {
+                SlashCommandMenu(
+                    inputText: $inputText,
+                    showSlashMenu: $showSlashMenu,
+                    onSelect: { isInputFocused = true },
+                    onInteractiveCommand: { cmd in
+                        switch cmd {
+                        case .model:
+                            // 先收起键盘，避免 confirmationDialog 被键盘遮挡
+                            isInputFocused = false
+                            // 延迟一帧等键盘开始收起后再弹出 dialog
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showModelPicker = true
+                            }
+                        }
+                    }
+                )
+            }
+            if showFilePicker {
+                FileMentionPicker(
+                    inputText: $inputText,
+                    showFilePicker: $showFilePicker,
+                    fileList: $fileList,
+                    mentionQuery: $mentionQuery,
+                    mentionBasePath: $mentionBasePath,
+                    projectPath: sessionInfo.project
+                )
+            }
+            ChatInputBar(
+                inputText: $inputText,
+                isInputFocused: $isInputFocused,
+                hasPastedImage: hasPastedImage,
+                onSend: send,
+                onDismissPasteImage: { hasPastedImage = false },
+                onAtTap: {
+                    inputText += "@"; isInputFocused = true
+                    loadFileList(); showFilePicker = true; showSlashMenu = false
+                },
+                onSlashTap: {
+                    inputText = "/"; showSlashMenu = true; showFilePicker = false; isInputFocused = true
+                },
+                onCtrlC: { sendKey("c", "ctrl") },
+                onEsc: { sendKey("escape", "") },
+                onCompact: { sendDirect("/compact\n") },
+                onStatus: { sendDirect("/status\n") },
+                onPlan: { sendDirect("/plan\n") },
+                isInPlanMode: isInPlanMode,
+                composeViewModel: composeViewModel,
+                onSendComposed: { message in
+                    sendComposedMessage(message)
+                }
+            )
         }
         .background(CMColors.backgroundPrimary)
         .sheet(item: $selectedTool) { tool in
@@ -84,11 +125,43 @@ struct ClaudeChatView: View {
                 .presentationDetents([.medium, .large])
             }
         }
+        .overlay(alignment: .top) {
+            // 模型切换成功提示
+            if let feedback = modelSwitchFeedback {
+                HStack(spacing: 6) {
+                    Image(systemName: feedback.hasPrefix("⚠️") ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                        .foregroundStyle(feedback.hasPrefix("⚠️") ? .orange : .green)
+                    Text(feedback)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                .background(Color.black.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.top, 12)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .confirmationDialog(
+            String(localized: "model.picker.title", defaultValue: "切换模型"),
+            isPresented: $showModelPicker,
+            titleVisibility: .visible
+        ) {
+            // 发送 /model 命令后，用数字键选择模型（Claude Code 的交互方式）
+            Button("Default (推荐)") { selectModel(key: "default", name: "Default") }
+            Button("Sonnet 4.6") { selectModel(key: "sonnet", name: "Sonnet") }
+            Button("Haiku 4.5") { selectModel(key: "haiku", name: "Haiku") }
+            Button("Opus 4.6 (1M context)") { selectModel(key: "opus", name: "Opus") }
+            Button(String(localized: "model.picker.cancel", defaultValue: "取消"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "model.picker.desc", defaultValue: "切换后应用于当前及未来的 Claude Code 会话"))
+        }
         .onAppear {
             // 保留已有消息避免闪烁，仅首次加载时重置序号
             if chatMessages.isEmpty {
                 lastSeq = 0
             }
+            hasPastedImage = UIPasteboard.general.hasImages
             fetchMessages()
             // 订阅 Mac 端推送（文件监听），保留低频轮询作为降级
             startWatching()
@@ -99,15 +172,8 @@ struct ClaudeChatView: View {
             stopWatching()
         }
         .onChange(of: inputText) { _, newValue in handleInputChange(newValue) }
-        .onChange(of: speechRecognizer.isRecording) { _, recording in
-            // 录音停止时，将转写文本追加到输入框
-            if !recording {
-                let text = speechRecognizer.transcript
-                if !text.isEmpty {
-                    inputText += text
-                    isInputFocused = true
-                }
-            }
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+            hasPastedImage = UIPasteboard.general.hasImages
         }
     }
 
@@ -121,17 +187,33 @@ struct ClaudeChatView: View {
                     if chatMessages.isEmpty && !isThinking {
                         Text("向 Claude 发送消息开始对话")
                             .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.2))
+                            .foregroundStyle(CMColors.textTertiary)
                             .padding(.top, 20)
                     }
                     ForEach(chatMessages) { msg in
-                        messageRow(msg).id(msg.id)
+                        ChatMessageRow(msg: msg) { tool in
+                            selectedTool = tool
+                        }.id(msg.id)
                     }
+                    // 内嵌审批请求（当前 surface 的待处理请求）
+                    ForEach(pendingApprovalsForSurface) { request in
+                        InlineApprovalView(
+                            request: request,
+                            onApprove: { handleInlineApprove(request) },
+                            onReject: { handleInlineReject(request) }
+                        )
+                        .id("approval-\(request.requestID)")
+                    }
+
                     if isThinking {
                         thinkingView.id("thinking")
                     }
                     Color.clear.frame(height: 4).id("end")
                 }.padding(.horizontal, 14)
+            }
+            .onTapGesture {
+                // 点击聊天区域收起键盘
+                isInputFocused = false
             }
             .onChange(of: chatMessages.count) { _, _ in
                 withAnimation(.easeOut(duration: 0.15)) {
@@ -153,12 +235,12 @@ struct ClaudeChatView: View {
                         .padding(.horizontal, 10).padding(.vertical, 3)
                         .background(Color.purple.opacity(0.12)).clipShape(Capsule())
                     if !sessionInfo.context.isEmpty {
-                        Text(sessionInfo.context).font(.system(size: 11)).foregroundStyle(.white.opacity(0.4))
+                        Text(sessionInfo.context).font(.system(size: 11)).foregroundStyle(CMColors.textTertiary)
                     }
                 }
             }
             if !sessionInfo.project.isEmpty {
-                Text(sessionInfo.project).font(.system(size: 11, design: .monospaced)).foregroundStyle(.white.opacity(0.3))
+                Text(sessionInfo.project).font(.system(size: 11, design: .monospaced)).foregroundStyle(CMColors.textTertiary)
             }
             // Token 用量
             if !tokenUsage.isEmpty {
@@ -171,100 +253,6 @@ struct ClaudeChatView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 4)
             }
-        }
-    }
-
-    // MARK: - 消息渲染
-
-    @ViewBuilder
-    private func messageRow(_ msg: ClaudeChatItem) -> some View {
-        switch msg.role {
-        case .user:
-            HStack {
-                Spacer(minLength: 50)
-                Text(msg.content).font(.system(size: 15)).foregroundStyle(.white)
-                    .padding(.horizontal, 14).padding(.vertical, 10)
-                    .background(CMColors.userBubble)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            }
-        case .assistant:
-            HStack(alignment: .top, spacing: 8) {
-                claudeAvatar
-                markdownText(msg.content)
-                Spacer(minLength: 20)
-            }
-        case .tool(name: let name):
-            Button {
-                selectedTool = msg
-            } label: {
-                HStack(alignment: .top, spacing: 8) {
-                    Color.clear.frame(width: 26)
-                    HStack(spacing: 0) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 4) {
-                                Image(systemName: toolIcon(name)).font(.system(size: 10)).foregroundStyle(toolColor(name))
-                                Text(name).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.6))
-                            }
-                            if !msg.content.isEmpty {
-                                Text(msg.content).font(.system(size: 11, design: .monospaced))
-                                    .foregroundStyle(.white.opacity(0.35)).lineLimit(2)
-                                    .multilineTextAlignment(.leading)
-                            }
-                        }
-                        Spacer(minLength: 8)
-                        // 状态图标
-                        toolStateIcon(msg.toolState)
-                    }
-                    .padding(10).background(Color.white.opacity(0.04))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    Spacer(minLength: 20)
-                }
-            }
-            .buttonStyle(.plain)
-        case .system:
-            HStack {
-                Spacer()
-                Text(msg.content).font(.system(size: 11)).foregroundStyle(.white.opacity(0.2))
-                Spacer()
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func toolStateIcon(_ state: ClaudeChatItem.ToolState) -> some View {
-        switch state {
-        case .running:
-            ProgressView().scaleEffect(0.5).tint(.orange).frame(width: 16, height: 16)
-        case .completed:
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(.green.opacity(0.6))
-        case .error:
-            Image(systemName: "xmark.circle.fill").font(.system(size: 12)).foregroundStyle(.red.opacity(0.6))
-        case .none:
-            Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.white.opacity(0.2))
-        }
-    }
-
-    private func toolColor(_ name: String) -> Color {
-        switch name {
-        case "Read": return .blue
-        case "Write", "Edit": return .orange
-        case "Bash": return .green
-        case "Grep", "Glob": return .cyan
-        case "Agent", "Task": return .purple
-        default: return .gray
-        }
-    }
-
-    private func toolIcon(_ name: String) -> String {
-        switch name {
-        case "Read": return "doc.text"
-        case "Write": return "doc.badge.plus"
-        case "Edit": return "pencil"
-        case "Bash": return "terminal"
-        case "Grep": return "magnifyingglass"
-        case "Glob": return "folder.badge.questionmark"
-        case "Agent": return "person.2"
-        default: return "terminal"
         }
     }
 
@@ -283,7 +271,7 @@ struct ClaudeChatView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.15))
+                    .background(Color(UIColor.systemFill))
                     .clipShape(Capsule())
             }
         }
@@ -293,25 +281,16 @@ struct ClaudeChatView: View {
         .background(Color.purple.opacity(0.7))
     }
 
-    private var claudeAvatar: some View {
-        ZStack {
-            Circle().fill(Color.purple.opacity(0.15)).frame(width: 26, height: 26)
-            Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.purple)
-        }
-    }
-
-    /// Markdown 渲染（支持 # 标题、代码块、表格、列表等块级元素）
-    private func markdownText(_ content: String) -> some View {
-        MarkdownView(content: content)
-    }
-
     private var thinkingView: some View {
         HStack(alignment: .top, spacing: 8) {
-            claudeAvatar
+            ZStack {
+                Circle().fill(Color.purple.opacity(0.15)).frame(width: 26, height: 26)
+                Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.purple)
+            }
             HStack(spacing: 6) {
                 ProgressView().scaleEffect(0.6).tint(.purple.opacity(0.6))
                 Text(statusLabel)
-                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.4)).italic()
+                    .font(.system(size: 12)).foregroundStyle(CMColors.textTertiary).italic()
             }.padding(.top, 3)
             Spacer()
         }
@@ -323,329 +302,6 @@ struct ClaudeChatView: View {
         case "tool_running": return "执行工具中…"
         case "thinking": return "思考中…"
         default: return "处理中…"
-        }
-    }
-
-    // MARK: - / 命令菜单
-
-    /// 命令分类定义
-    private struct SlashCommand {
-        let cmd: String
-        let desc: String
-        let category: String
-        let shortcut: String?
-
-        init(_ cmd: String, _ desc: String, _ category: String, shortcut: String? = nil) {
-            self.cmd = cmd; self.desc = desc; self.category = category; self.shortcut = shortcut
-        }
-    }
-
-    private let slashCommands: [SlashCommand] = [
-        // 常用
-        SlashCommand("/compact", "压缩上下文", "常用", shortcut: "⌘⇧C"),
-        SlashCommand("/status", "查看状态", "常用"),
-        SlashCommand("/clear", "清空对话", "常用"),
-        SlashCommand("/help", "帮助", "常用"),
-        SlashCommand("/cost", "费用统计", "常用"),
-        // 项目
-        SlashCommand("/init", "初始化项目", "项目"),
-        SlashCommand("/review", "代码审查", "项目"),
-        SlashCommand("/bug", "报告/调试 Bug", "项目"),
-        SlashCommand("/terminal-setup", "终端环境配置", "项目"),
-        // 配置
-        SlashCommand("/config", "配置", "配置"),
-        SlashCommand("/permissions", "权限管理", "配置"),
-        SlashCommand("/memory", "记忆管理", "配置"),
-        SlashCommand("/allowed-tools", "管理允许的工具", "配置"),
-        // 工具
-        SlashCommand("/mcp", "MCP 服务", "工具"),
-        SlashCommand("/model", "切换模型", "工具"),
-        SlashCommand("/vim", "Vim 模式", "工具"),
-        SlashCommand("/doctor", "诊断", "工具"),
-        SlashCommand("/listen", "监听模式", "工具"),
-        SlashCommand("/install-github-app", "安装 GitHub App", "工具"),
-    ]
-
-    /// 最近使用的命令列表
-    private var recentCommands: [String] {
-        recentCommandsData.isEmpty ? [] : recentCommandsData.components(separatedBy: ",")
-    }
-
-    /// 记录最近使用的命令
-    private func trackRecentCommand(_ cmd: String) {
-        var recents = recentCommands.filter { $0 != cmd }
-        recents.insert(cmd, at: 0)
-        let trimmed = Array(recents.prefix(5))
-        recentCommandsData = trimmed.joined(separator: ",")
-    }
-
-    private var slashCommandMenu: some View {
-        let query = String(inputText.dropFirst()).lowercased()
-        let filtered = query.isEmpty ? slashCommands : slashCommands.filter { $0.cmd.contains(query) }
-
-        // 按分类分组
-        let categories = ["常用", "项目", "配置", "工具"]
-        let grouped = Dictionary(grouping: filtered) { $0.category }
-
-        // 最近使用的命令（仅在无搜索时显示）
-        let recentItems: [SlashCommand] = query.isEmpty
-            ? recentCommands.compactMap { cmd in slashCommands.first { $0.cmd == cmd } }
-            : []
-
-        return ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                // 最近使用
-                if !recentItems.isEmpty {
-                    sectionHeader("最近使用")
-                    ForEach(recentItems, id: \.cmd) { item in
-                        slashCommandRow(item)
-                    }
-                }
-
-                // 分类列表
-                ForEach(categories, id: \.self) { category in
-                    if let items = grouped[category], !items.isEmpty {
-                        sectionHeader(category)
-                        ForEach(items, id: \.cmd) { item in
-                            slashCommandRow(item)
-                        }
-                    }
-                }
-            }
-        }.frame(maxHeight: 260).background(CMColors.menuBackground)
-    }
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white.opacity(0.25))
-            .textCase(.uppercase)
-            .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 4)
-    }
-
-    private func slashCommandRow(_ item: SlashCommand) -> some View {
-        Button {
-            inputText = item.cmd
-            showSlashMenu = false
-            isInputFocused = true
-            trackRecentCommand(item.cmd)
-        } label: {
-            HStack {
-                Text(item.cmd)
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.orange)
-                Spacer()
-                if let shortcut = item.shortcut {
-                    Text(shortcut)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.2))
-                        .padding(.trailing, 4)
-                }
-                Text(item.desc)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.3))
-            }.padding(.horizontal, 16).padding(.vertical, 10)
-        }
-    }
-
-    // MARK: - @ 文件选择器
-
-    struct FileEntry: Equatable { let name: String; let isDirectory: Bool }
-
-    /// 根据 mentionQuery 模糊过滤的文件列表
-    private var filteredFileList: [FileEntry] {
-        guard !mentionQuery.isEmpty else { return fileList }
-        let query = mentionQuery.lowercased()
-        return fileList.filter { fuzzyMatch(query: query, target: $0.name.lowercased()) }
-    }
-
-    /// 简单模糊匹配：查询字符按顺序出现在目标中
-    private func fuzzyMatch(query: String, target: String) -> Bool {
-        var targetIdx = target.startIndex
-        for ch in query {
-            guard let found = target[targetIdx...].firstIndex(of: ch) else { return false }
-            targetIdx = target.index(after: found)
-        }
-        return true
-    }
-
-    private var filePickerView: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Image(systemName: "doc.text").font(.system(size: 12)).foregroundStyle(.blue)
-                if mentionBasePath.isEmpty {
-                    Text("选择文件").font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.6))
-                } else {
-                    Text(mentionBasePath)
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.blue.opacity(0.6))
-                        .lineLimit(1)
-                }
-                Spacer()
-                if !mentionQuery.isEmpty {
-                    Text("\(filteredFileList.count) 个结果")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.white.opacity(0.2))
-                }
-                Button { dismissMentionPicker() } label: {
-                    Image(systemName: "xmark").font(.system(size: 10)).foregroundStyle(.white.opacity(0.3))
-                }
-            }.padding(.horizontal, 16).padding(.vertical, 8)
-
-            if fileList.isEmpty {
-                HStack {
-                    ProgressView().scaleEffect(0.6).tint(.blue)
-                    Text("加载…").font(.system(size: 12)).foregroundStyle(.white.opacity(0.3))
-                }.padding(.horizontal, 16).padding(.vertical, 12)
-            } else if filteredFileList.isEmpty {
-                HStack {
-                    Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.white.opacity(0.2))
-                    Text("无匹配文件").font(.system(size: 12)).foregroundStyle(.white.opacity(0.3))
-                }.padding(.horizontal, 16).padding(.vertical, 12)
-            } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(filteredFileList, id: \.name) { file in
-                            Button {
-                                if file.isDirectory {
-                                    // 路径遍历：进入子目录
-                                    navigateToSubdirectory(file.name)
-                                } else {
-                                    selectFile(file)
-                                }
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: file.isDirectory ? "folder.fill" : "doc.text")
-                                        .font(.system(size: 12)).foregroundStyle(file.isDirectory ? .yellow : .blue).frame(width: 16)
-                                    Text(file.name).font(.system(size: 13)).foregroundStyle(.white.opacity(0.8)).lineLimit(1)
-                                    Spacer()
-                                    if file.isDirectory {
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 9))
-                                            .foregroundStyle(.white.opacity(0.2))
-                                    }
-                                }.padding(.horizontal, 16).padding(.vertical, 8)
-                            }
-                        }
-                    }
-                }.frame(maxHeight: 200)
-            }
-        }.background(CMColors.menuBackground)
-    }
-
-    /// 进入子目录
-    private func navigateToSubdirectory(_ dirName: String) {
-        let newBase = mentionBasePath.isEmpty ? dirName + "/" : mentionBasePath + dirName + "/"
-        mentionBasePath = newBase
-        mentionQuery = ""
-        // 更新输入框中的 @ 引用
-        updateMentionInInput(newBase)
-        loadFileList(subpath: newBase)
-    }
-
-    /// 选中文件，插入到输入框
-    private func selectFile(_ file: FileEntry) {
-        let fullPath = mentionBasePath + file.name
-        // 替换输入框中 @ 开始的部分
-        let textBeforeAt = extractTextBeforeLastAt(inputText)
-        inputText = textBeforeAt + "@" + fullPath + " "
-        dismissMentionPicker()
-        isInputFocused = true
-    }
-
-    /// 关闭提及选择器并重置状态
-    private func dismissMentionPicker() {
-        showFilePicker = false
-        mentionQuery = ""
-        mentionBasePath = ""
-    }
-
-    /// 更新输入框中 @ 后的文本
-    private func updateMentionInInput(_ path: String) {
-        let textBeforeAt = extractTextBeforeLastAt(inputText)
-        inputText = textBeforeAt + "@" + path
-    }
-
-    /// 提取输入框中最后一个 @ 之前的文本
-    private func extractTextBeforeLastAt(_ text: String) -> String {
-        guard let atRange = text.range(of: "@", options: .backwards) else { return text }
-        return String(text[text.startIndex..<atRange.lowerBound])
-    }
-
-    // MARK: - 输入栏
-
-    private var inputBar: some View {
-        VStack(spacing: 0) {
-            Divider().background(CMColors.separator)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    chip("@", color: .blue) {
-                        inputText += "@"; isInputFocused = true; loadFileList(); showFilePicker = true; showSlashMenu = false
-                    }
-                    chip("/", color: .orange) { inputText = "/"; showSlashMenu = true; showFilePicker = false; isInputFocused = true }
-                    Rectangle().fill(Color.white.opacity(0.1)).frame(width: 1, height: 16)
-                    chip("^C", color: .red) { sendKey("c", "ctrl") }
-                    chip("Esc", color: .gray) { sendKey("escape", "") }
-                    chip("/compact", color: .purple) { sendDirect("/compact\n"); trackRecentCommand("/compact") }
-                    chip("/status", color: .green) { sendDirect("/status\n"); trackRecentCommand("/status") }
-                }.padding(.horizontal, 12).padding(.vertical, 6)
-            }
-            // 粘贴板图片提示
-            if hasPastedImage {
-                HStack(spacing: 6) {
-                    Image(systemName: "photo.badge.plus").font(.system(size: 11)).foregroundStyle(.blue)
-                    Text("粘贴板包含图片").font(.system(size: 11)).foregroundStyle(.white.opacity(0.4))
-                    Spacer()
-                    Button {
-                        hasPastedImage = false
-                    } label: {
-                        Image(systemName: "xmark").font(.system(size: 9)).foregroundStyle(.white.opacity(0.3))
-                    }
-                }
-                .padding(.horizontal, 16).padding(.vertical, 4)
-                .background(Color.blue.opacity(0.06))
-            }
-            HStack(spacing: 8) {
-                ZStack(alignment: .bottomTrailing) {
-                    TextField("", text: $inputText, prompt: Text("消息...").foregroundStyle(.gray.opacity(0.6)), axis: .vertical)
-                        .font(.system(size: 15)).foregroundStyle(.white)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .lineLimit(1...8).focused($isInputFocused)
-                        .padding(.horizontal, 14).padding(.vertical, 9)
-                        .background(Color.white.opacity(0.06))
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .onSubmit { send() }
-                    // 字符计数（超过 500 字符时显示）
-                    if inputText.count > 500 {
-                        Text("\(inputText.count)")
-                            .font(.system(size: 9, weight: .medium, design: .monospaced))
-                            .foregroundStyle(inputText.count > 10000 ? .red.opacity(0.6) : .white.opacity(0.2))
-                            .padding(.trailing, 10).padding(.bottom, 6)
-                    }
-                }
-                VoiceInputButton(isRecording: speechRecognizer.isRecording) {
-                    handleVoiceTap()
-                }
-                Button(action: send) {
-                    Image(systemName: "arrow.up.circle.fill").font(.system(size: 30))
-                        .foregroundStyle(inputText.isEmpty ? .gray.opacity(0.3) : .purple)
-                }.disabled(inputText.isEmpty)
-            }.padding(.horizontal, 12).padding(.bottom, 8)
-        }
-        .background(CMColors.inputBarBackground)
-        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
-            hasPastedImage = UIPasteboard.general.hasImages
-        }
-        .onAppear {
-            hasPastedImage = UIPasteboard.general.hasImages
-        }
-    }
-
-    private func chip(_ label: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label).font(.system(size: 11, weight: .medium, design: .monospaced))
-                .padding(.horizontal, 8).padding(.vertical, 8)
-                .background(color.opacity(0.1)).foregroundStyle(color.opacity(0.7)).clipShape(Capsule())
         }
     }
 
@@ -716,6 +372,7 @@ struct ClaudeChatView: View {
         }
     }
 
+    /// 委托给 FileMentionPicker 加载文件列表
     private func loadFileList(subpath: String = "") {
         let basePath = sessionInfo.project.isEmpty ? "~" : sessionInfo.project
         let fullPath = subpath.isEmpty ? basePath : basePath + "/" + subpath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -724,7 +381,7 @@ struct ClaudeChatView: View {
             if let entries = resultDict["entries"] as? [[String: Any]] {
                 fileList = entries.compactMap {
                     guard let name = $0["name"] as? String else { return nil }
-                    return FileEntry(name: name, isDirectory: ($0["type"] as? String) == "directory")
+                    return MentionFileEntry(name: name, isDirectory: ($0["type"] as? String) == "directory")
                 }.sorted { a, b in
                     if a.isDirectory != b.isDirectory { return a.isDirectory }
                     return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
@@ -733,22 +390,10 @@ struct ClaudeChatView: View {
         }
     }
 
-    // MARK: - 语音输入
-
-    private func handleVoiceTap() {
-        if speechRecognizer.isRecording {
-            speechRecognizer.stopRecording()
-        } else {
-            Task {
-                let granted = await speechRecognizer.requestPermissions()
-                guard granted else { return }
-                do {
-                    try speechRecognizer.startRecording()
-                } catch {
-                    // 语音识别启动失败，静默处理
-                }
-            }
-        }
+    private func dismissMentionPicker() {
+        showFilePicker = false
+        mentionQuery = ""
+        mentionBasePath = ""
     }
 
     // MARK: - 发送
@@ -768,6 +413,69 @@ struct ClaudeChatView: View {
 
     private func sendDirect(_ text: String) {
         relayConnection.send(["method": "surface.send_text", "params": ["surface_id": surfaceID, "text": text]])
+    }
+
+    /// 发送混合消息（文字 + 图片）到终端
+    private func sendComposedMessage(_ message: ComposedMessage) {
+        let correctedMessage = ComposedMessage(
+            blocks: message.blocks,
+            targetSurfaceID: surfaceID
+        )
+        guard !correctedMessage.isEmpty else { return }
+
+        // 本地显示用户消息（仅显示文字部分 + 图片数量提示）
+        let textParts = correctedMessage.effectiveBlocks.compactMap { $0.textContent }
+        let imageCount = correctedMessage.imageCount
+        var displayText = textParts.joined(separator: "\n")
+        if imageCount > 0 {
+            let imageLabel = String(localized: "chat.composed.imageCount",
+                                    defaultValue: "[\(imageCount) 张图片]")
+            displayText = displayText.isEmpty ? imageLabel : displayText + "\n" + imageLabel
+        }
+        appendMessage(ClaudeChatItem(id: UUID().uuidString, role: .user, content: displayText, timestamp: Date()))
+
+        // 通过 composed_msg 协议发送
+        let sender = ComposedMessageSender(relayConnection: relayConnection)
+        sender.send(correctedMessage)
+        isThinking = true
+    }
+
+    // MARK: - 内嵌审批
+
+    /// 当前 surface 的待处理审批请求
+    private var pendingApprovalsForSurface: [ApprovalRequest] {
+        approvalManager.pendingRequests.filter { $0.surfaceID == surfaceID }
+    }
+
+    private func handleInlineApprove(_ request: ApprovalRequest) {
+        let payload = approvalManager.buildApprovePayload(requestID: request.requestID)
+        relayConnection.send(payload)
+        approvalManager.markResolved(requestID: request.requestID, resolution: .approved)
+    }
+
+    private func handleInlineReject(_ request: ApprovalRequest) {
+        let payload = approvalManager.buildRejectPayload(requestID: request.requestID)
+        relayConnection.send(payload)
+        approvalManager.markResolved(requestID: request.requestID, resolution: .rejected)
+    }
+
+    /// 通过 Mac 端 RPC 切换模型（Mac 自动操作 /model TUI 菜单）
+    private func selectModel(key: String, name: String) {
+        relayConnection.sendWithResponse([
+            "method": "claude.switch_model",
+            "params": ["surface_id": surfaceID, "model": key],
+        ]) { result in
+            let resultDict = result["result"] as? [String: Any] ?? result
+            if resultDict["ok"] as? Bool == true {
+                withAnimation { modelSwitchFeedback = "已切换到 \(name)" }
+            } else {
+                let error = resultDict["error"] as? String ?? "切换失败"
+                withAnimation { modelSwitchFeedback = "⚠️ \(error)" }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation { modelSwitchFeedback = nil }
+            }
+        }
     }
 
     private func sendKey(_ key: String, _ mods: String) {
@@ -817,6 +525,11 @@ struct ClaudeChatView: View {
         // 收集 tool_result，用于关联到 tool_use
         var toolResults: [String: (content: String, isError: Bool)] = [:]
 
+        // HIGH 修复：预构建去重集合，O(1) 查找替代 O(n) contains
+        let existingIDs = Set(chatMessages.map { $0.id })
+        let existingUserTexts = Set(chatMessages.filter { $0.role == .user }.map { $0.content })
+        let existingToolIds = Set(chatMessages.compactMap { $0.toolUseId })
+
         // 第一遍：收集所有 tool_result
         for msg in messages {
             let blocks = msg["content"] as? [[String: Any]] ?? []
@@ -829,6 +542,9 @@ struct ClaudeChatView: View {
                 }
             }
         }
+
+        // 用于跟踪本批次内的新用户消息文本（防止批次内重复）
+        var newUserTexts = Set<String>()
 
         // 第二遍：构建消息列表
         for msg in messages {
@@ -847,29 +563,59 @@ struct ClaudeChatView: View {
                 if !textBlocks.isEmpty {
                     let text = textBlocks.compactMap { $0["text"] as? String }.joined()
                     if !text.isEmpty {
-                        // 去重：匹配 ID 或内容（本地发送的 ID 与 JSONL 的 ID 不同）
-                        let exists = chatMessages.contains { $0.id == uuid || ($0.role == .user && $0.content == text) }
-                            || newItems.contains { $0.role == .user && $0.content == text }
+                        // 过滤系统注入的 user 消息（skill 展开、任务通知等）
+                        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if trimmed.hasPrefix("Base directory for this skill:")
+                            || trimmed.hasPrefix("<task-notification>")
+                            || trimmed.hasPrefix("<command-name>")
+                            || trimmed.hasPrefix("<local-command-caveat>")
+                            || trimmed.hasPrefix("<local-command-stdout>")
+                            || trimmed.hasPrefix("<local-command-stderr>")
+                            || trimmed.hasPrefix("<system-reminder>") {
+                            continue
+                        }
+                        // O(1) 去重：匹配 ID 或内容
+                        let exists = existingIDs.contains(uuid)
+                            || existingUserTexts.contains(text)
+                            || newUserTexts.contains(text)
                         if !exists {
                             newItems.append(ClaudeChatItem(id: uuid, role: .user, content: text, timestamp: Date()))
+                            newUserTexts.insert(text)
                         }
                     }
                 }
             } else if type == "assistant" {
                 // 跳过中间状态消息（stop_reason 为 null 表示 Claude 还在生成）
                 if stopReason == nil { continue }
+
+                // 提取模型名（用于标注每条消息）
+                let rawModel = (msg["message"] as? [String: Any])?["model"] as? String
+                    ?? msg["model"] as? String
+                let displayModel = formatModelName(rawModel)
+
                 for block in blocks {
                     let blockType = block["type"] as? String ?? ""
                     switch blockType {
                     case "text":
                         if let text = block["text"] as? String, !text.isEmpty {
                             let msgID = "\(uuid)-text"
-                            // UUID-based 去重
-                            let exists = chatMessages.contains { $0.id == msgID }
-                            if !exists {
+                            // O(1) UUID-based 去重
+                            if !existingIDs.contains(msgID) {
                                 newItems.append(ClaudeChatItem(
                                     id: msgID, role: .assistant,
-                                    content: text, timestamp: Date()
+                                    content: text, timestamp: Date(),
+                                    modelName: displayModel
+                                ))
+                            }
+                        }
+                    case "thinking":
+                        // 思考过程（extended thinking）
+                        if let thinking = block["thinking"] as? String, !thinking.isEmpty {
+                            let thinkingID = "\(uuid)-thinking"
+                            if !existingIDs.contains(thinkingID) {
+                                newItems.append(ClaudeChatItem(
+                                    id: thinkingID, role: .thinking,
+                                    content: thinking, timestamp: Date()
                                 ))
                             }
                         }
@@ -890,8 +636,8 @@ struct ClaudeChatView: View {
                             toolState = .none
                         }
 
-                        let exists = chatMessages.contains { $0.toolUseId == toolUseId }
-                        if !exists {
+                        // O(1) 去重
+                        if !existingToolIds.contains(toolUseId) {
                             newItems.append(ClaudeChatItem(
                                 id: "\(uuid)-tool-\(toolUseId.prefix(8))",
                                 role: .tool(name: toolName),
@@ -899,7 +645,8 @@ struct ClaudeChatView: View {
                                 timestamp: Date(),
                                 toolResult: result?.content,
                                 toolState: toolState,
-                                toolUseId: toolUseId
+                                toolUseId: toolUseId,
+                                completedAt: result != nil ? Date() : nil
                             ))
                         }
                     default:
@@ -933,7 +680,8 @@ struct ClaudeChatView: View {
                     timestamp: item.timestamp,
                     toolResult: result.content,
                     toolState: result.isError ? .error : .completed,
-                    toolUseId: item.toolUseId
+                    toolUseId: item.toolUseId,
+                    completedAt: Date()
                 )
                 all.append(updatedItem)
                 updated = true
@@ -949,7 +697,36 @@ struct ClaudeChatView: View {
 
         if updated {
             messageStore.claudeChats[surfaceID] = all
+
+            // HIGH 修复：更新 Plan 模式缓存（避免每次渲染遍历全部消息）
+            updatePlanModeState(all)
         }
+    }
+
+    /// 将原始模型 ID 格式化为可读名称
+    private func formatModelName(_ raw: String?) -> String? {
+        guard let raw, !raw.isEmpty else { return nil }
+        if raw.contains("opus") { return "Opus" }
+        if raw.contains("sonnet") { return "Sonnet" }
+        if raw.contains("haiku") { return "Haiku" }
+        // 其他模型保留原始名（截取最后部分）
+        if let last = raw.split(separator: "/").last {
+            return String(last)
+        }
+        return raw
+    }
+
+    /// 根据最新消息列表更新 Plan 模式状态
+    /// 根据最后一个 Plan 相关工具消息确定 Plan 模式状态
+    /// 只有明确找到 EnterPlanMode/ExitPlanMode 时才更新，避免无关消息误重置
+    private func updatePlanModeState(_ messages: [ClaudeChatItem]) {
+        for msg in messages.reversed() {
+            if case .tool(name: let name) = msg.role {
+                if name == "ExitPlanMode" { isInPlanMode = false; return }
+                if name == "EnterPlanMode" { isInPlanMode = true; return }
+            }
+        }
+        // 没找到任何 Plan 工具消息时不修改状态（保持当前值）
     }
 
     /// 格式化工具输入为简要描述
@@ -958,11 +735,9 @@ struct ClaudeChatView: View {
         case "Read":
             return input["file_path"] as? String ?? ""
         case "Write":
-            let path = input["file_path"] as? String ?? ""
-            return path
+            return input["file_path"] as? String ?? ""
         case "Edit":
-            let path = input["file_path"] as? String ?? ""
-            return path
+            return input["file_path"] as? String ?? ""
         case "Bash":
             return input["command"] as? String ?? ""
         case "Grep":
@@ -1021,14 +796,14 @@ struct ClaudeChatView: View {
         relayConnection.onClaudeUpdate = nil
     }
 
-    // MARK: - 降级轮询（5秒兜底）
+    // MARK: - 降级轮询（15秒兜底）
 
     private func startPolling() {
         stopPolling()
         refreshTask = Task {
             while !Task.isCancelled {
-                // 推送通道存在时，轮询仅作为 5 秒兜底
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                // HIGH 修复：推送通道存在时，轮询间隔从 5 秒提升到 15 秒
+                try? await Task.sleep(nanoseconds: 15_000_000_000)
                 guard !Task.isCancelled else { break }
                 fetchMessages()
             }
