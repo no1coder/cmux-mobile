@@ -39,8 +39,15 @@ struct ClaudeChatView: View {
     @State private var showModelPicker = false
     /// 模型切换成功反馈（非 nil 时显示 toast）
     @State private var modelSwitchFeedback: String?
+    /// 显示消息上限（只渲染最近 N 条，避免大量 Markdown 渲染卡顿）
+    private static let maxDisplayMessages = 200
+
     private var chatMessages: [ClaudeChatItem] {
-        messageStore.claudeChats[surfaceID] ?? []
+        let all = messageStore.claudeChats[surfaceID] ?? []
+        if all.count > Self.maxDisplayMessages {
+            return Array(all.suffix(Self.maxDisplayMessages))
+        }
+        return all
     }
 
     var body: some View {
@@ -215,9 +222,15 @@ struct ClaudeChatView: View {
                 // 点击聊天区域收起键盘
                 isInputFocused = false
             }
-            .onChange(of: chatMessages.count) { _, _ in
-                withAnimation(.easeOut(duration: 0.15)) {
+            .onChange(of: chatMessages.count) { oldCount, newCount in
+                if oldCount == 0 && newCount > 0 {
+                    // 首次加载消息，无动画直接跳到底部
                     proxy.scrollTo("end", anchor: .bottom)
+                } else {
+                    // 增量消息，平滑滚动
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        proxy.scrollTo("end", anchor: .bottom)
+                    }
                 }
             }
         }
