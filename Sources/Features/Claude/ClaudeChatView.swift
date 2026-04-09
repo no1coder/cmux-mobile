@@ -39,13 +39,20 @@ struct ClaudeChatView: View {
     @State private var showModelPicker = false
     /// 模型切换成功反馈（非 nil 时显示 toast）
     @State private var modelSwitchFeedback: String?
-    /// 显示消息上限（只渲染最近 N 条，避免大量 Markdown 渲染卡顿）
-    private static let maxDisplayMessages = 200
+    /// 每页消息数量
+    private static let pageSize = 200
+    /// 当前显示消息上限（向上滚动时递增）
+    @State private var displayLimit = 200
+    /// 是否还有更早的消息可加载
+    private var hasMoreMessages: Bool {
+        let all = messageStore.claudeChats[surfaceID] ?? []
+        return all.count > displayLimit
+    }
 
     private var chatMessages: [ClaudeChatItem] {
         let all = messageStore.claudeChats[surfaceID] ?? []
-        if all.count > Self.maxDisplayMessages {
-            return Array(all.suffix(Self.maxDisplayMessages))
+        if all.count > displayLimit {
+            return Array(all.suffix(displayLimit))
         }
         return all
     }
@@ -191,6 +198,25 @@ struct ClaudeChatView: View {
             ScrollView {
                 LazyVStack(spacing: 6) {
                     sessionHeader.padding(.bottom, 8)
+                    // 滚动到顶部时自动加载更早的消息
+                    if hasMoreMessages {
+                        Button {
+                            loadMoreMessages(proxy: proxy)
+                        } label: {
+                            HStack(spacing: 6) {
+                                ProgressView().controlSize(.small)
+                                Text(String(localized: "chat.load_more", defaultValue: "加载更早的消息"))
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(CMColors.textTertiary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                        }
+                        .onAppear {
+                            // 滚到顶部自动触发加载
+                            loadMoreMessages(proxy: proxy)
+                        }
+                    }
                     if chatMessages.isEmpty && !isThinking {
                         Text("向 Claude 发送消息开始对话")
                             .font(.system(size: 13))
@@ -511,6 +537,21 @@ struct ClaudeChatView: View {
         var msgs = messageStore.claudeChats[surfaceID] ?? []
         msgs.append(msg)
         messageStore.claudeChats[surfaceID] = msgs
+    }
+
+    // MARK: - 分页加载
+
+    /// 加载更早的消息（向上滚动时触发）
+    private func loadMoreMessages(proxy: ScrollViewProxy) {
+        // 记住当前第一条消息的 ID，加载后保持滚动位置
+        let firstVisibleId = chatMessages.first?.id
+        displayLimit += Self.pageSize
+        // 加载后保持在原位置（不跳到底部）
+        if let id = firstVisibleId {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                proxy.scrollTo(id, anchor: .top)
+            }
+        }
     }
 
     // MARK: - 从 JSONL 拉取消息（跟 happy 的 sessionScanner 一样）
