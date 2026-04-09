@@ -4,12 +4,24 @@ import Foundation
 /// 过滤掉所有 TUI 装饰（边框、ASCII 艺术、状态栏等）
 enum ClaudeOutputParser {
 
-    /// 检测终端输出是否包含 Claude Code 会话
+    /// 检测终端是否有 Claude Code 正在运行（而非历史残留输出）
+    /// 检查终端最后几行是否有 Claude TUI 活跃特征：
+    /// - 底部状态栏（Context/Usage 百分比行）
+    /// - Claude 输入 prompt（❯ 或 >）紧接状态栏
+    /// - box-drawing 边框（╭╮╰╯─）表示 TUI 正在渲染
     static func isClaudeSession(_ lines: [String]) -> Bool {
-        let joined = lines.prefix(40).joined(separator: " ")
-        return joined.contains("Claude Code")
-            || joined.contains("Opus")
-            || joined.contains("Sonnet")
+        // 只检查最后 15 行（活跃 TUI 特征只出现在底部）
+        let tail = lines.suffix(15)
+        let tailJoined = tail.joined(separator: " ")
+
+        // 必须有 Claude TUI 状态栏特征（Context/Usage + 百分比）
+        let hasStatusBar = tailJoined.contains("Context") && tailJoined.contains("%")
+        // 必须有 box-drawing 边框（Claude TUI 的分隔线）
+        let hasBoxDrawing = tail.contains { line in
+            line.contains("─") || line.contains("╭") || line.contains("╰")
+        }
+
+        return hasStatusBar && hasBoxDrawing
     }
 
     /// 从终端输出中提取 Claude 会话信息
