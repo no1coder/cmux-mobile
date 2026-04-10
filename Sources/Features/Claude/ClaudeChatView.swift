@@ -47,6 +47,8 @@ struct ClaudeChatView: View {
     private static let pageSize = 200
     /// 当前显示消息上限（向上滚动时递增）
     @State private var displayLimit = 200
+    /// 展开的 Turn ID 集合
+    @State private var expandedTurnIds: Set<String> = []
     // MARK: - 发送状态
 
     private enum SendStage: Equatable {
@@ -75,6 +77,11 @@ struct ClaudeChatView: View {
             return Array(all.suffix(displayLimit))
         }
         return all
+    }
+
+    /// 将平铺消息分组为对话轮次
+    private var chatTurns: [ConversationTurn] {
+        ConversationTurn.group(chatMessages)
     }
 
     var body: some View {
@@ -251,10 +258,14 @@ struct ClaudeChatView: View {
                             .foregroundStyle(CMColors.textTertiary)
                             .padding(.top, 20)
                     }
-                    ForEach(chatMessages) { msg in
-                        ChatMessageRow(msg: msg) { tool in
-                            selectedTool = tool
-                        }.id(msg.id)
+                    ForEach(chatTurns) { turn in
+                        TurnView(
+                            turn: turn,
+                            isExpanded: expandedTurnIds.contains(turn.id),
+                            onToggle: { toggleTurn(turn.id) },
+                            onToolTap: { tool in selectedTool = tool }
+                        )
+                        .id(turn.id)
                     }
                     // 内嵌审批请求（当前 surface 的待处理请求）
                     ForEach(pendingApprovalsForSurface) { request in
@@ -289,9 +300,11 @@ struct ClaudeChatView: View {
             .onChange(of: chatMessages.count) { oldCount, newCount in
                 if oldCount == 0 && newCount > 0 {
                     // 首次加载消息，无动画直接跳到底部
+                    autoExpandLastTurn()
                     proxy.scrollTo("end", anchor: .bottom)
                 } else if newCount > oldCount {
                     // 新增消息，平滑滚动到底部
+                    autoExpandLastTurn()
                     withAnimation(.easeOut(duration: 0.15)) {
                         proxy.scrollTo("end", anchor: .bottom)
                     }
@@ -643,6 +656,24 @@ struct ClaudeChatView: View {
         var msgs = messageStore.claudeChats[surfaceID] ?? []
         msgs.append(msg)
         messageStore.claudeChats[surfaceID] = msgs
+    }
+
+    // MARK: - Turn 折叠管理
+
+    private func toggleTurn(_ turnId: String) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if expandedTurnIds.contains(turnId) {
+                expandedTurnIds.remove(turnId)
+            } else {
+                expandedTurnIds.insert(turnId)
+            }
+        }
+    }
+
+    private func autoExpandLastTurn() {
+        let turns = chatTurns
+        guard let lastTurn = turns.last else { return }
+        expandedTurnIds = [lastTurn.id]
     }
 
     // MARK: - 分页加载
