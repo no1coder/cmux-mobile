@@ -27,6 +27,9 @@ final class MessageStore: ObservableObject {
     /// Claude 推送事件回调（Mac 端 JSONL 文件变化时触发）
     var onClaudeUpdate: (([String: Any]) -> Void)?
 
+    /// Mac 端推送的能力快照（slash 命令列表）
+    @Published var slashCommands: [[String: Any]] = []
+
     /// C4: 关联的断线恢复管理器，由外部注入（弱引用避免循环）
     weak var recovery: DisconnectRecovery?
 
@@ -121,6 +124,9 @@ final class MessageStore: ObservableObject {
             // 模型切换事件：转发给 onClaudeUpdate 回调
             let rawDict = anyCodableToRawDict(payload)
             onClaudeUpdate?(rawDict)
+            return
+        case "capabilities.snapshot":
+            handleCapabilitiesSnapshot(payload)
             return
         case "notification":
             handleTerminalNotification(payload)
@@ -364,6 +370,41 @@ final class MessageStore: ObservableObject {
             totalSessions: claudeCount,
             activeSessions: claudeCount
         )
+    }
+
+    // MARK: - 能力快照
+
+    /// 处理 Mac 端推送的能力快照
+    private func handleCapabilitiesSnapshot(_ payload: [String: AnyCodable]) {
+        // 提取 slash_commands 数组
+        guard case .array(let commands) = payload["slash_commands"] else { return }
+
+        let parsed: [[String: Any]] = commands.compactMap { cmd -> [String: Any]? in
+            guard case .object(let dict) = cmd else { return nil }
+            var result: [String: Any] = [:]
+            for (k, v) in dict {
+                switch v {
+                case .string(let s):  result[k] = s
+                case .bool(let b):    result[k] = b
+                case .int(let i):     result[k] = i
+                case .double(let d):  result[k] = d
+                case .array(let arr):
+                    // 嵌套数组（如 args 列表）转为 [[String: Any]]
+                    result[k] = arr.compactMap { item -> [String: Any]? in
+                        guard case .object(let d) = item else { return nil }
+                        var r: [String: Any] = [:]
+                        for (dk, dv) in d {
+                            if case .string(let s) = dv { r[dk] = s }
+                        }
+                        return r
+                    }
+                default: break
+                }
+            }
+            return result
+        }
+        slashCommands = parsed
+        print("[capabilities] 收到 \(parsed.count) 个 slash 命令")
     }
 
     // MARK: - 终端通知处理

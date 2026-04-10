@@ -57,15 +57,43 @@ struct SlashCommandMenu: View {
     let onSelect: () -> Void
     /// 交互式命令回调（/model、/plan 等需要原生 UI 的命令）
     var onInteractiveCommand: ((InteractiveCommand) -> Void)?
+    /// Mac 端推送的动态命令列表（空时降级为硬编码默认值）
+    var dynamicCommands: [[String: Any]] = []
 
     /// 最近使用的命令列表
     var recentCommands: [String] {
         recentCommandsData.isEmpty ? [] : recentCommandsData.components(separatedBy: ",")
     }
 
+    /// 根据动态数据或硬编码兜底构建展示命令列表
+    private var displayCommands: [SlashCommand] {
+        if dynamicCommands.isEmpty {
+            return allSlashCommands
+        }
+        return dynamicCommands.compactMap { dict -> SlashCommand? in
+            guard let command = dict["command"] as? String,
+                  let description = dict["description"] as? String else { return nil }
+            let category = mapCategory(dict["category"] as? String ?? "common")
+            let shortcut = dict["shortcut"] as? String
+            return SlashCommand(command, description, category, shortcut: shortcut)
+        }
+    }
+
+    /// 将英文分类名映射为中文显示名
+    private func mapCategory(_ raw: String) -> String {
+        switch raw {
+        case "common":  return "常用"
+        case "project": return "项目"
+        case "config":  return "配置"
+        case "tools":   return "工具"
+        default:        return "常用"
+        }
+    }
+
     var body: some View {
         let query = String(inputText.dropFirst()).lowercased()
-        let filtered = query.isEmpty ? allSlashCommands : allSlashCommands.filter { $0.cmd.contains(query) }
+        let commands = displayCommands
+        let filtered = query.isEmpty ? commands : commands.filter { $0.cmd.contains(query) }
 
         // 按分类分组
         let categories = ["常用", "项目", "配置", "工具"]
@@ -73,7 +101,7 @@ struct SlashCommandMenu: View {
 
         // 最近使用的命令（仅在无搜索时显示）
         let recentItems: [SlashCommand] = query.isEmpty
-            ? recentCommands.compactMap { cmd in allSlashCommands.first { $0.cmd == cmd } }
+            ? recentCommands.compactMap { cmd in commands.first { $0.cmd == cmd } }
             : []
 
         ScrollView {

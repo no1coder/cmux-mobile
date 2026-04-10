@@ -104,7 +104,8 @@ struct ClaudeChatView: View {
                                 showModelPicker = true
                             }
                         }
-                    }
+                    },
+                    dynamicCommands: messageStore.slashCommands
                 )
             }
             if showFilePicker {
