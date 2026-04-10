@@ -65,6 +65,13 @@ struct cmuxMobileApp: App {
                 PushNotificationManager.shared.relayConnection = relayConnection
                 PushNotificationManager.shared.requestAuthorization()
 
+                // Live Activity token 上报
+                LiveActivityManager.shared.onPushTokenUpdate = { token in
+                    Task { @MainActor in
+                        PushNotificationManager.shared.reportLiveActivityToken(token)
+                    }
+                }
+
                 // 如果已配对，自动连接
                 autoConnectIfPaired()
             }
