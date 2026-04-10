@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 轻量级语法高亮器 — 支持主流编程语言的关键字、字符串、注释着色
 /// 采用正则匹配方式，无需依赖第三方库
@@ -571,6 +572,7 @@ struct SyntaxHighlightedCodeView: View {
                 Spacer()
                 Button {
                     UIPasteboard.general.string = code
+                    Haptics.light()
                     copied = true
                     Task {
                         try? await Task.sleep(for: .seconds(1.5))

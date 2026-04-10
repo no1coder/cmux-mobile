@@ -521,6 +521,7 @@ struct ClaudeChatView: View {
     private func send() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        Haptics.rigid()
         let messageId = UUID().uuidString
         inputText = ""; showSlashMenu = false; showFilePicker = false
 
@@ -571,6 +572,7 @@ struct ClaudeChatView: View {
             targetSurfaceID: surfaceID
         )
         guard !correctedMessage.isEmpty else { return }
+        Haptics.rigid()
 
         // 本地显示用户消息（仅显示文字部分 + 图片数量提示）
         let textParts = correctedMessage.effectiveBlocks.compactMap { $0.textContent }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 内嵌在聊天中的审批请求卡片 — 紧凑版，直接在对话流中操作
 struct InlineApprovalView: View {
@@ -57,6 +58,7 @@ struct InlineApprovalView: View {
                 // 按钮
                 HStack(spacing: 10) {
                     Button {
+                        Haptics.warning()
                         onReject()
                     } label: {
                         HStack(spacing: 4) {
@@ -74,6 +76,7 @@ struct InlineApprovalView: View {
                     .buttonStyle(.plain)
 
                     Button {
+                        Haptics.success()
                         onApprove()
                     } label: {
                         HStack(spacing: 4) {
