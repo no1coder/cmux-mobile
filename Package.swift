@@ -19,10 +19,13 @@ let package = Package(
             dependencies: ["cmux-models"],
             path: "Tests",
             sources: [
+                "AnyCodableTests.swift",
                 "ClaudeChatItemTests.swift",
                 "ContentBlockTests.swift",
                 "ConversationTurnTests.swift",
+                "ConversationTurnEdgeCaseTests.swift",
                 "RpcDedupTests.swift",
+                "RpcDedupCacheEdgeTests.swift",
             ]
         ),
     ]

@@ -1,7 +1,10 @@
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/AnyCodableTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnEdgeCaseTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/RpcDedupCacheEdgeTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/RpcDedupTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/AnyCodable.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ApprovalPolicy.swift.o

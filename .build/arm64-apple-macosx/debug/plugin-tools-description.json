@@ -129,6 +129,10 @@
       "inputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/AnyCodableTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift"
         },
         {
@@ -137,7 +141,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnEdgeCaseTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/RpcDedupCacheEdgeTests.swift"
         },
         {
           "kind" : "file",
@@ -160,9 +172,12 @@
       "moduleName" : "cmux_mobileTests",
       "moduleOutputPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobileTests.swiftmodule",
       "objects" : [
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/AnyCodableTests.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnEdgeCaseTests.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/RpcDedupCacheEdgeTests.swift.o",
         "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/RpcDedupTests.swift.o"
       ],
       "otherArguments" : [
@@ -223,6 +238,10 @@
       "outputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/AnyCodableTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o"
         },
         {
@@ -231,7 +250,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnEdgeCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/RpcDedupCacheEdgeTests.swift.o"
         },
         {
           "kind" : "file",
@@ -244,9 +271,12 @@
       ],
       "prepareForIndexing" : false,
       "sources" : [
+        "/Users/jackie/code/cmux-mobile/Tests/AnyCodableTests.swift",
         "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift",
         "/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift",
+        "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnEdgeCaseTests.swift",
         "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift",
+        "/Users/jackie/code/cmux-mobile/Tests/RpcDedupCacheEdgeTests.swift",
         "/Users/jackie/code/cmux-mobile/Tests/RpcDedupTests.swift"
       ],
       "tempsPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build",
@@ -527,9 +557,12 @@
       "-package-name",
       "cmux_mobile",
       "-c",
+      "/Users/jackie/code/cmux-mobile/Tests/AnyCodableTests.swift",
       "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift",
       "/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift",
+      "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnEdgeCaseTests.swift",
       "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift",
+      "/Users/jackie/code/cmux-mobile/Tests/RpcDedupCacheEdgeTests.swift",
       "/Users/jackie/code/cmux-mobile/Tests/RpcDedupTests.swift",
       "-I",
       "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules",
@@ -712,6 +745,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/AnyCodableTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o"
         },
         {
@@ -720,7 +757,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnEdgeCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/RpcDedupCacheEdgeTests.swift.o"
         },
         {
           "kind" : "file",
@@ -796,6 +841,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/AnyCodableTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift"
         },
         {
@@ -804,7 +853,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnEdgeCaseTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/RpcDedupCacheEdgeTests.swift"
         },
         {
           "kind" : "file",
