@@ -11,9 +11,9 @@ struct SettingsView: View {
             List {
                 connectionSection
                 displaySection
+                terminalSection
                 chatSection
                 approvalSection
-                voiceSection
                 privacySection
                 aboutSection
             }
@@ -58,16 +58,26 @@ struct SettingsView: View {
                     systemImage: "paintbrush"
                 )
             }
+        }
+    }
 
-            HStack {
-                Label(
-                    String(localized: "settings.font_size", defaultValue: "终端字体大小"),
-                    systemImage: "textformat.size"
-                )
-                Spacer()
-                Text("\(Int(terminalFontSize))pt")
-                    .foregroundStyle(.secondary)
+    // MARK: - 终端
+
+    private var terminalSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(String(localized: "settings.font_size", defaultValue: "终端字体大小"))
+                    Spacer()
+                    Text("\(Int(terminalFontSize)) pt")
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $terminalFontSize, in: 6...20, step: 1)
+                    .tint(.purple)
             }
+        } header: {
+            Text(String(localized: "settings.terminal", defaultValue: "终端"))
         }
     }
 
@@ -97,21 +107,6 @@ struct SettingsView: View {
                 Label(
                     String(localized: "settings.approval.title", defaultValue: "审批策略"),
                     systemImage: "checkmark.shield"
-                )
-            }
-        }
-    }
-
-    // MARK: - 语音
-
-    private var voiceSection: some View {
-        Section(String(localized: "settings.section.voice", defaultValue: "语音")) {
-            NavigationLink {
-                VoiceSettingsView()
-            } label: {
-                Label(
-                    String(localized: "settings.voice.title", defaultValue: "语音输入设置"),
-                    systemImage: "mic"
                 )
             }
         }
