@@ -89,10 +89,33 @@ final class MessageStore: ObservableObject {
         case "workspace.list_update":
             handleWorkspaceListUpdate(payload)
             return
+        case "phase.update":
+            handlePhaseUpdate(payload)
+            return
         case "claude.messages.update":
             // 将 AnyCodable 转为原生字典，通过 onClaudeUpdate 分发
             let rawDict = anyCodableToRawDict(payload)
             onClaudeUpdate?(rawDict)
+
+            // 驱动 Live Activity（从 status 字段推断阶段）
+            let status: String
+            if case .string(let s) = payload["status"] { status = s } else { status = "idle" }
+            let surfaceId: String
+            if case .string(let sid) = payload["surface_id"] { surfaceId = sid } else { surfaceId = "" }
+            if !surfaceId.isEmpty {
+                let phase: String
+                switch status {
+                case "thinking", "tool_running":
+                    phase = status
+                default:
+                    phase = "idle"
+                }
+                LiveActivityManager.shared.updateGlobal(
+                    activeSessionId: surfaceId,
+                    projectName: "",
+                    phase: phase
+                )
+            }
             return
         case "claude.model_switching", "claude.model_switched":
             // 模型切换事件：转发给 onClaudeUpdate 回调
@@ -309,6 +332,38 @@ final class MessageStore: ObservableObject {
             lastScreenshotEncoding = encoding
             return
         }
+    }
+
+    // MARK: - 阶段更新（驱动 Live Activity）
+
+    /// 处理 Mac 端推送的阶段变化事件
+    private func handlePhaseUpdate(_ payload: [String: AnyCodable]) {
+        let surfaceId: String
+        if case .string(let v) = payload["surface_id"] { surfaceId = v } else { surfaceId = "" }
+        let phase: String
+        if case .string(let v) = payload["phase"] { phase = v } else { phase = "idle" }
+        let toolName: String?
+        if case .string(let v) = payload["tool_name"] { toolName = v } else { toolName = nil }
+        let projectName: String
+        if case .string(let v) = payload["project_name"] { projectName = v } else { projectName = "" }
+        let lastUserMessage: String?
+        if case .string(let v) = payload["last_user_message"] { lastUserMessage = v } else { lastUserMessage = nil }
+        let lastAssistantSummary: String?
+        if case .string(let v) = payload["last_assistant_summary"] { lastAssistantSummary = v } else { lastAssistantSummary = nil }
+
+        // 统计活跃 Claude session 数
+        let claudeCount = surfaces.filter { $0.title.contains("Claude") }.count
+
+        LiveActivityManager.shared.updateGlobal(
+            activeSessionId: surfaceId,
+            projectName: projectName,
+            phase: phase,
+            toolName: toolName,
+            lastUserMessage: lastUserMessage,
+            lastAssistantSummary: lastAssistantSummary,
+            totalSessions: claudeCount,
+            activeSessions: claudeCount
+        )
     }
 
     // MARK: - 终端通知处理

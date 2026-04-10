@@ -2,12 +2,15 @@
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/RpcDedupTests.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/AnyCodable.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ApprovalPolicy.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeChatItem.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeSession.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/CmuxActivityAttributes.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ContentBlock.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ConversationTurn.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/RelayMessage.swift.o
+/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/RpcDedupCache.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ScreenSnapshot.swift.o
 /Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/Surface.swift.o

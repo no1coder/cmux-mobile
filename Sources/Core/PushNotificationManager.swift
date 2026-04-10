@@ -139,20 +139,77 @@ final class PushNotificationManager: NSObject, ObservableObject {
     /// 用户点击通知或操作按钮时调用
     func handleNotificationResponse(_ response: UNNotificationResponse) {
         let userInfo = response.notification.request.content.userInfo
-        let eventType = userInfo["event_type"] as? String ?? ""
+        let requestId = userInfo["request_id"] as? String ?? ""
+        let surfaceId = userInfo["surface_id"] as? String ?? ""
 
         switch response.actionIdentifier {
         case "APPROVE":
-            print("[push] 用户批准: event=\(eventType)")
-            // TODO: 发送审批结果到 relay
+            print("[push] 用户批准: request=\(requestId.prefix(8))")
+            guard !requestId.isEmpty else { return }
+            relayConnection?.send([
+                "method": "agent.approve",
+                "params": ["request_id": requestId],
+            ])
         case "DENY":
-            print("[push] 用户拒绝: event=\(eventType)")
-            // TODO: 发送审批结果到 relay
+            print("[push] 用户拒绝: request=\(requestId.prefix(8))")
+            guard !requestId.isEmpty else { return }
+            relayConnection?.send([
+                "method": "agent.reject",
+                "params": ["request_id": requestId],
+            ])
         case UNNotificationDefaultActionIdentifier:
-            print("[push] 用户点击通知: event=\(eventType)")
-            // TODO: 导航到对应页面
+            print("[push] 用户点击通知: surface=\(surfaceId.prefix(8))")
+            if !surfaceId.isEmpty {
+                NotificationCenter.default.post(
+                    name: .navigateToSurface,
+                    object: nil,
+                    userInfo: ["surface_id": surfaceId]
+                )
+            }
         default:
             break
         }
     }
+
+    // MARK: - Live Activity Token
+
+    /// 上报 Live Activity push token 到 relay server
+    func reportLiveActivityToken(_ token: String) {
+        guard let connection = relayConnection,
+              !connection.serverURL.isEmpty else { return }
+
+        let phoneID = connection.phoneID
+        guard !phoneID.isEmpty else { return }
+
+        let urlString = "https://\(connection.serverURL)/api/push/live-activity-token"
+        guard let url = URL(string: urlString) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: String] = [
+            "phone_id": phoneID,
+            "token": token,
+            "session_id": "__global__",
+        ]
+
+        guard let bodyData = try? JSONSerialization.data(withJSONObject: body) else { return }
+        request.httpBody = bodyData
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error {
+                print("[push] Live Activity token 上报失败: \(error.localizedDescription)")
+                return
+            }
+            if let httpResponse = response as? HTTPURLResponse {
+                print("[push] Live Activity token 上报: status=\(httpResponse.statusCode)")
+            }
+        }.resume()
+    }
+}
+
+extension Notification.Name {
+    /// 从推送通知导航到指定 surface
+    static let navigateToSurface = Notification.Name("navigateToSurface")
 }
