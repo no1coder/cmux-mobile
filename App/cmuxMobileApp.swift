@@ -115,6 +115,7 @@ struct cmuxMobileApp: App {
                     .environmentObject(relayConnection)
                     .environmentObject(inputManager)
                     .environmentObject(sessionManager)
+                    .environmentObject(approvalManager)
                     .tag(1)
 
                 // 文件浏览器 Tab
@@ -281,6 +282,7 @@ private struct iPadSplitViewContent: View {
                 .environmentObject(relayConnection)
                 .environmentObject(inputManager)
                 .environmentObject(sessionManager)
+                .environmentObject(approvalManager)
 
         case .files:
             FileExplorerView()

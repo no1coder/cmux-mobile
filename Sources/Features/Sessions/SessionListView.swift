@@ -6,6 +6,7 @@ struct SessionListView: View {
     @EnvironmentObject var messageStore: MessageStore
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
+    @EnvironmentObject var approvalManager: ApprovalManager
 
     /// 是否展开归档区域
     @State private var showArchived = false
@@ -42,6 +43,7 @@ struct SessionListView: View {
                             .environmentObject(messageStore)
                             .environmentObject(inputManager)
                             .environmentObject(relayConnection)
+                            .environmentObject(approvalManager)
                         } label: {
                             SessionRowView(session: session)
                         }
