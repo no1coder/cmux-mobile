@@ -70,3 +70,22 @@ targets:
         BUNDLE_LOADER: "$(TEST_HOST)"
     dependencies:
       - target: cmux-mobile
+
+schemes:
+  Devpod:
+    build:
+      targets:
+        cmux-mobile: all
+        cmuxWidget: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - cmux-mobileTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
