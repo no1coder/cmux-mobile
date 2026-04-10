@@ -129,7 +129,7 @@ struct ClaudeChatView: View {
                     loadFileList(); showFilePicker = true; showSlashMenu = false
                 },
                 onSlashTap: {
-                    inputText = "/"; showSlashMenu = true; showFilePicker = false; isInputFocused = true
+                    inputText += "/"; showSlashMenu = true; showFilePicker = false; isInputFocused = true
                 },
                 onCtrlC: { sendKey("c", "ctrl") },
                 onEsc: { sendKey("escape", "") },
@@ -446,7 +446,14 @@ struct ClaudeChatView: View {
     }
 
     private func handleInputChange(_ text: String) {
-        showSlashMenu = text.hasPrefix("/") && !text.contains(" ")
+        // 斜杠菜单：检测最后一个 "/" 后的内容（支持文字中间插入命令）
+        if let slashRange = text.range(of: "/", options: .backwards) {
+            let afterSlash = String(text[slashRange.upperBound...])
+            // "/" 后无空格且无换行 → 显示菜单
+            showSlashMenu = !afterSlash.contains(" ") && !afterSlash.contains("\n")
+        } else {
+            showSlashMenu = false
+        }
 
         // @ 提及检测与实时过滤
         if let atRange = text.range(of: "@", options: .backwards) {

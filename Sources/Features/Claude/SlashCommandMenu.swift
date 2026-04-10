@@ -91,7 +91,11 @@ struct SlashCommandMenu: View {
     }
 
     var body: some View {
-        let query = String(inputText.dropFirst()).lowercased()
+        // 从最后一个 "/" 后提取搜索关键词
+        let query: String = {
+            guard let slashIdx = inputText.lastIndex(of: "/") else { return "" }
+            return String(inputText[inputText.index(after: slashIdx)...]).lowercased()
+        }()
         let commands = displayCommands
         let filtered = query.isEmpty ? commands : commands.filter { $0.cmd.contains(query) }
 
@@ -150,12 +154,20 @@ struct SlashCommandMenu: View {
             trackRecentCommand(item.cmd)
             // 交互式命令：通过原生 UI 处理，不发送文本
             if item.cmd == "/model" {
-                inputText = ""
+                // 移除最后的 "/..." 部分
+                if let slashIdx = inputText.lastIndex(of: "/") {
+                    inputText = String(inputText[..<slashIdx])
+                }
                 showSlashMenu = false
                 onInteractiveCommand?(.model)
                 return
             }
-            inputText = item.cmd
+            // 替换最后一个 "/" 及其后内容为选中的命令
+            if let slashIdx = inputText.lastIndex(of: "/") {
+                inputText = String(inputText[..<slashIdx]) + item.cmd + " "
+            } else {
+                inputText = item.cmd + " "
+            }
             showSlashMenu = false
             onSelect()
         } label: {
