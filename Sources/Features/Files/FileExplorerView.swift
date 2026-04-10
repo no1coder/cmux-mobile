@@ -121,7 +121,7 @@ struct FileExplorerView: View {
             Section {
                 ForEach(Self.allowedRoots, id: \.name) { root in
                     NavigationLink {
-                        FileExplorerSubdirectoryView(
+                        _ChildFileExplorerView(
                             parentPath: root.path.components(separatedBy: "/"),
                             connection: relayConnection
                         )
