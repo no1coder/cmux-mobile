@@ -15,6 +15,10 @@ struct ClaudeChatView: View {
     @State private var activityLabel = ""
     @State private var sessionInfo: (model: String, project: String, context: String) = ("", "", "")
     @State private var refreshTask: Task<Void, Never>?
+    /// 流式预览：Claude 生成过程中从终端屏幕读取的实时输出
+    @State private var streamingPreview = ""
+    /// 流式预览轮询任务
+    @State private var streamingTask: Task<Void, Never>?
     @FocusState private var isInputFocused: Bool
     /// 已获取的最大消息序号（用于增量拉取）
     @State private var lastSeq = 0
@@ -43,6 +47,18 @@ struct ClaudeChatView: View {
     private static let pageSize = 200
     /// 当前显示消息上限（向上滚动时递增）
     @State private var displayLimit = 200
+    // MARK: - 发送状态
+
+    private enum SendStage: Equatable {
+        case sending
+        case delivered
+        case thinking
+        case failed(String)
+    }
+
+    @State private var pendingSend: (id: String, stage: SendStage)?
+    @State private var lastSendText = ""
+
     /// 是否还有更早的消息可加载
     private var hasMoreMessages: Bool {
         let all = messageStore.claudeChats[surfaceID] ?? []
@@ -184,6 +200,14 @@ struct ClaudeChatView: View {
         .onDisappear {
             stopPolling()
             stopWatching()
+            stopStreamingPreview()
+        }
+        .onChange(of: isThinking) { _, thinking in
+            if thinking {
+                startStreamingPreview()
+            } else {
+                stopStreamingPreview()
+            }
         }
         .onChange(of: inputText) { _, newValue in handleInputChange(newValue) }
         .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
@@ -239,8 +263,9 @@ struct ClaudeChatView: View {
                     }
 
                     if isThinking {
-                        thinkingView.id("thinking")
+                        streamingPreviewView.id("thinking")
                     }
+                    sendStatusFooter.id("send-status")
                     Color.clear.frame(height: 4).id("end")
                 }.padding(.horizontal, 14)
             }
@@ -248,16 +273,29 @@ struct ClaudeChatView: View {
                 // 点击聊天区域收起键盘
                 isInputFocused = false
             }
+            .onAppear {
+                // 进入页面时：已有消息则立即滚动到底部
+                if !chatMessages.isEmpty {
+                    // 延迟一帧等 LazyVStack 完成布局
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        proxy.scrollTo("end", anchor: .bottom)
+                    }
+                }
+            }
             .onChange(of: chatMessages.count) { oldCount, newCount in
                 if oldCount == 0 && newCount > 0 {
                     // 首次加载消息，无动画直接跳到底部
                     proxy.scrollTo("end", anchor: .bottom)
-                } else {
-                    // 增量消息，平滑滚动
+                } else if newCount > oldCount {
+                    // 新增消息，平滑滚动到底部
                     withAnimation(.easeOut(duration: 0.15)) {
                         proxy.scrollTo("end", anchor: .bottom)
                     }
                 }
+            }
+            .onChange(of: streamingPreview) { _, _ in
+                // 流式预览内容更新时保持在底部
+                proxy.scrollTo("end", anchor: .bottom)
             }
         }
     }
@@ -320,27 +358,52 @@ struct ClaudeChatView: View {
         .background(Color.purple.opacity(0.7))
     }
 
-    private var thinkingView: some View {
-        HStack(alignment: .top, spacing: 8) {
-            ZStack {
-                Circle().fill(Color.purple.opacity(0.15)).frame(width: 26, height: 26)
-                Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.purple)
+    /// 流式预览视图：显示 Claude 正在生成的内容（从终端屏幕读取）
+    private var streamingPreviewView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if !streamingPreview.isEmpty {
+                // 显示实时内容
+                HStack(alignment: .top, spacing: 8) {
+                    ZStack {
+                        Circle().fill(Color.purple.opacity(0.15)).frame(width: 26, height: 26)
+                        Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.purple)
+                    }
+                    Text(streamingPreview)
+                        .font(.system(size: 14))
+                        .foregroundStyle(CMColors.textPrimary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                // 底部状态指示
+                HStack(spacing: 6) {
+                    ProgressView().scaleEffect(0.5).tint(.purple.opacity(0.6))
+                    Text(statusLabel)
+                        .font(.system(size: 11)).foregroundStyle(CMColors.textTertiary).italic()
+                }.padding(.leading, 34)
+            } else {
+                // 还没读到内容，显示加载状态
+                HStack(alignment: .top, spacing: 8) {
+                    ZStack {
+                        Circle().fill(Color.purple.opacity(0.15)).frame(width: 26, height: 26)
+                        Image(systemName: "sparkles").font(.system(size: 11)).foregroundStyle(.purple)
+                    }
+                    HStack(spacing: 6) {
+                        ProgressView().scaleEffect(0.6).tint(.purple.opacity(0.6))
+                        Text(statusLabel)
+                            .font(.system(size: 12)).foregroundStyle(CMColors.textTertiary).italic()
+                    }.padding(.top, 3)
+                    Spacer()
+                }
             }
-            HStack(spacing: 6) {
-                ProgressView().scaleEffect(0.6).tint(.purple.opacity(0.6))
-                Text(statusLabel)
-                    .font(.system(size: 12)).foregroundStyle(CMColors.textTertiary).italic()
-            }.padding(.top, 3)
-            Spacer()
         }
     }
 
     /// 当前状态显示文本
     private var statusLabel: String {
         switch activityLabel {
-        case "tool_running": return "执行工具中…"
-        case "thinking": return "思考中…"
-        default: return "处理中…"
+        case "tool_running": return String(localized: "claude.status.tool_running", defaultValue: "执行工具中…")
+        case "thinking": return String(localized: "claude.status.thinking", defaultValue: "思考中…")
+        default: return String(localized: "claude.status.processing", defaultValue: "处理中…")
         }
     }
 
@@ -440,14 +503,43 @@ struct ClaudeChatView: View {
     private func send() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        let messageId = UUID().uuidString
         inputText = ""; showSlashMenu = false; showFilePicker = false
 
-        // 本地立即显示用户消息
-        appendMessage(ClaudeChatItem(id: UUID().uuidString, role: .user, content: text, timestamp: Date()))
+        appendMessage(ClaudeChatItem(id: messageId, role: .user, content: text, timestamp: Date()))
 
-        // 发送到终端
-        sendDirect(text + "\n")
-        isThinking = true
+        withAnimation { pendingSend = (id: messageId, stage: .sending) }
+        lastSendText = text
+
+        relayConnection.sendWithResponse([
+            "method": "surface.send_text",
+            "params": ["surface_id": surfaceID, "text": text + "\n"],
+        ]) { result in
+            let resultDict = result["result"] as? [String: Any] ?? result
+            if resultDict["error"] as? String != nil {
+                withAnimation { pendingSend = (id: messageId, stage: .failed("发送失败")) }
+                return
+            }
+            withAnimation { pendingSend = (id: messageId, stage: .delivered) }
+            isThinking = true
+        }
+    }
+
+    private func retrySend() {
+        guard let pending = pendingSend, case .failed = pending.stage else { return }
+        withAnimation { pendingSend = (id: pending.id, stage: .sending) }
+        relayConnection.sendWithResponse([
+            "method": "surface.send_text",
+            "params": ["surface_id": surfaceID, "text": lastSendText + "\n"],
+        ]) { result in
+            let resultDict = result["result"] as? [String: Any] ?? result
+            if resultDict["error"] as? String != nil {
+                withAnimation { pendingSend = (id: pending.id, stage: .failed("发送失败")) }
+                return
+            }
+            withAnimation { pendingSend = (id: pending.id, stage: .delivered) }
+            isThinking = true
+        }
     }
 
     private func sendDirect(_ text: String) {
@@ -472,6 +564,15 @@ struct ClaudeChatView: View {
             displayText = displayText.isEmpty ? imageLabel : displayText + "\n" + imageLabel
         }
         appendMessage(ClaudeChatItem(id: UUID().uuidString, role: .user, content: displayText, timestamp: Date()))
+
+        withAnimation { pendingSend = (id: UUID().uuidString, stage: .sending) }
+        lastSendText = displayText
+        Task {
+            try? await Task.sleep(for: .seconds(1.0))
+            if let p = pendingSend, p.stage == .sending {
+                withAnimation { pendingSend = (id: p.id, stage: .delivered) }
+            }
+        }
 
         // 通过 composed_msg 协议发送
         let sender = ComposedMessageSender(relayConnection: relayConnection)
@@ -579,6 +680,9 @@ struct ClaudeChatView: View {
             }
 
             processJsonlMessages(messages)
+            if !isThinking && pendingSend != nil {
+                withAnimation { pendingSend = nil }
+            }
         }
     }
 
@@ -648,9 +752,6 @@ struct ClaudeChatView: View {
                     }
                 }
             } else if type == "assistant" {
-                // 跳过中间状态消息（stop_reason 为 null 表示 Claude 还在生成）
-                if stopReason == nil { continue }
-
                 // 提取模型名（用于标注每条消息）
                 let rawModel = (msg["message"] as? [String: Any])?["model"] as? String
                     ?? msg["model"] as? String
@@ -662,8 +763,14 @@ struct ClaudeChatView: View {
                     case "text":
                         if let text = block["text"] as? String, !text.isEmpty {
                             let msgID = "\(uuid)-text"
-                            // O(1) UUID-based 去重
-                            if !existingIDs.contains(msgID) {
+                            // 已有同 ID 消息 → 内容可能更新（流式追加），就地替换
+                            if existingIDs.contains(msgID) {
+                                updateOrAppendStreamingMessage(
+                                    &newItems, existingIDs: existingIDs,
+                                    id: msgID, role: .assistant,
+                                    content: text, modelName: displayModel
+                                )
+                            } else {
                                 newItems.append(ClaudeChatItem(
                                     id: msgID, role: .assistant,
                                     content: text, timestamp: Date(),
@@ -728,7 +835,7 @@ struct ClaudeChatView: View {
             }
         }
 
-        // 更新已有工具消息的状态和结果（不可变：创建新实例替换旧的）
+        // 更新已有消息（工具状态更新）
         let existing = messageStore.claudeChats[surfaceID] ?? []
         var all: [ClaudeChatItem] = []
         var updated = false
@@ -760,9 +867,40 @@ struct ClaudeChatView: View {
 
         if updated {
             messageStore.claudeChats[surfaceID] = all
+            // 有新消息到达时清空流式预览（已被结构化消息替代）
+            if !newItems.isEmpty { streamingPreview = "" }
 
             // HIGH 修复：更新 Plan 模式缓存（避免每次渲染遍历全部消息）
             updatePlanModeState(all)
+        }
+    }
+
+    /// 流式消息：更新已有的同 ID 消息内容，或追加新消息
+    private func updateOrAppendStreamingMessage(
+        _ newItems: inout [ClaudeChatItem],
+        existingIDs: Set<String>,
+        id: String, role: ClaudeChatItem.Role,
+        content: String, modelName: String?
+    ) {
+        // 检查已有消息中是否有同 ID 的流式消息
+        if let existing = messageStore.claudeChats[surfaceID],
+           let idx = existing.firstIndex(where: { $0.id == id }) {
+            // 内容不变则跳过
+            guard existing[idx].content != content else { return }
+            // 替换为新内容（不可变：创建新实例）
+            var msgs = existing
+            msgs[idx] = ClaudeChatItem(
+                id: id, role: role,
+                content: content, timestamp: Date(),
+                modelName: modelName
+            )
+            messageStore.claudeChats[surfaceID] = msgs
+        } else if !existingIDs.contains(id) {
+            newItems.append(ClaudeChatItem(
+                id: id, role: role,
+                content: content, timestamp: Date(),
+                modelName: modelName
+            ))
         }
     }
 
@@ -833,6 +971,7 @@ struct ClaudeChatView: View {
         // 监听推送事件
         let sid = surfaceID
         relayConnection.onClaudeUpdate = { [weak relayConnection] payload in
+            _ = relayConnection  // 保持 weak 引用以避免循环引用
             // 模型切换事件（不含 surface_id 过滤，因为是全局事件）
             if let event = payload["event"] as? String {
                 switch event {
@@ -853,6 +992,17 @@ struct ClaudeChatView: View {
                         withAnimation { modelSwitchFeedback = nil }
                     }
                     return
+                case "claude.session.reset":
+                    // Mac 端 JSONL 文件被截断/替换，重置状态并重新拉取
+                    let payloadSid = payload["surface_id"] as? String ?? ""
+                    guard payloadSid == sid else { return }
+                    lastSeq = 0
+                    displayLimit = Self.pageSize
+                    tokenUsage = [:]
+                    isThinking = false
+                    activityLabel = ""
+                    fetchMessages()
+                    return
                 default:
                     break
                 }
@@ -872,6 +1022,18 @@ struct ClaudeChatView: View {
                 }
 
                 processJsonlMessages(messages)
+
+                // 更新发送状态
+                if let pending = pendingSend,
+                   pending.stage == .delivered || pending.stage == .sending {
+                    let hasResponse = messages.contains { ($0["type"] as? String) == "assistant" }
+                    if hasResponse || status == "thinking" || status == "tool_running" {
+                        withAnimation { pendingSend = (id: pending.id, stage: .thinking) }
+                    }
+                }
+                if !isThinking && pendingSend != nil {
+                    withAnimation { pendingSend = nil }
+                }
             }
         }
     }
@@ -899,4 +1061,157 @@ struct ClaudeChatView: View {
     }
 
     private func stopPolling() { refreshTask?.cancel(); refreshTask = nil }
+
+    // MARK: - 流式预览（生成时轮询终端屏幕）
+
+    /// Claude 生成期间，快速轮询 read_screen 获取实时输出
+    private func startStreamingPreview() {
+        stopStreamingPreview()
+        streamingPreview = ""
+        let sid = surfaceID
+        streamingTask = Task {
+            while !Task.isCancelled {
+                // 1 秒间隔轮询终端屏幕
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                guard !Task.isCancelled else { break }
+
+                await withCheckedContinuation { continuation in
+                    relayConnection.sendWithResponse([
+                        "method": "read_screen",
+                        "params": ["surface_id": sid],
+                    ]) { result in
+                        let resultDict = result["result"] as? [String: Any] ?? result
+                        if let lines = resultDict["lines"] as? [String] {
+                            let extracted = Self.extractClaudeOutput(from: lines)
+                            if !extracted.isEmpty {
+                                streamingPreview = extracted
+                            }
+                        }
+                        continuation.resume()
+                    }
+                }
+            }
+        }
+    }
+
+    private func stopStreamingPreview() {
+        streamingTask?.cancel()
+        streamingTask = nil
+        // 不立即清空 streamingPreview，让 JSONL 消息到达后自然替换
+    }
+
+    /// 从终端屏幕行中提取 Claude 正在输出的文本内容
+    /// 跳过 TUI 框架元素（状态栏、工具调用指示器等），提取纯文本
+    private static func extractClaudeOutput(from lines: [String]) -> String {
+        // Claude Code TUI 的屏幕布局：
+        // - 顶部几行：状态栏、上下文信息
+        // - 中间：对话内容（用户消息和 assistant 输出）
+        // - 底部：输入框、快捷键提示
+        //
+        // 策略：从底部向上扫描，跳过空行和 TUI 装饰，提取最近的文本块
+        var contentLines: [String] = []
+        var foundContent = false
+
+        // 从倒数第二行开始（最后一行通常是输入框/快捷键提示）
+        let scanLines = Array(lines.dropLast(2).reversed())
+
+        for line in scanLines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            // 跳过空行
+            if trimmed.isEmpty {
+                if foundContent { break } // 连续文本块结束
+                continue
+            }
+
+            // 跳过 TUI 装饰行（进度条、状态指示、分隔符等）
+            if trimmed.hasPrefix("─") || trimmed.hasPrefix("━")
+                || trimmed.hasPrefix("╭") || trimmed.hasPrefix("╰")
+                || trimmed.hasPrefix("│") || trimmed.hasPrefix("┃")
+                || trimmed.hasPrefix(">") // 输入提示符
+                || trimmed.hasPrefix("⏵") // Claude Code 输入
+                || trimmed.hasPrefix("●") || trimmed.hasPrefix("○") // 状态指示
+            {
+                if foundContent { break }
+                continue
+            }
+
+            foundContent = true
+            contentLines.append(trimmed)
+        }
+
+        // 反转回正序
+        contentLines.reverse()
+
+        // 限制预览长度（避免过长的屏幕内容）
+        let joined = contentLines.joined(separator: "\n")
+        if joined.count > 2000 {
+            return String(joined.suffix(2000))
+        }
+        return joined
+    }
+
+    // MARK: - 发送状态指示
+
+    @ViewBuilder
+    private var sendStatusFooter: some View {
+        if let pending = pendingSend {
+            HStack(spacing: 6) {
+                switch pending.stage {
+                case .sending:
+                    ProgressView()
+                        .scaleEffect(0.5)
+                        .frame(width: 12, height: 12)
+                    Text(String(localized: "chat.status.sending", defaultValue: "发送中..."))
+                case .delivered:
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.green)
+                    Text(String(localized: "chat.status.delivered", defaultValue: "已送达"))
+                case .thinking:
+                    ThinkingDotsView()
+                    Text(String(localized: "chat.status.thinking", defaultValue: "Claude 正在思考..."))
+                case .failed(let error):
+                    Image(systemName: "exclamationmark.circle")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.red)
+                    Text(error)
+                        .foregroundStyle(.red)
+                    Button(String(localized: "chat.status.retry", defaultValue: "重试")) {
+                        retrySend()
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.blue)
+                }
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(CMColors.textTertiary)
+            .padding(.leading, 40)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
+        }
+    }
+
+    private struct ThinkingDotsView: View {
+        @State private var phase = 0
+
+        var body: some View {
+            HStack(spacing: 3) {
+                ForEach(0..<3, id: \.self) { i in
+                    Circle()
+                        .fill(Color.purple.opacity(i <= phase ? 1.0 : 0.3))
+                        .frame(width: 4, height: 4)
+                        .scaleEffect(i <= phase ? 1.2 : 0.8)
+                }
+            }
+            .frame(width: 20, height: 12)
+            .onAppear {
+                Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { _ in
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        phase = (phase + 1) % 4
+                    }
+                }
+            }
+        }
+    }
 }
