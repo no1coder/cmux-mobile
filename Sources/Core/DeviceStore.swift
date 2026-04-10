@@ -48,7 +48,21 @@ enum DeviceStore {
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return (try? decoder.decode([PairedDevice].self, from: data)) ?? []
+        var devices = (try? decoder.decode([PairedDevice].self, from: data)) ?? []
+
+        // 域名迁移：cmux.rooyun.com → devpod.rooyun.com
+        var migrated = false
+        for i in devices.indices {
+            if devices[i].serverURL == "cmux.rooyun.com" {
+                devices[i].serverURL = "devpod.rooyun.com"
+                migrated = true
+            }
+        }
+        if migrated {
+            saveDevices(devices)
+        }
+
+        return devices
         #else
         return []
         #endif
