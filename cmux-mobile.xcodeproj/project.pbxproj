@@ -1012,6 +1012,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEVELOPMENT_TEAM = 69A75B6U2B;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = cmuxWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rooyun.devpod.widget;
@@ -1043,6 +1044,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEVELOPMENT_TEAM = 69A75B6U2B;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = cmuxWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rooyun.devpod.widget;
