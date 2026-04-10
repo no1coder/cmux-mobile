@@ -9,7 +9,7 @@ struct PairingSettingsView: View {
     private static let keySelfHostedURL = "selfHostedServerURL"
 
     /// 默认中继服务器地址
-    static let defaultServerURL = "cmux.rooyun.com"
+    static let defaultServerURL = "devpod.rooyun.com"
 
     // MARK: - 状态
 
