@@ -49,6 +49,7 @@ struct FileEntry: Identifiable, Codable {
 /// 文件浏览器：展示远程文件系统目录，支持进入子目录和预览文件
 struct FileExplorerView: View {
     @EnvironmentObject var relayConnection: RelayConnection
+    @EnvironmentObject var messageStore: MessageStore
 
     /// 当前浏览的路径（相对于根目录）
     @State private var currentPath: [String] = []
@@ -117,36 +118,49 @@ struct FileExplorerView: View {
 
     // MARK: - 允许的根目录
 
-    /// Mac 端沙箱允许的工作目录
-    private static let allowedRoots: [(name: String, path: String, icon: String)] = [
-        ("code", "~/code", "folder.fill"),
-        ("projects", "~/projects", "folder.fill"),
-        ("Developer", "~/Developer", "hammer.fill"),
-        ("Documents", "~/Documents", "doc.fill"),
-        ("Desktop", "~/Desktop", "menubar.dock.rectangle"),
-    ]
+    /// 默认目录列表（Mac 未推送时使用）
+    private static let defaultDirs = ["~/code", "~/projects", "~/Developer", "~/Documents", "~/Desktop"]
+
+    /// 当前显示的目录列表（优先使用 Mac 推送的）
+    private var displayDirs: [String] {
+        let dirs = messageStore.allowedDirectories
+        return dirs.isEmpty ? Self.defaultDirs : dirs
+    }
+
+    /// 目录路径对应的图标
+    private func iconForDir(_ path: String) -> String {
+        let name = (path as NSString).lastPathComponent.lowercased()
+        switch name {
+        case "developer": return "hammer.fill"
+        case "documents": return "doc.fill"
+        case "desktop": return "menubar.dock.rectangle"
+        case "downloads": return "arrow.down.circle.fill"
+        default: return "folder.fill"
+        }
+    }
 
     private var allowedRootsView: some View {
         List {
             Section {
-                ForEach(Self.allowedRoots, id: \.name) { root in
+                ForEach(displayDirs, id: \.self) { dir in
+                    let name = (dir as NSString).lastPathComponent
                     NavigationLink {
                         _ChildFileExplorerView(
-                            parentPath: root.path.components(separatedBy: "/"),
+                            parentPath: dir.components(separatedBy: "/"),
                             connection: relayConnection
                         )
                     } label: {
                         Label {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(root.name)
+                                Text(name)
                                     .font(.body)
                                     .fontWeight(.medium)
-                                Text("~/" + root.name)
+                                Text(dir)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                         } icon: {
-                            Image(systemName: root.icon)
+                            Image(systemName: iconForDir(dir))
                                 .foregroundStyle(.blue)
                         }
                     }

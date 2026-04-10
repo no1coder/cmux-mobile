@@ -29,6 +29,8 @@ final class MessageStore: ObservableObject {
 
     /// Mac 端推送的能力快照（slash 命令列表）
     @Published var slashCommands: [[String: Any]] = []
+    /// Mac 端推送的允许访问目录列表
+    @Published var allowedDirectories: [String] = []
 
     /// C4: 关联的断线恢复管理器，由外部注入（弱引用避免循环）
     weak var recovery: DisconnectRecovery?
@@ -405,6 +407,18 @@ final class MessageStore: ObservableObject {
         }
         slashCommands = parsed
         print("[capabilities] 收到 \(parsed.count) 个 slash 命令")
+
+        // 提取允许访问的目录列表
+        if case .array(let dirs) = payload["allowed_directories"] {
+            let dirList = dirs.compactMap { item -> String? in
+                if case .string(let s) = item { return s }
+                return nil
+            }
+            if !dirList.isEmpty {
+                allowedDirectories = dirList
+                print("[capabilities] 收到 \(dirList.count) 个允许目录")
+            }
+        }
     }
 
     // MARK: - 终端通知处理

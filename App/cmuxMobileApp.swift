@@ -121,6 +121,7 @@ struct cmuxMobileApp: App {
                 // 文件浏览器 Tab
                 FileExplorerView()
                     .environmentObject(relayConnection)
+                    .environmentObject(messageStore)
                     .tabItem {
                         Label(
                             String(localized: "tab.files", defaultValue: "文件"),
