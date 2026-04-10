@@ -5,7 +5,7 @@ import UIKit
 import AppKit
 #endif
 
-/// 文件预览视图：支持图片（缩放）和文本（等宽字体）两种模式
+/// 文件预览视图：支持图片（缩放）、代码高亮、Markdown 渲染和文本（等宽字体）四种模式
 struct FilePreviewView: View {
     let fileName: String
     let filePath: String
@@ -21,6 +21,8 @@ struct FilePreviewView: View {
         case loading
         case image(PlatformImage)
         case text(String)
+        case code(language: String, content: String)
+        case markdown(String)
         case error(String)
     }
 
@@ -43,6 +45,12 @@ struct FilePreviewView: View {
 
             case .text(let content):
                 textPreview(content: content)
+
+            case .code(let language, let content):
+                codePreview(language: language, content: content)
+
+            case .markdown(let content):
+                markdownPreview(content: content)
 
             case .error(let message):
                 errorView(message: message)
@@ -91,6 +99,25 @@ struct FilePreviewView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .textSelection(.enabled)
+        }
+    }
+
+    private func codePreview(language: String, content: String) -> some View {
+        ScrollView {
+            SyntaxHighlightedCodeView(
+                code: content,
+                language: language,
+                showLineNumbers: true,
+                maxLines: 0
+            )
+            .padding(8)
+        }
+    }
+
+    private func markdownPreview(content: String) -> some View {
+        ScrollView {
+            MarkdownView(content: content)
+                .padding()
         }
     }
 
@@ -150,9 +177,15 @@ struct FilePreviewView: View {
             return
         }
 
-        // 检查是否为 utf8 文本
+        // 检查是否为 utf8 文本，并按文件类型路由
         if let content = result["content"] as? String {
-            previewState = .text(content)
+            if Self.isMarkdownFile(fileName) {
+                previewState = .markdown(content)
+            } else if let lang = Self.detectLanguage(fileName) {
+                previewState = .code(language: lang, content: content)
+            } else {
+                previewState = .text(content)
+            }
             return
         }
 
@@ -173,5 +206,38 @@ struct FilePreviewView: View {
         let imageExts: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "heic", "bmp", "tiff"]
         let ext = (name as NSString).pathExtension.lowercased()
         return imageExts.contains(ext)
+    }
+
+    /// 根据文件扩展名检测编程语言
+    private static func detectLanguage(_ fileName: String) -> String? {
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        switch ext {
+        case "swift": return "swift"
+        case "py": return "python"
+        case "js", "jsx": return "javascript"
+        case "ts", "tsx": return "typescript"
+        case "go": return "go"
+        case "rs": return "rust"
+        case "java": return "java"
+        case "c", "h": return "c"
+        case "cpp", "cc", "cxx", "hpp": return "cpp"
+        case "rb": return "ruby"
+        case "sh", "bash", "zsh": return "bash"
+        case "sql": return "sql"
+        case "json": return "json"
+        case "yaml", "yml": return "yaml"
+        case "html", "htm": return "html"
+        case "css", "scss": return "css"
+        case "kt": return "kotlin"
+        case "xml", "svg", "plist": return "html"
+        case "toml": return "yaml"
+        case "dockerfile": return "bash"
+        default: return nil
+        }
+    }
+
+    private static func isMarkdownFile(_ fileName: String) -> Bool {
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        return ext == "md" || ext == "markdown"
     }
 }

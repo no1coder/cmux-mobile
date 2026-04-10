@@ -412,6 +412,8 @@ private struct _ChildFileExplorerView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
     @State private var currentPath: [String]
+    @State private var showNewFolderAlert = false
+    @State private var newFolderName = ""
 
     init(parentPath: [String], connection: RelayConnection) {
         self.parentPath = parentPath
@@ -475,7 +477,73 @@ private struct _ChildFileExplorerView: View {
             }
         }
         .navigationTitle(currentPath.last ?? "")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        showNewFolderAlert = true
+                    } label: {
+                        Label(String(localized: "files.action.new_folder", defaultValue: "新建文件夹"), systemImage: "folder.badge.plus")
+                    }
+                    Button {
+                        createTerminalHere()
+                    } label: {
+                        Label(String(localized: "files.action.open_terminal", defaultValue: "在此打开终端"), systemImage: "terminal")
+                    }
+                    Button {
+                        launchClaudeHere()
+                    } label: {
+                        Label(String(localized: "files.action.launch_claude", defaultValue: "启动 Claude"), systemImage: "sparkles")
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .alert(String(localized: "files.action.new_folder", defaultValue: "新建文件夹"), isPresented: $showNewFolderAlert) {
+            TextField(String(localized: "files.action.folder_name", defaultValue: "文件夹名称"), text: $newFolderName)
+            Button(String(localized: "files.action.create", defaultValue: "创建")) { createFolder() }
+            Button(String(localized: "files.cancel", defaultValue: "取消"), role: .cancel) { newFolderName = "" }
+        }
         .task { loadDirectory() }
+    }
+
+    // MARK: - 目录操作
+
+    /// 在当前目录创建新文件夹
+    private func createFolder() {
+        guard !newFolderName.isEmpty else { return }
+        let joined = (currentPath + [newFolderName]).joined(separator: "/")
+        let path = joined.hasPrefix("~") ? joined : "/" + joined
+        connection.send([
+            "method": "file.mkdir",
+            "params": ["path": path]
+        ])
+        newFolderName = ""
+        // 稍后重新加载目录，等待服务端创建完成
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            loadDirectory()
+        }
+    }
+
+    /// 在当前目录打开新终端
+    private func createTerminalHere() {
+        let joined = currentPath.joined(separator: "/")
+        let cwd = joined.hasPrefix("~") ? joined : "/" + joined
+        connection.send([
+            "method": "workspace.create",
+            "params": ["cwd": cwd]
+        ])
+    }
+
+    /// 在当前目录启动 Claude
+    private func launchClaudeHere() {
+        let joined = currentPath.joined(separator: "/")
+        let cwd = joined.hasPrefix("~") ? joined : "/" + joined
+        connection.send([
+            "method": "workspace.create",
+            "params": ["cwd": cwd, "command": "claude"]
+        ])
     }
 
     private func loadDirectory() {
