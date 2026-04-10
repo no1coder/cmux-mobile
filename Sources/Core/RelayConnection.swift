@@ -454,11 +454,11 @@ final class RelayConnection: NSObject, ObservableObject {
     private func scheduleReconnect() {
         reconnectTask = Task { [weak self] in
             guard let self else { return }
-            let delay = await self.currentReconnectDelay()
+            let delay = self.currentReconnectDelay()
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard !Task.isCancelled else { return }
-            await self.bumpReconnectDelay()
-            await self.connect()
+            self.bumpReconnectDelay()
+            self.connect()
         }
     }
 
