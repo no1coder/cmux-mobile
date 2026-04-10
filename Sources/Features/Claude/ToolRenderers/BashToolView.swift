@@ -56,12 +56,12 @@ struct BashToolView: View {
         return ScrollView(.horizontal, showsIndicators: false) {
             Text(text)
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(isError ? .red.opacity(0.8) : .white.opacity(0.7))
+                .foregroundStyle(isError ? .red.opacity(0.8) : CMColors.textSecondary)
                 .textSelection(.enabled)
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.white.opacity(isError ? 0.04 : 0.02))
+        .background(CMColors.backgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 12)
     }

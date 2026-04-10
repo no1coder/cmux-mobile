@@ -15,7 +15,7 @@ struct TodoToolView: View {
                     .foregroundStyle(.purple)
                 Text("任务清单")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(CMColors.textSecondary)
             }
             .padding(.horizontal, 16)
 
@@ -27,7 +27,7 @@ struct TodoToolView: View {
                 // 回退到原始文本
                 Text(input)
                     .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(CMColors.textSecondary)
                     .padding(.horizontal, 16)
             }
         }
@@ -86,7 +86,7 @@ private struct TodoItem {
         switch status {
         case "completed": return .green.opacity(0.7)
         case "in_progress": return .orange.opacity(0.8)
-        default: return .white.opacity(0.6)
+        default: return CMColors.textSecondary
         }
     }
 

@@ -12,7 +12,7 @@ struct ConnectionStatusBar: View {
                     .frame(width: 6, height: 6)
                 Text(statusText)
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(CMColors.textSecondary)
                 Spacer()
             }
             .padding(.horizontal, 16)

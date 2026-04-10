@@ -34,7 +34,7 @@ struct MCPToolRenderer: View {
                     .foregroundStyle(.indigo)
                 Text(displayName)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(CMColors.textSecondary)
             }
 
             // 使用 GenericToolView 展示输入/输出

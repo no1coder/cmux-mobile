@@ -17,7 +17,7 @@ struct GlobToolView: View {
                     ProgressView().scaleEffect(0.7).tint(.cyan)
                     Text("匹配中…")
                         .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(CMColors.textTertiary)
                 }
                 .padding(.horizontal, 12)
             }
@@ -28,7 +28,7 @@ struct GlobToolView: View {
             } else if state == .completed {
                 Text("无匹配文件")
                     .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(CMColors.textTertiary)
                     .padding(.horizontal, 16)
             }
         }
@@ -59,17 +59,17 @@ struct GlobToolView: View {
             WrappingHStack(items: displayFiles) { file in
                 Text(fileName(from: file))
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(CMColors.textSecondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.06))
+                    .background(CMColors.backgroundSecondary)
                     .clipShape(Capsule())
             }
 
             if files.count > 50 {
                 Text("… 共 \(files.count) 个文件")
                     .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(CMColors.textTertiary)
             }
         }
         .padding(.horizontal, 12)

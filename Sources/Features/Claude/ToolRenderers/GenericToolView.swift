@@ -28,7 +28,7 @@ struct GenericToolView: View {
                     ProgressView().scaleEffect(0.7).tint(.gray)
                     Text("执行中…")
                         .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(CMColors.textTertiary)
                 }
                 .padding(.horizontal, 12)
             }
@@ -62,7 +62,7 @@ struct GenericToolView: View {
                     Text(title)
                         .font(.system(size: 11, weight: .semibold))
                 }
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(CMColors.textTertiary)
                 .textCase(.uppercase)
             }
             .padding(.horizontal, 16)
@@ -77,12 +77,12 @@ struct GenericToolView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             Text(text)
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(isError ? .red.opacity(0.8) : .white.opacity(0.7))
+                .foregroundStyle(isError ? .red.opacity(0.8) : CMColors.textSecondary)
                 .textSelection(.enabled)
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.white.opacity(isError ? 0.04 : 0.03))
+        .background(CMColors.backgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 12)
     }

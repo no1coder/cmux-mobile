@@ -169,7 +169,7 @@ struct MarkdownView: View, Equatable {
 
         case .horizontalRule:
             Rectangle()
-                .fill(Color.white.opacity(0.1))
+                .fill(CMColors.separator)
                 .frame(height: 1)
                 .padding(.vertical, 4)
 
@@ -177,7 +177,7 @@ struct MarkdownView: View, Equatable {
             HStack(alignment: .top, spacing: 6) {
                 Text("•")
                     .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(CMColors.textTertiary)
                     .padding(.leading, CGFloat(indent) * 16)
                 inlineMarkdown(text)
             }
@@ -191,12 +191,12 @@ struct MarkdownView: View, Equatable {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
                         .fontWeight(isHeader ? .bold : .regular)
-                        .background(isHeader ? Color.white.opacity(0.06) : Color.white.opacity(0.02))
+                        .background(isHeader ? CMColors.backgroundSecondary : CMColors.backgroundPrimary)
                         .overlay(alignment: .trailing) {
                             // 单元格右边框（最后一列除外）
                             if idx < cells.count - 1 {
                                 Rectangle()
-                                    .fill(Color.white.opacity(0.08))
+                                    .fill(CMColors.separator)
                                     .frame(width: 0.5)
                             }
                         }
@@ -205,7 +205,7 @@ struct MarkdownView: View, Equatable {
             .overlay(alignment: .bottom) {
                 // 行底边框
                 Rectangle()
-                    .fill(Color.white.opacity(isHeader ? 0.15 : 0.06))
+                    .fill(CMColors.separator)
                     .frame(height: 0.5)
             }
 
@@ -226,7 +226,7 @@ struct MarkdownView: View, Equatable {
         }
         return Text(text)
             .font(.system(size: fontSize, weight: .bold))
-            .foregroundStyle(.white)
+            .foregroundStyle(CMColors.textPrimary)
             .padding(.top, level <= 2 ? 8 : 4)
     }
 
@@ -240,13 +240,13 @@ struct MarkdownView: View, Equatable {
         ) {
             Text(attributed)
                 .font(.system(size: 15))
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(CMColors.textPrimary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
         } else {
             Text(text)
                 .font(.system(size: 15))
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(CMColors.textPrimary)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
         }

@@ -175,10 +175,10 @@ struct ClaudeChatView: View {
                         .foregroundStyle(feedback.hasPrefix("⚠️") ? .orange : .green)
                     Text(feedback)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(CMColors.textPrimary)
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
-                .background(Color.black.opacity(0.8))
+                .background(Color(UIColor.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding(.top, 12)
                 .transition(.move(edge: .top).combined(with: .opacity))

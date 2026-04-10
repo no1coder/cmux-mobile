@@ -53,7 +53,7 @@ struct DiffCodeView: View {
             if showLineNumbers {
                 Text("\(lineNumber)")
                     .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.2))
+                    .foregroundStyle(CMColors.textTertiary)
                     .frame(width: 28, alignment: .trailing)
                     .padding(.trailing, 4)
             }
@@ -85,7 +85,7 @@ struct DiffCodeView: View {
         switch kind {
         case .removed: return .red.opacity(0.8)
         case .added: return .green.opacity(0.8)
-        case .context: return .white.opacity(0.4)
+        case .context: return CMColors.textTertiary
         }
     }
 

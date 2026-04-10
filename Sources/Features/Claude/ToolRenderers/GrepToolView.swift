@@ -17,7 +17,7 @@ struct GrepToolView: View {
                     ProgressView().scaleEffect(0.7).tint(.cyan)
                     Text("搜索中…")
                         .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(CMColors.textTertiary)
                 }
                 .padding(.horizontal, 12)
             }
@@ -28,7 +28,7 @@ struct GrepToolView: View {
             } else if state == .completed {
                 Text("无匹配结果")
                     .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(CMColors.textTertiary)
                     .padding(.horizontal, 16)
             }
         }
@@ -55,7 +55,7 @@ struct GrepToolView: View {
             if !searchPath.isEmpty {
                 Text("在 \(searchPath)")
                     .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.4))
+                    .foregroundStyle(CMColors.textTertiary)
             }
         }
         .padding(.horizontal, 16)
@@ -69,7 +69,7 @@ struct GrepToolView: View {
             ForEach(Array(displayLines.enumerated()), id: \.offset) { _, line in
                 Text(line)
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(CMColors.textSecondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -77,12 +77,12 @@ struct GrepToolView: View {
             if lines.count > 100 {
                 Text("… 共 \(lines.count) 条结果")
                     .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(CMColors.textTertiary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
             }
         }
-        .background(Color.white.opacity(0.03))
+        .background(CMColors.backgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 12)
     }

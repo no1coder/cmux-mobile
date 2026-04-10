@@ -47,7 +47,7 @@ struct ToolDetailView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(toolName)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(CMColors.textPrimary)
                 Text(stateLabel)
                     .font(.system(size: 12))
                     .foregroundStyle(stateColor)
@@ -101,7 +101,7 @@ struct ToolDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(CMColors.textTertiary)
                 .textCase(.uppercase)
                 .padding(.horizontal, 16)
             content()
@@ -112,12 +112,12 @@ struct ToolDetailView: View {
         ScrollView(.horizontal, showsIndicators: true) {
             Text(text)
                 .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(isError ? .red.opacity(0.8) : .white.opacity(0.7))
+                .foregroundStyle(isError ? .red.opacity(0.8) : CMColors.textSecondary)
                 .textSelection(.enabled)
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.white.opacity(isError ? 0.04 : 0.03))
+        .background(CMColors.backgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 12)
     }

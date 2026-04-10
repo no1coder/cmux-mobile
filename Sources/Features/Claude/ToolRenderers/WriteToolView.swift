@@ -24,7 +24,7 @@ struct WriteToolView: View {
                     ProgressView().scaleEffect(0.7).tint(.orange)
                     Text("写入中…")
                         .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(CMColors.textTertiary)
                 }
                 .padding(.horizontal, 12)
             } else if state == .completed {
@@ -51,7 +51,7 @@ struct WriteToolView: View {
                 .foregroundStyle(.orange)
             Text(filePath)
                 .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(CMColors.textSecondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer()
@@ -77,7 +77,7 @@ struct WriteToolView: View {
                     ForEach(Array(visibleLines.enumerated()), id: \.offset) { _, line in
                         Text(line)
                             .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(CMColors.textSecondary)
                     }
                 }
                 .padding(8)
@@ -87,12 +87,12 @@ struct WriteToolView: View {
             if truncated {
                 Text("… 共 \(allLines.count) 行")
                     .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(CMColors.textTertiary)
                     .padding(.horizontal, 8)
                     .padding(.bottom, 6)
             }
         }
-        .background(Color.white.opacity(0.03))
+        .background(CMColors.backgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 12)
     }

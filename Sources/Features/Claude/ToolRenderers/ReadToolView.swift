@@ -21,7 +21,7 @@ struct ReadToolView: View {
                     ProgressView().scaleEffect(0.7).tint(.blue)
                     Text("读取中…")
                         .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(CMColors.textTertiary)
                 }
                 .padding(.horizontal, 12)
             } else if let result, !result.isEmpty {
@@ -41,7 +41,7 @@ struct ReadToolView: View {
                 .foregroundStyle(.blue)
             Text(filePath)
                 .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(CMColors.textSecondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
@@ -61,11 +61,11 @@ struct ReadToolView: View {
                         HStack(alignment: .top, spacing: 0) {
                             Text("\(idx + 1)")
                                 .font(.system(size: 10, design: .monospaced))
-                                .foregroundStyle(.white.opacity(0.2))
+                                .foregroundStyle(CMColors.textTertiary)
                                 .frame(width: 36, alignment: .trailing)
                             Text(" \(line)")
                                 .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(CMColors.textSecondary)
                         }
                     }
                 }
@@ -87,7 +87,7 @@ struct ReadToolView: View {
                 }
             }
         }
-        .background(Color.white.opacity(0.03))
+        .background(CMColors.backgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 12)
     }

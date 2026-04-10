@@ -22,7 +22,7 @@ struct EditToolView: View {
                     ProgressView().scaleEffect(0.7).tint(.orange)
                     Text("编辑中…")
                         .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .foregroundStyle(CMColors.textTertiary)
                 }
                 .padding(.horizontal, 12)
             } else if state == .completed {
@@ -53,7 +53,7 @@ struct EditToolView: View {
                 .foregroundStyle(.orange)
             Text(filePath)
                 .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(CMColors.textSecondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
