@@ -465,7 +465,7 @@ private struct _ChildFileExplorerView: View {
             }
         }
         .navigationTitle(currentPath.last ?? "")
-        .onAppear { loadDirectory() }
+        .task { loadDirectory() }
     }
 
     private func loadDirectory() {
@@ -474,6 +474,7 @@ private struct _ChildFileExplorerView: View {
         // 构建路径：~ 开头不加 /，其他加 /
         let joined = currentPath.joined(separator: "/")
         let path = joined.hasPrefix("~") ? joined : "/" + joined
+        print("[files] loadDirectory path=\(path) currentPath=\(currentPath)")
         // C4: 使用 sendWithResponse 注册响应回调
         connection.sendWithResponse([
             "method": "file.list",
