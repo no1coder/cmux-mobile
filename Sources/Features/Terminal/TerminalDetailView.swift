@@ -57,6 +57,18 @@ struct TerminalDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if relayConnection.status == .connected, let latency = relayConnection.latencyMs {
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(latency < 100 ? .green : latency < 300 ? .yellow : .red)
+                            .frame(width: 4, height: 4)
+                        Text("\(latency)ms")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     if isClaudeMode {
