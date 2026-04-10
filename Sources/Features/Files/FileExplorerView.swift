@@ -221,20 +221,40 @@ struct FileExplorerView: View {
             "params": ["path": path]
         ]) { result in
             DispatchQueue.main.async { [self] in
-                // 检查是否有错误
+                print("[files] file.list 响应 keys=\(result.keys.sorted())")
+                // 检查是否有错误（支持多种错误格式）
                 if let error = result["error"] as? [String: Any],
                    let message = error["message"] as? String {
                     isLoading = false
                     errorMessage = message
                     return
                 }
-                // 从响应中解析 result.entries
-                // Mac Bridge 返回格式: {"id": N, "result": {"entries": [...]}}
-                let resultDict = result["result"] as? [String: Any] ?? result
-                if let rawEntries = resultDict["entries"] as? [[String: Any]] {
-                    handleResponse(rawEntries)
+                if let error = result["error"] as? String {
+                    isLoading = false
+                    errorMessage = error
+                    return
+                }
+                // 从响应中解析 entries（尝试多层嵌套）
+                // 格式可能是: {"result": {"entries": [...]}}
+                //          或: {"entries": [...]}
+                //          或: {"result": {"result": {"entries": [...]}}}
+                let entries: [[String: Any]]? = {
+                    // 直接在顶层
+                    if let e = result["entries"] as? [[String: Any]] { return e }
+                    // 在 result 字段下
+                    if let r = result["result"] as? [String: Any] {
+                        if let e = r["entries"] as? [[String: Any]] { return e }
+                        // 再嵌套一层
+                        if let r2 = r["result"] as? [String: Any],
+                           let e = r2["entries"] as? [[String: Any]] { return e }
+                    }
+                    return nil
+                }()
+                if let entries {
+                    handleResponse(entries)
                 } else {
                     isLoading = false
+                    print("[files] 无法解析 entries, result=\(result)")
                     errorMessage = String(localized: "files.error.empty_response", defaultValue: "响应数据格式错误")
                 }
             }
@@ -405,16 +425,30 @@ private struct _ChildFileExplorerView: View {
             "params": ["path": path]
         ]) { result in
             DispatchQueue.main.async {
-                // 检查错误
+                // 检查错误（支持多种格式）
                 if let error = result["error"] as? [String: Any],
                    let message = error["message"] as? String {
                     errorMessage = message
                     isLoading = false
                     return
                 }
-                // Mac Bridge 返回格式: {"id": N, "result": {"entries": [...]}}
-                let resultDict = result["result"] as? [String: Any] ?? result
-                guard let rawEntries = resultDict["entries"] as? [[String: Any]] else {
+                if let error = result["error"] as? String {
+                    errorMessage = error
+                    isLoading = false
+                    return
+                }
+                // 解析 entries（尝试多层嵌套）
+                let rawEntries: [[String: Any]]? = {
+                    if let e = result["entries"] as? [[String: Any]] { return e }
+                    if let r = result["result"] as? [String: Any] {
+                        if let e = r["entries"] as? [[String: Any]] { return e }
+                        if let r2 = r["result"] as? [String: Any],
+                           let e = r2["entries"] as? [[String: Any]] { return e }
+                    }
+                    return nil
+                }()
+                guard let rawEntries else {
+                    print("[files] 子目录无法解析 entries, result=\(result)")
                     errorMessage = String(localized: "files.error.empty_response", defaultValue: "响应数据格式错误")
                     isLoading = false
                     return
