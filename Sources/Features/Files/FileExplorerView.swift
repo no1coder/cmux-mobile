@@ -7,7 +7,8 @@ struct FileEntry: Identifiable, Codable {
     let name: String
     let type: FileEntryType
     let size: Int64?
-    let modified: String?
+    /// 修改时间（毫秒时间戳）
+    let modified: Int64?
 
     /// Identifiable 所需的 id，使用 name 作为唯一标识
     var id: String { name }
@@ -22,6 +23,15 @@ struct FileEntry: Identifiable, Codable {
         let gb = mb / 1024
         if gb < 1 { return String(format: "%.1f MB", mb) }
         return String(format: "%.1f GB", gb)
+    }
+
+    /// 格式化修改时间
+    var formattedDate: String {
+        guard let ms = modified else { return "" }
+        let date = Date(timeIntervalSince1970: Double(ms) / 1000)
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 
     enum FileEntryType: String, Codable {
