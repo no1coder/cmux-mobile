@@ -41,8 +41,7 @@ struct TurnView: View {
 
                         // 回复计数
                         if turn.replyCount > 0 {
-                            Text(String(localized: "turn.reply_count \(turn.replyCount)",
-                                        defaultValue: "\(turn.replyCount) 条回复"))
+                            Text("\(turn.replyCount) 条回复")
                                 .font(.system(size: 10))
                                 .foregroundStyle(CMColors.textTertiary)
                         }
