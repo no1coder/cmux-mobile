@@ -5,8 +5,26 @@ struct ConnectionStatusBar: View {
     @EnvironmentObject var relayConnection: RelayConnection
 
     var body: some View {
-        // 已连接时完全隐藏，不占任何空间
-        if relayConnection.status != .connected {
+        if relayConnection.status == .connected {
+            // 已连接：显示延迟徽章
+            if let latency = relayConnection.latencyMs {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(latencyColor(latency))
+                        .frame(width: 5, height: 5)
+                    Text("\(latency) ms")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(latencyColor(latency).opacity(0.8))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .background(latencyColor(latency).opacity(0.08))
+                .clipShape(Capsule())
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 2)
+            }
+        } else {
             HStack(spacing: 6) {
                 Circle()
                     .fill(statusColor)
@@ -48,5 +66,11 @@ struct ConnectionStatusBar: View {
         #else
         return false
         #endif
+    }
+
+    private func latencyColor(_ ms: Int) -> Color {
+        if ms < 100 { return .green }
+        if ms < 300 { return .yellow }
+        return .red
     }
 }
