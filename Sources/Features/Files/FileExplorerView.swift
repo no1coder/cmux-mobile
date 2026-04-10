@@ -53,8 +53,10 @@ struct FileExplorerView: View {
         NavigationStack {
             Group {
                 if relayConnection.status != .connected {
-                    // 未连接时显示提示
                     notConnectedView
+                } else if currentPath.isEmpty {
+                    // 根目录：显示允许访问的文件夹快捷入口
+                    allowedRootsView
                 } else if isLoading {
                     ProgressView(String(localized: "files.loading", defaultValue: "加载中…"))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -73,12 +75,12 @@ struct FileExplorerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .onAppear {
-                if relayConnection.status == .connected {
+                if relayConnection.status == .connected && !currentPath.isEmpty {
                     loadDirectory()
                 }
             }
             .onChange(of: relayConnection.status) { _, newStatus in
-                if newStatus == .connected {
+                if newStatus == .connected && !currentPath.isEmpty {
                     loadDirectory()
                 }
             }
@@ -101,6 +103,53 @@ struct FileExplorerView: View {
                 .padding(.horizontal, 32)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - 允许的根目录
+
+    /// Mac 端沙箱允许的工作目录
+    private static let allowedRoots: [(name: String, path: String, icon: String)] = [
+        ("code", "~/code", "folder.fill"),
+        ("projects", "~/projects", "folder.fill"),
+        ("Developer", "~/Developer", "hammer.fill"),
+        ("Documents", "~/Documents", "doc.fill"),
+        ("Desktop", "~/Desktop", "menubar.dock.rectangle"),
+    ]
+
+    private var allowedRootsView: some View {
+        List {
+            Section {
+                ForEach(Self.allowedRoots, id: \.name) { root in
+                    NavigationLink {
+                        FileExplorerSubdirectoryView(
+                            parentPath: root.path.components(separatedBy: "/"),
+                            connection: relayConnection
+                        )
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(root.name)
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                Text("~/" + root.name)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: root.icon)
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                }
+            } header: {
+                Text(String(localized: "files.allowed_dirs", defaultValue: "可访问的目录"))
+            }
+        }
+        #if os(iOS)
+        .listStyle(.insetGrouped)
+        #else
+        .listStyle(.inset)
+        #endif
     }
 
     // MARK: - 子视图
@@ -283,7 +332,8 @@ struct FileExplorerView: View {
     private func pathString(appending extra: String? = nil) -> String {
         var parts = currentPath
         if let extra { parts.append(extra) }
-        return "/" + parts.joined(separator: "/")
+        let joined = parts.joined(separator: "/")
+        return joined.hasPrefix("~") ? joined : "/" + joined
     }
 
     /// 根据文件扩展名返回对应的 SF Symbol 名称
@@ -397,7 +447,10 @@ private struct _ChildFileExplorerView: View {
                         NavigationLink(
                             destination: FilePreviewView(
                                 fileName: entry.name,
-                                filePath: "/" + (currentPath + [entry.name]).joined(separator: "/"),
+                                filePath: {
+                                    let joined = (currentPath + [entry.name]).joined(separator: "/")
+                                    return joined.hasPrefix("~") ? joined : "/" + joined
+                                }(),
                                 connection: connection
                             )
                         ) {
@@ -418,7 +471,9 @@ private struct _ChildFileExplorerView: View {
     private func loadDirectory() {
         isLoading = true
         errorMessage = nil
-        let path = "/" + currentPath.joined(separator: "/")
+        // 构建路径：~ 开头不加 /，其他加 /
+        let joined = currentPath.joined(separator: "/")
+        let path = joined.hasPrefix("~") ? joined : "/" + joined
         // C4: 使用 sendWithResponse 注册响应回调
         connection.sendWithResponse([
             "method": "file.list",
