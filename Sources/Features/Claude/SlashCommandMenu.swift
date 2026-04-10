@@ -86,7 +86,10 @@ struct SlashCommandMenu: View {
         case "project": return "项目"
         case "config":  return "配置"
         case "tools":   return "工具"
-        default:        return "常用"
+        case "user":    return "自定义"
+        case "skill":   return "技能"
+        case "plugin":  return "插件"
+        default:        return "其他"
         }
     }
 
@@ -100,7 +103,7 @@ struct SlashCommandMenu: View {
         let filtered = query.isEmpty ? commands : commands.filter { $0.cmd.contains(query) }
 
         // 按分类分组
-        let categories = ["常用", "项目", "配置", "工具"]
+        let categories = ["常用", "项目", "配置", "工具", "自定义", "技能", "插件", "其他"]
         let grouped = Dictionary(grouping: filtered) { $0.category }
 
         // 最近使用的命令（仅在无搜索时显示）
