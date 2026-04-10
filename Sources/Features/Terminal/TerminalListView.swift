@@ -89,7 +89,7 @@ struct TerminalListView: View {
         .refreshable {
             relayConnection.requestSurfaceList()
         }
-        .onChange(of: messageStore.surfaces) { newSurfaces in
+        .onChange(of: messageStore.surfaces) { _, newSurfaces in
             sessionManager.syncFromSurfaces(newSurfaces)
         }
     }

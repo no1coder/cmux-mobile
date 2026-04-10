@@ -31,7 +31,7 @@ final class SessionManager: ObservableObject {
 
             if let index = updated.firstIndex(where: { $0.surfaceID == surface.id }) {
                 // 更新已有会话的活跃时间和元数据
-                var session = updated[index]
+                let session = updated[index]
                 let newSession = ClaudeSession(
                     id: session.id,
                     surfaceID: session.surfaceID,

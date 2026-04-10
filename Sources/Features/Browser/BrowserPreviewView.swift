@@ -51,7 +51,7 @@ struct BrowserPreviewView: View {
         .onDisappear {
             stopAutoRefresh()
         }
-        .onChange(of: autoRefreshEnabled) { enabled in
+        .onChange(of: autoRefreshEnabled) { _, enabled in
             if enabled {
                 startAutoRefresh()
             } else {

@@ -423,7 +423,7 @@ final class RelayConnection: NSObject, ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
                 guard !Task.isCancelled else { break }
-                await self?.sendPing()
+                self?.sendPing()
             }
         }
     }
