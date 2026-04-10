@@ -46,6 +46,8 @@ final class RelayConnection: NSObject, ObservableObject {
     private var responseHandlers: [Int: ([String: Any]) -> Void] = [:]
     /// 自增请求 ID 计数器，避免时间戳碰撞
     private var nextRequestID: Int = 1
+    /// RPC 请求去重缓存
+    let rpcDedup = RpcDedupCache()
 
     // MARK: - 连接管理
 
@@ -138,6 +140,14 @@ final class RelayConnection: NSObject, ObservableObject {
     /// C4: 发送 RPC 请求并注册响应回调，响应到达时在主线程调用 handler
     /// 30 秒超时自动移除 handler，防止内存泄漏
     func sendWithResponse(_ payload: [String: Any], handler: @escaping ([String: Any]) -> Void) {
+        // 去重检查
+        if let requestId = payload["request_id"] as? String {
+            guard rpcDedup.shouldSend(requestId) else {
+                print("[relay] 去重拦截: request_id=\(requestId.prefix(8))")
+                return
+            }
+        }
+
         let id = payload["id"] as? Int ?? {
             let current = nextRequestID
             nextRequestID += 1
@@ -398,6 +408,7 @@ final class RelayConnection: NSObject, ObservableObject {
     private func clearPendingHandlers() {
         let pending = responseHandlers
         responseHandlers.removeAll()
+        rpcDedup.reset()
         for (_, handler) in pending {
             handler(["error": "disconnected", "message": "连接已断开"])
         }

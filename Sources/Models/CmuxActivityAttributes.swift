@@ -1,5 +1,7 @@
-import ActivityKit
 import Foundation
+
+#if os(iOS)
+import ActivityKit
 
 /// Live Activity 属性 — app 和 Widget Extension 共享
 struct CmuxActivityAttributes: ActivityAttributes {
@@ -23,3 +25,4 @@ struct CmuxActivityAttributes: ActivityAttributes {
     /// 静态属性（创建时设置，不再变化）
     var serverName: String
 }
+#endif

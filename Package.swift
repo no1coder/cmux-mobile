@@ -22,6 +22,7 @@ let package = Package(
                 "ClaudeChatItemTests.swift",
                 "ContentBlockTests.swift",
                 "ConversationTurnTests.swift",
+                "RpcDedupTests.swift",
             ]
         ),
     ]
