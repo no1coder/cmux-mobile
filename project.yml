@@ -37,6 +37,8 @@ targets:
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
     dependencies:
       - target: cmuxWidget
+        embed: true
+        codeSign: true
 
   cmuxWidget:
     type: app-extension

@@ -46,7 +46,7 @@
 		3B42E7F1DFA0DBE099DF02B6 /* TodoToolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9229D9306C02A7A882421D /* TodoToolView.swift */; };
 		3BD20D1AF9CB4F92B37D2E0C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2902E6DF51E9A24426104A92 /* Theme.swift */; };
 		3CCE97C9FA614389E11916BA /* ClaudeOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2FDFFFB7D84AAB64DB94A7 /* ClaudeOutputParser.swift */; };
-		40F5C16D67BE8BA379D789AB /* cmuxWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB93C1C5F6D561119C74F5A4 /* cmuxWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		40F5C16D67BE8BA379D789AB /* cmuxWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB93C1C5F6D561119C74F5A4 /* cmuxWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		45A5E245F44D5D8D065360B5 /* InputManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4416396E67D1C2014948459 /* InputManagerTests.swift */; };
 		45AE71D4ACFA7D6C46E23BDB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4049829C9D170331AE3958D /* AppDelegate.swift */; };
 		4655956EC37CD1DF9A70E6DC /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D79456B52D60160009F38B /* LiveActivityManager.swift */; };
