@@ -35,6 +35,24 @@ targets:
         DEVELOPMENT_TEAM: "69A75B6U2B"
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
+    dependencies:
+      - target: cmuxWidget
+
+  cmuxWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: cmuxWidget
+      - path: Sources/Models/CmuxActivityAttributes.swift
+    settings:
+      base:
+        INFOPLIST_FILE: cmuxWidget/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.rooyun.devpod.widget
+        PRODUCT_NAME: "cmuxWidget"
+        DEVELOPMENT_TEAM: "69A75B6U2B"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks"
+        SKIP_INSTALL: "YES"
 
   cmux-mobileTests:
     type: bundle.unit-test
