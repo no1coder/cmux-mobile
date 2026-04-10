@@ -184,15 +184,30 @@ struct MarkdownView: View, Equatable {
 
         case .tableRow(let cells, let isHeader):
             HStack(spacing: 0) {
-                ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
+                ForEach(Array(cells.enumerated()), id: \.offset) { idx, cell in
                     inlineMarkdown(cell)
+                        .font(.system(size: 13))
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
-                        .fontWeight(isHeader ? .semibold : .regular)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .fontWeight(isHeader ? .bold : .regular)
+                        .background(isHeader ? Color.white.opacity(0.06) : Color.white.opacity(0.02))
+                        .overlay(alignment: .trailing) {
+                            // 单元格右边框（最后一列除外）
+                            if idx < cells.count - 1 {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.08))
+                                    .frame(width: 0.5)
+                            }
+                        }
                 }
             }
-            .background(isHeader ? Color.white.opacity(0.04) : Color.clear)
+            .overlay(alignment: .bottom) {
+                // 行底边框
+                Rectangle()
+                    .fill(Color.white.opacity(isHeader ? 0.15 : 0.06))
+                    .frame(height: 0.5)
+            }
 
         case .tableSeparator:
             EmptyView()
