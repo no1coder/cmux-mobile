@@ -374,13 +374,7 @@ private struct SurfaceRowView: View {
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 12)
-        .background(
-            LinearGradient(
-                colors: [Color(white: 0.12), Color(white: 0.08)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .background(CMColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
