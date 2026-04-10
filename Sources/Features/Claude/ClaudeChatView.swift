@@ -56,7 +56,11 @@ struct ClaudeChatView: View {
         case failed(String)
     }
 
-    @State private var pendingSend: (id: String, stage: SendStage)?
+    private struct PendingSend: Equatable {
+        let id: String
+        var stage: SendStage
+    }
+    @State private var pendingSend: PendingSend?
     @State private var lastSendText = ""
 
     /// 是否还有更早的消息可加载
@@ -508,7 +512,7 @@ struct ClaudeChatView: View {
 
         appendMessage(ClaudeChatItem(id: messageId, role: .user, content: text, timestamp: Date()))
 
-        withAnimation { pendingSend = (id: messageId, stage: .sending) }
+        withAnimation { pendingSend = PendingSend(id: messageId, stage: .sending) }
         lastSendText = text
 
         relayConnection.sendWithResponse([
@@ -517,27 +521,27 @@ struct ClaudeChatView: View {
         ]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
             if resultDict["error"] as? String != nil {
-                withAnimation { pendingSend = (id: messageId, stage: .failed("发送失败")) }
+                withAnimation { pendingSend = PendingSend(id: messageId, stage: .failed("发送失败")) }
                 return
             }
-            withAnimation { pendingSend = (id: messageId, stage: .delivered) }
+            withAnimation { pendingSend = PendingSend(id: messageId, stage: .delivered) }
             isThinking = true
         }
     }
 
     private func retrySend() {
         guard let pending = pendingSend, case .failed = pending.stage else { return }
-        withAnimation { pendingSend = (id: pending.id, stage: .sending) }
+        withAnimation { pendingSend = PendingSend(id: pending.id, stage: .sending) }
         relayConnection.sendWithResponse([
             "method": "surface.send_text",
             "params": ["surface_id": surfaceID, "text": lastSendText + "\n"],
         ]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
             if resultDict["error"] as? String != nil {
-                withAnimation { pendingSend = (id: pending.id, stage: .failed("发送失败")) }
+                withAnimation { pendingSend = PendingSend(id: pending.id, stage: .failed("发送失败")) }
                 return
             }
-            withAnimation { pendingSend = (id: pending.id, stage: .delivered) }
+            withAnimation { pendingSend = PendingSend(id: pending.id, stage: .delivered) }
             isThinking = true
         }
     }
@@ -565,12 +569,13 @@ struct ClaudeChatView: View {
         }
         appendMessage(ClaudeChatItem(id: UUID().uuidString, role: .user, content: displayText, timestamp: Date()))
 
-        withAnimation { pendingSend = (id: UUID().uuidString, stage: .sending) }
+        let composedMsgId = UUID().uuidString
+        withAnimation { pendingSend = PendingSend(id: composedMsgId, stage: .sending) }
         lastSendText = displayText
         Task {
             try? await Task.sleep(for: .seconds(1.0))
-            if let p = pendingSend, p.stage == .sending {
-                withAnimation { pendingSend = (id: p.id, stage: .delivered) }
+            if pendingSend?.id == composedMsgId, pendingSend?.stage == .sending {
+                withAnimation { pendingSend = PendingSend(id: composedMsgId, stage: .delivered) }
             }
         }
 
@@ -1028,7 +1033,7 @@ struct ClaudeChatView: View {
                    pending.stage == .delivered || pending.stage == .sending {
                     let hasResponse = messages.contains { ($0["type"] as? String) == "assistant" }
                     if hasResponse || status == "thinking" || status == "tool_running" {
-                        withAnimation { pendingSend = (id: pending.id, stage: .thinking) }
+                        withAnimation { pendingSend = PendingSend(id: pending.id, stage: .thinking) }
                     }
                 }
                 if !isThinking && pendingSend != nil {
@@ -1084,7 +1089,9 @@ struct ClaudeChatView: View {
                         if let lines = resultDict["lines"] as? [String] {
                             let extracted = Self.extractClaudeOutput(from: lines)
                             if !extracted.isEmpty {
-                                streamingPreview = extracted
+                                DispatchQueue.main.async {
+                                    streamingPreview = extracted
+                                }
                             }
                         }
                         continuation.resume()
@@ -1205,8 +1212,10 @@ struct ClaudeChatView: View {
                 }
             }
             .frame(width: 20, height: 12)
-            .onAppear {
-                Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { _ in
+            .task {
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(0.35))
+                    guard !Task.isCancelled else { break }
                     withAnimation(.easeInOut(duration: 0.2)) {
                         phase = (phase + 1) % 4
                     }
