@@ -7,6 +7,7 @@ struct TerminalDetailView: View {
     @EnvironmentObject var messageStore: MessageStore
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
+    @EnvironmentObject var approvalManager: ApprovalManager
 
     /// 是否在 Claude 模式
     @State private var isClaudeMode = false
@@ -44,6 +45,7 @@ struct TerminalDetailView: View {
                 ClaudeChatView(surfaceID: surfaceID)
                     .environmentObject(messageStore)
                     .environmentObject(relayConnection)
+                    .environmentObject(approvalManager)
             } else {
                 TerminalView(surfaceID: surfaceID)
                     .environmentObject(messageStore)
