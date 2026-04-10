@@ -60,12 +60,21 @@ final class SessionManager: ObservableObject {
             }
         }
 
-        // 标记不再活跃的会话（surface 已消失且标题不含 Claude Code）
+        // 自动归档已消失的 Claude 会话（surface 不在列表中）
         let activeSurfaceIDs = Set(surfaces.filter { $0.title.contains("Claude Code") }.map(\.id))
         for index in updated.indices {
             if !updated[index].isArchived && !activeSurfaceIDs.contains(updated[index].surfaceID) {
-                // surface 消失但不立即归档，仅更新状态
-                // 用户可手动归档
+                updated[index] = ClaudeSession(
+                    id: updated[index].id,
+                    surfaceID: updated[index].surfaceID,
+                    title: updated[index].title,
+                    projectPath: updated[index].projectPath,
+                    model: updated[index].model,
+                    createdAt: updated[index].createdAt,
+                    lastActiveAt: updated[index].lastActiveAt,
+                    isArchived: true
+                )
+                changed = true
             }
         }
 
