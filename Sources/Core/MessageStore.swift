@@ -330,7 +330,7 @@ final class MessageStore: ObservableObject {
         let displayBody = subtitle.isEmpty ? body : (body.isEmpty ? subtitle : "\(subtitle) — \(body)")
 
         // 添加到活动日志
-        activityStore?.add(type: .notification, title: title, detail: displayBody)
+        activityStore?.add(type: .info, title: title, detail: displayBody)
 
         // 应用在后台时触发本地通知
         scheduleLocalNotification(title: title, body: displayBody)

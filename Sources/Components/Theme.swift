@@ -56,4 +56,5 @@ enum CMColors {
     static let textPrimary = Color(UIColor.label)
     static let textSecondary = Color(UIColor.secondaryLabel)
     static let textTertiary = Color(UIColor.tertiaryLabel)
+    static let tertiarySystemFill = Color(UIColor.tertiarySystemFill)
 }

@@ -21,435 +21,6 @@
 
   ],
   "swiftCommands" : {
-    "C.cmux-mobile-app-arm64-apple-macosx26.0-debug.module" : {
-      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/sources",
-      "importPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules",
-      "inputs" : [
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/App/cmuxMobileApp.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobile.swiftmodule"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/sources"
-        }
-      ],
-      "isLibrary" : false,
-      "moduleName" : "cmux_mobile_app",
-      "moduleOutputPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobile_app.swiftmodule",
-      "objects" : [
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp.swift.o"
-      ],
-      "otherArguments" : [
-        "-target",
-        "arm64-apple-macosx13.0",
-        "-incremental",
-        "-enable-batch-mode",
-        "-serialize-diagnostics",
-        "-index-store-path",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/index/store",
-        "-Onone",
-        "-enable-testing",
-        "-j14",
-        "-DSWIFT_PACKAGE",
-        "-DDEBUG",
-        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
-        "-module-cache-path",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/ModuleCache",
-        "-parseable-output",
-        "-Xfrontend",
-        "-entry-point-function-name",
-        "-Xfrontend",
-        "cmux_mobile_app_main",
-        "-parse-as-library",
-        "-swift-version",
-        "5",
-        "-plugin-path",
-        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
-        "-sdk",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
-        "-F",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-        "-F",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-        "-I",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-        "-L",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-        "-g",
-        "-Xcc",
-        "-isysroot",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
-        "-Xcc",
-        "-F",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-        "-Xcc",
-        "-F",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-        "-Xcc",
-        "-fPIC",
-        "-Xcc",
-        "-g",
-        "-package-name",
-        "cmux_mobile"
-      ],
-      "outputFileMapPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/output-file-map.json",
-      "outputs" : [
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobile_app.swiftmodule"
-        }
-      ],
-      "prepareForIndexing" : false,
-      "sources" : [
-        "/Users/jackie/code/cmux-mobile/App/cmuxMobileApp.swift"
-      ],
-      "tempsPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build",
-      "wholeModuleOptimization" : false
-    },
-    "C.cmux-mobile-arm64-apple-macosx26.0-debug.module" : {
-      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/sources",
-      "importPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules",
-      "inputs" : [
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/DisconnectRecovery.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Browser/BrowserPreviewView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FileExplorerView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FilePreviewView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/PairingSettingsView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/sources"
-        }
-      ],
-      "isLibrary" : true,
-      "moduleName" : "cmux_mobile",
-      "moduleOutputPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobile.swiftmodule",
-      "objects" : [
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingManager.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayConnection.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ANSIParser.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatusBadge.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalListView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalView.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayMessage.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ScreenSnapshot.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/Surface.swift.o"
-      ],
-      "otherArguments" : [
-        "-target",
-        "arm64-apple-macosx13.0",
-        "-incremental",
-        "-enable-batch-mode",
-        "-serialize-diagnostics",
-        "-index-store-path",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/index/store",
-        "-Onone",
-        "-enable-testing",
-        "-j14",
-        "-DSWIFT_PACKAGE",
-        "-DDEBUG",
-        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
-        "-module-cache-path",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/ModuleCache",
-        "-parseable-output",
-        "-parse-as-library",
-        "-emit-objc-header",
-        "-emit-objc-header-path",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/include/cmux-mobile-Swift.h",
-        "-swift-version",
-        "5",
-        "-plugin-path",
-        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
-        "-sdk",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
-        "-F",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-        "-F",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-        "-I",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-        "-L",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-        "-g",
-        "-Xcc",
-        "-isysroot",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
-        "-Xcc",
-        "-F",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-        "-Xcc",
-        "-F",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-        "-Xcc",
-        "-fPIC",
-        "-Xcc",
-        "-g",
-        "-package-name",
-        "cmux_mobile"
-      ],
-      "outputFileMapPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/output-file-map.json",
-      "outputs" : [
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayConnection.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ANSIParser.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatusBadge.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalListView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayMessage.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ScreenSnapshot.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/Surface.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobile.swiftmodule"
-        }
-      ],
-      "prepareForIndexing" : false,
-      "sources" : [
-        "/Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Core/DisconnectRecovery.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Browser/BrowserPreviewView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FileExplorerView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FilePreviewView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/PairingSettingsView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift",
-        "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift"
-      ],
-      "tempsPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build",
-      "wholeModuleOptimization" : false
-    },
     "C.cmux-mobilePackageTests-arm64-apple-macosx26.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "fileList" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/sources",
@@ -558,27 +129,15 @@
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift"
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift"
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/DisconnectRecoveryTests.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift"
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift"
         },
         {
           "kind" : "file",
@@ -586,7 +145,7 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobile.swiftmodule"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_models.swiftmodule"
         },
         {
           "kind" : "file",
@@ -597,12 +156,9 @@
       "moduleName" : "cmux_mobileTests",
       "moduleOutputPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_mobileTests.swiftmodule",
       "objects" : [
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o",
-        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swift.o"
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -662,27 +218,15 @@
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o"
         },
         {
           "kind" : "file",
@@ -691,14 +235,188 @@
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift",
-        "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift",
-        "/Users/jackie/code/cmux-mobile/Tests/DisconnectRecoveryTests.swift",
-        "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift",
-        "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift",
-        "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift"
+        "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift",
+        "/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift",
+        "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift"
       ],
       "tempsPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.cmux-models-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/sources",
+      "importPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ApprovalPolicy.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeChatItem.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeSession.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ContentBlock.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ConversationTurn.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "cmux_models",
+      "moduleOutputPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_models.swiftmodule",
+      "objects" : [
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/AnyCodable.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ApprovalPolicy.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeChatItem.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeSession.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ContentBlock.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ConversationTurn.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/RelayMessage.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ScreenSnapshot.swift.o",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/Surface.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j14",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/include/cmux-models-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "cmux_mobile"
+      ],
+      "outputFileMapPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/AnyCodable.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ApprovalPolicy.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeChatItem.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeSession.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ContentBlock.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ConversationTurn.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/RelayMessage.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ScreenSnapshot.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/Surface.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules/cmux_models.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/ApprovalPolicy.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeChatItem.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeSession.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/ContentBlock.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/ConversationTurn.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift",
+        "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift"
+      ],
+      "tempsPath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build",
       "wholeModuleOptimization" : false
     }
   },
@@ -706,95 +424,6 @@
 
   },
   "swiftTargetScanArgs" : {
-    "cmux_mobile" : [
-      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "-module-name",
-      "cmux_mobile",
-      "-package-name",
-      "cmux_mobile",
-      "-c",
-      "/Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Core/DisconnectRecovery.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Browser/BrowserPreviewView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FileExplorerView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FilePreviewView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/PairingSettingsView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift",
-      "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift",
-      "-I",
-      "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules",
-      "-target",
-      "arm64-apple-macosx13.0",
-      "-incremental",
-      "-enable-batch-mode",
-      "-serialize-diagnostics",
-      "-index-store-path",
-      "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/index/store",
-      "-Onone",
-      "-enable-testing",
-      "-j14",
-      "-DSWIFT_PACKAGE",
-      "-DDEBUG",
-      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
-      "-module-cache-path",
-      "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/ModuleCache",
-      "-parseable-output",
-      "-parse-as-library",
-      "-emit-objc-header",
-      "-emit-objc-header-path",
-      "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/include/cmux-mobile-Swift.h",
-      "-swift-version",
-      "5",
-      "-plugin-path",
-      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
-      "-sdk",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
-      "-F",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-      "-F",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-      "-I",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-      "-L",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-      "-g",
-      "-Xcc",
-      "-isysroot",
-      "-Xcc",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
-      "-Xcc",
-      "-F",
-      "-Xcc",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-      "-Xcc",
-      "-F",
-      "-Xcc",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-      "-Xcc",
-      "-fPIC",
-      "-Xcc",
-      "-g",
-      "-package-name",
-      "cmux_mobile",
-      "-driver-use-frontend-path",
-      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
-    ],
     "cmux_mobilePackageTests" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
@@ -868,12 +497,9 @@
       "-package-name",
       "cmux_mobile",
       "-c",
-      "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift",
-      "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift",
-      "/Users/jackie/code/cmux-mobile/Tests/DisconnectRecoveryTests.swift",
-      "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift",
-      "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift",
-      "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift",
+      "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift",
+      "/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift",
+      "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift",
       "-I",
       "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -931,14 +557,22 @@
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ],
-    "cmux_mobile_app" : [
+    "cmux_models" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
-      "cmux_mobile_app",
+      "cmux_models",
       "-package-name",
       "cmux_mobile",
       "-c",
-      "/Users/jackie/code/cmux-mobile/App/cmuxMobileApp.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/ApprovalPolicy.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeChatItem.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeSession.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/ContentBlock.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/ConversationTurn.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift",
+      "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift",
       "-I",
       "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -957,11 +591,10 @@
       "-module-cache-path",
       "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/ModuleCache",
       "-parseable-output",
-      "-Xfrontend",
-      "-entry-point-function-name",
-      "-Xfrontend",
-      "cmux_mobile_app_main",
       "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/include/cmux-models-Swift.h",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -1000,18 +633,15 @@
     ]
   },
   "targetDependencyMap" : {
-    "cmux_mobile" : [
-
-    ],
     "cmux_mobilePackageTests" : [
       "cmux_mobileTests",
-      "cmux_mobile"
+      "cmux_models"
     ],
     "cmux_mobileTests" : [
-      "cmux_mobile"
+      "cmux_models"
     ],
-    "cmux_mobile_app" : [
-      "cmux_mobile"
+    "cmux_models" : [
+
     ]
   },
   "testDiscoveryCommands" : {
@@ -1036,130 +666,6 @@
     }
   },
   "writeCommands" : {
-    "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux-mobile-app-entitlement.plist" : {
-      "alwaysOutOfDate" : false,
-      "inputs" : [
-        {
-          "kind" : "virtual",
-          "name" : "<entitlement-plist>"
-        },
-        {
-          "kind" : "virtual",
-          "name" : "<com.apple.security.get-task-allow>"
-        }
-      ],
-      "outputFilePath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux-mobile-app-entitlement.plist"
-    },
-    "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux-mobile-app.product/Objects.LinkFileList" : {
-      "alwaysOutOfDate" : false,
-      "inputs" : [
-        {
-          "kind" : "virtual",
-          "name" : "<link-file-list>"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ANSIParser.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatusBadge.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayConnection.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayMessage.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ScreenSnapshot.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/Surface.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalListView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/cmuxMobileApp.swift.o"
-        }
-      ],
-      "outputFilePath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux-mobile-app.product/Objects.LinkFileList"
-    },
     "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux-mobilePackageTests.product/Objects.LinkFileList" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
@@ -1169,236 +675,58 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ANSIParser.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AgentDashboard.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/AnyCodable.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ApprovalRequestView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/BrowserPreviewView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatus.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ConnectionStatusBadge.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/DisconnectRecovery.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FileExplorerView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/FilePreviewView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/InputManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/KeychainHelper.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/MessageStore.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/NotificationSettingsView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingManager.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/PairingSettingsView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayConnection.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/RelayMessage.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/ScreenSnapshot.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/Surface.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalInputBar.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalListView.swift.o"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/TerminalView.swift.o"
-        },
-        {
-          "kind" : "file",
           "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/runner.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/AnyCodable.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ApprovalPolicy.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swift.o"
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeChatItem.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ClaudeSession.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ContentBlock.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ConversationTurn.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/RelayMessage.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/ScreenSnapshot.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/Surface.swift.o"
         }
       ],
       "outputFilePath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux-mobilePackageTests.product/Objects.LinkFileList"
-    },
-    "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/sources" : {
-      "alwaysOutOfDate" : false,
-      "inputs" : [
-        {
-          "kind" : "virtual",
-          "name" : "<sources-file-list>"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/ConnectionStatus.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/DisconnectRecovery.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/InputManager.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/KeychainHelper.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/MessageStore.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/PairingManager.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Core/RelayConnection.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/AgentDashboard.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalManager.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Agent/ApprovalRequestView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Browser/BrowserPreviewView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FileExplorerView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Files/FilePreviewView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/NotificationSettingsView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Settings/PairingSettingsView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ANSIParser.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/ConnectionStatusBadge.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalInputBar.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalListView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Features/Terminal/TerminalView.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift"
-        }
-      ],
-      "outputFilePath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile.build/sources"
     },
     "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobilePackageTests.build/sources" : {
       "alwaysOutOfDate" : false,
@@ -1423,32 +751,20 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift"
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift"
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/DisconnectRecoveryTests.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift"
+          "name" : "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift"
         }
       ],
       "outputFilePath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/sources"
     },
-    "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/sources" : {
+    "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -1457,10 +773,42 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/jackie/code/cmux-mobile/App/cmuxMobileApp.swift"
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/AnyCodable.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ApprovalPolicy.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeChatItem.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ClaudeSession.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ContentBlock.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ConversationTurn.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/RelayMessage.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/ScreenSnapshot.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jackie/code/cmux-mobile/Sources/Models/Surface.swift"
         }
       ],
-      "outputFilePath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobile_app.build/sources"
+      "outputFilePath" : "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_models.build/sources"
     },
     "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
       "alwaysOutOfDate" : true,

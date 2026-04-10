@@ -1,6 +1,3 @@
-/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift
-/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift
-/Users/jackie/code/cmux-mobile/Tests/DisconnectRecoveryTests.swift
-/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift
-/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift
-/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift
+/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift
+/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift
+/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift

@@ -1,19 +1,19 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
+// 注意：iOS 相关 target (cmux-mobile, cmux-mobile-app) 通过 Xcode / project.yml 构建。
+// Package.swift 仅用于 macOS 上 `swift test` 运行纯模型测试。
 let package = Package(
     name: "cmux-mobile",
-    // macOS 平台用于 swift test（纯模型测试）；iOS 用于实际 App 构建
     platforms: [.iOS(.v17), .macOS(.v13)],
     targets: [
-        // 纯 Swift 模型 target（无 UIKit 依赖，macOS/iOS 均可编译）
+        // 纯模型 target（无 UIKit 依赖，macOS swift test 可用）
         .target(
             name: "cmux-models",
             dependencies: [],
             path: "Sources/Models"
         ),
-        // 单元测试：只依赖纯模型 target，macOS 上可通过 swift test 运行
-        // 仅包含不依赖 UIKit 的测试文件
+        // 模型单元测试：仅包含不依赖 UIKit 的纯模型测试
         .testTarget(
             name: "cmux-mobileTests",
             dependencies: ["cmux-models"],

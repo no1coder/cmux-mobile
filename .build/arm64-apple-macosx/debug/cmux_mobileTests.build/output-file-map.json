@@ -2,46 +2,25 @@
   "": {
     "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/master.swiftdeps"
   },
-  "/Users/jackie/code/cmux-mobile/Tests/ANSIParserTests.swift": {
-    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.d",
-    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swift.o",
-    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.swiftdeps",
-    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ANSIParserTests.dia"
+  "/Users/jackie/code/cmux-mobile/Tests/ClaudeChatItemTests.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ClaudeChatItemTests.dia"
   },
-  "/Users/jackie/code/cmux-mobile/Tests/ApprovalManagerTests.swift": {
-    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.d",
-    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swift.o",
-    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.swiftdeps",
-    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ApprovalManagerTests.dia"
+  "/Users/jackie/code/cmux-mobile/Tests/ContentBlockTests.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ContentBlockTests.dia"
   },
-  "/Users/jackie/code/cmux-mobile/Tests/DisconnectRecoveryTests.swift": {
-    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.d",
-    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swift.o",
-    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.swiftdeps",
-    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/DisconnectRecoveryTests.dia"
-  },
-  "/Users/jackie/code/cmux-mobile/Tests/InputManagerTests.swift": {
-    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.d",
-    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swift.o",
-    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.swiftdeps",
-    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/InputManagerTests.dia"
-  },
-  "/Users/jackie/code/cmux-mobile/Tests/MessageStoreTests.swift": {
-    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.d",
-    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swift.o",
-    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.swiftdeps",
-    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/MessageStoreTests.dia"
-  },
-  "/Users/jackie/code/cmux-mobile/Tests/PairingManagerTests.swift": {
-    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.d",
-    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swift.o",
-    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.swiftdeps",
-    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/PairingManagerTests.dia"
+  "/Users/jackie/code/cmux-mobile/Tests/ConversationTurnTests.swift": {
+    "dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.d",
+    "object": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swift.o",
+    "swiftmodule": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.swiftdeps",
+    "diagnostics": "/Users/jackie/code/cmux-mobile/.build/arm64-apple-macosx/debug/cmux_mobileTests.build/ConversationTurnTests.dia"
   }
 }

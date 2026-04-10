@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// read_screen 降频状态（引用类型，确保 Task 闭包能读到最新值）
+@MainActor
+final class ReadScreenState: ObservableObject {
+    @Published var failCount: Int = 0
+}
+
 /// 终端内容视图，全屏显示终端输出 + 底部输入工具栏
 struct TerminalView: View {
     let surfaceID: String
