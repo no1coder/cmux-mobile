@@ -59,6 +59,7 @@ struct FileExplorerView: View {
     @State private var isLoading: Bool = false
     /// 错误信息
     @State private var errorMessage: String?
+    @StateObject private var requestGate = LatestOnlyRequestGate()
 
     var body: some View {
         NavigationStack {
@@ -100,20 +101,11 @@ struct FileExplorerView: View {
 
     /// 未连接提示视图
     private var notConnectedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "wifi.slash")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text(String(localized: "files.not_connected_title", defaultValue: "未连接到设备"))
-                .font(.title3)
-                .fontWeight(.medium)
-            Text(String(localized: "files.not_connected_desc", defaultValue: "请先在设置中扫码配对 Mac，连接成功后即可浏览文件"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        PairMacOnboardingView(
+            title: String(localized: "files.not_connected_title", defaultValue: "未连接到设备"),
+            message: String(localized: "files.not_connected_desc", defaultValue: "连接成功后即可浏览文件、在当前目录打开终端，或直接启动 Claude。")
+        )
+        .environmentObject(relayConnection)
     }
 
     // MARK: - 允许的根目录
@@ -226,6 +218,31 @@ struct FileExplorerView: View {
         }
     }
 
+    /// 从 RPC 响应里提取人类可读错误信息；覆盖四种常见格式：
+    /// - `{"error": {"message": "..."}}`
+    /// - `{"error": "..."}`
+    /// - `{"result": {"error": {"message": "..."}}}`
+    /// - `{"result": {"error": "..."}}`
+    static func extractErrorMessage(from result: [String: Any]) -> String? {
+        if let err = result["error"] as? [String: Any],
+           let msg = err["message"] as? String {
+            return msg
+        }
+        if let err = result["error"] as? String {
+            return err
+        }
+        if let nested = result["result"] as? [String: Any] {
+            if let err = nested["error"] as? [String: Any],
+               let msg = err["message"] as? String {
+                return msg
+            }
+            if let err = nested["error"] as? String {
+                return err
+            }
+        }
+        return nil
+    }
+
     private func errorView(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
@@ -288,23 +305,19 @@ struct FileExplorerView: View {
         errorMessage = nil
 
         let path = pathString()
+        let token = requestGate.begin("directory")
         // C4: 使用 sendWithResponse 注册响应回调，避免响应丢失
         relayConnection.sendWithResponse([
             "method": "file.list",
             "params": ["path": path]
         ]) { result in
             DispatchQueue.main.async { [self] in
+                guard requestGate.isLatest(token, for: "directory") else { return }
                 print("[files] file.list 响应 keys=\(result.keys.sorted())")
-                // 检查是否有错误（支持多种错误格式）
-                if let error = result["error"] as? [String: Any],
-                   let message = error["message"] as? String {
+                // 检查是否有错误（支持多种错误格式 + 嵌套在 result 下）
+                if let message = Self.extractErrorMessage(from: result) {
                     isLoading = false
                     errorMessage = message
-                    return
-                }
-                if let error = result["error"] as? String {
-                    isLoading = false
-                    errorMessage = error
                     return
                 }
                 // 从响应中解析 entries（尝试多层嵌套）
@@ -428,6 +441,7 @@ private struct _ChildFileExplorerView: View {
     @State private var currentPath: [String]
     @State private var showNewFolderAlert = false
     @State private var newFolderName = ""
+    @StateObject private var requestGate = LatestOnlyRequestGate()
 
     init(parentPath: [String], connection: RelayConnection) {
         self.parentPath = parentPath
@@ -436,54 +450,57 @@ private struct _ChildFileExplorerView: View {
     }
 
     var body: some View {
-        Group {
-            if isLoading {
-                ProgressView(String(localized: "files.loading", defaultValue: "加载中…"))
-            } else if let error = errorMessage {
-                VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundStyle(.orange)
-                    Text(error)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                    Button(String(localized: "files.retry", defaultValue: "重试")) {
-                        loadDirectory()
-                    }
-                }
-                .padding()
-            } else if entries.isEmpty {
-                Text(String(localized: "files.empty_title", defaultValue: "目录为空"))
-                    .foregroundStyle(.secondary)
-            } else {
-                List(entries) { entry in
-                    if entry.type == .directory {
-                        NavigationLink(
-                            destination: _ChildFileExplorerView(
-                                parentPath: currentPath + [entry.name],
-                                connection: connection
-                            )
-                        ) {
-                            HStack {
-                                Image(systemName: "folder.fill").foregroundStyle(.yellow)
-                                Text(entry.name)
-                            }
+        VStack(spacing: 0) {
+            pathContextBar
+            Group {
+                if isLoading {
+                    ProgressView(String(localized: "files.loading", defaultValue: "加载中…"))
+                } else if let error = errorMessage {
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.largeTitle)
+                            .foregroundStyle(.orange)
+                        Text(error)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                        Button(String(localized: "files.retry", defaultValue: "重试")) {
+                            loadDirectory()
                         }
-                    } else {
-                        NavigationLink(
-                            destination: FilePreviewView(
-                                fileName: entry.name,
-                                filePath: {
-                                    let joined = (currentPath + [entry.name]).joined(separator: "/")
-                                    return joined.hasPrefix("~") ? joined : "/" + joined
-                                }(),
-                                connection: connection
-                            )
-                        ) {
-                            HStack {
-                                Image(systemName: FileExplorerView.iconForFile(entry.name))
-                                    .foregroundStyle(.blue)
-                                Text(entry.name)
+                    }
+                    .padding()
+                } else if entries.isEmpty {
+                    Text(String(localized: "files.empty_title", defaultValue: "目录为空"))
+                        .foregroundStyle(.secondary)
+                } else {
+                    List(entries) { entry in
+                        if entry.type == .directory {
+                            NavigationLink(
+                                destination: _ChildFileExplorerView(
+                                    parentPath: currentPath + [entry.name],
+                                    connection: connection
+                                )
+                            ) {
+                                HStack {
+                                    Image(systemName: "folder.fill").foregroundStyle(.yellow)
+                                    Text(entry.name)
+                                }
+                            }
+                        } else {
+                            NavigationLink(
+                                destination: FilePreviewView(
+                                    fileName: entry.name,
+                                    filePath: {
+                                        let joined = (currentPath + [entry.name]).joined(separator: "/")
+                                        return joined.hasPrefix("~") ? joined : "/" + joined
+                                    }(),
+                                    connection: connection
+                                )
+                            ) {
+                                HStack {
+                                    Image(systemName: FileExplorerView.iconForFile(entry.name))
+                                        .foregroundStyle(.blue)
+                                    Text(entry.name)
+                                }
                             }
                         }
                     }
@@ -512,6 +529,7 @@ private struct _ChildFileExplorerView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel(String(localized: "files.action.more", defaultValue: "更多文件操作"))
             }
         }
         .alert(String(localized: "files.action.new_folder", defaultValue: "新建文件夹"), isPresented: $showNewFolderAlert) {
@@ -520,6 +538,16 @@ private struct _ChildFileExplorerView: View {
             Button(String(localized: "files.cancel", defaultValue: "取消"), role: .cancel) { newFolderName = "" }
         }
         .task { loadDirectory() }
+    }
+
+    private var pathContextBar: some View {
+        Text(displayPath)
+            .font(.system(size: 11, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(CMColors.backgroundSecondary)
     }
 
     // MARK: - 目录操作
@@ -567,21 +595,17 @@ private struct _ChildFileExplorerView: View {
         let joined = currentPath.joined(separator: "/")
         let path = joined.hasPrefix("~") ? joined : "/" + joined
         print("[files] loadDirectory path=\(path) currentPath=\(currentPath)")
+        let token = requestGate.begin("directory")
         // C4: 使用 sendWithResponse 注册响应回调
         connection.sendWithResponse([
             "method": "file.list",
             "params": ["path": path]
         ]) { result in
             DispatchQueue.main.async {
-                // 检查错误（支持多种格式）
-                if let error = result["error"] as? [String: Any],
-                   let message = error["message"] as? String {
+                guard requestGate.isLatest(token, for: "directory") else { return }
+                // 检查错误（支持多种格式 + 嵌套在 result 下）
+                if let message = FileExplorerView.extractErrorMessage(from: result) {
                     errorMessage = message
-                    isLoading = false
-                    return
-                }
-                if let error = result["error"] as? String {
-                    errorMessage = error
                     isLoading = false
                     return
                 }
@@ -612,5 +636,10 @@ private struct _ChildFileExplorerView: View {
                 isLoading = false
             }
         }
+    }
+
+    private var displayPath: String {
+        let joined = currentPath.joined(separator: "/")
+        return joined.hasPrefix("~") ? joined : "/" + joined
     }
 }

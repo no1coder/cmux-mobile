@@ -11,6 +11,9 @@ struct TerminalListView: View {
             Group {
                 if relayConnection.status != .connected {
                     notConnectedView
+                } else if let surfaceListError = relayConnection.lastSurfaceListError,
+                          messageStore.surfaces.isEmpty {
+                    surfaceListErrorView(message: surfaceListError)
                 } else if messageStore.surfaces.isEmpty {
                     emptyStateView
                 } else {
@@ -26,6 +29,10 @@ struct TerminalListView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .accessibilityLabel(String(
+                        localized: "terminal.new_workspace",
+                        defaultValue: "新建工作区"
+                    ))
                 }
             }
         }
@@ -34,18 +41,11 @@ struct TerminalListView: View {
     // MARK: - 未连接
 
     private var notConnectedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "wifi.slash")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text(String(localized: "terminal.not_connected", defaultValue: "未连接到设备"))
-                .font(.title3)
-                .fontWeight(.medium)
-            Text(String(localized: "terminal.not_connected_desc", defaultValue: "请先在设置中扫码配对 Mac"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        PairMacOnboardingView(
+            title: String(localized: "terminal.not_connected", defaultValue: "未连接到设备"),
+            message: String(localized: "terminal.not_connected_desc", defaultValue: "配对后，你可以继续查看终端、恢复 Claude 会话并创建新工作区。")
+        )
+        .environmentObject(relayConnection)
     }
 
     // MARK: - 路由
@@ -197,6 +197,18 @@ struct TerminalListView: View {
             systemImage: "terminal",
             description: Text("连接到 Mac 后终端列表将显示在这里")
         )
+    }
+
+    private func surfaceListErrorView(message: String) -> some View {
+        ContentUnavailableView {
+            Label("终端列表加载失败", systemImage: "wifi.exclamationmark")
+        } description: {
+            Text(message)
+        } actions: {
+            Button("重试") {
+                relayConnection.requestSurfaceList()
+            }
+        }
     }
 
     // MARK: - 新建 workspace

@@ -3,12 +3,14 @@ import SwiftUI
 @main
 struct cmuxMobileApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var messageStore = MessageStore()
     @StateObject private var relayConnection = RelayConnection()
     @StateObject private var inputManager = InputManager()
     @StateObject private var approvalManager = ApprovalManager()
     @StateObject private var sessionManager = SessionManager()
     @StateObject private var activityStore = ActivityStore()
+    @State private var hasPairedDevice = DeviceStore.hasPairedDevice()
 
     /// 主题偏好：跟随系统 / 亮色 / 暗色
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.dark.rawValue
@@ -20,7 +22,18 @@ struct cmuxMobileApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if UIDevice.current.userInterfaceIdiom == .pad {
+                if !hasPairedDevice {
+                    PairMacOnboardingView(
+                        title: String(localized: "pairing.onboarding.title", defaultValue: "先连接你的 Mac"),
+                        message: String(localized: "pairing.onboarding.message", defaultValue: "配对完成后，你就可以在手机或 iPad 上查看终端、Claude 会话、文件与审批请求。"),
+                        highlights: [
+                            String(localized: "pairing.onboarding.highlight.agent", defaultValue: "随时处理 Agent 审批与任务状态"),
+                            String(localized: "pairing.onboarding.highlight.terminal", defaultValue: "查看终端、文件与浏览器 surface"),
+                            String(localized: "pairing.onboarding.highlight.chat", defaultValue: "继续 Claude Code 对话，不必回到电脑前")
+                        ]
+                    )
+                    .environmentObject(relayConnection)
+                } else if UIDevice.current.userInterfaceIdiom == .pad {
                     // iPad：使用 NavigationSplitView 侧栏 + 详情
                     iPadSplitView
                 } else {
@@ -29,12 +42,23 @@ struct cmuxMobileApp: App {
                 }
             }
             .preferredColorScheme(appTheme.colorScheme)
+            .onChange(of: scenePhase) { _, newPhase in
+                // 从后台回到前台：清理过期 snapshot，避免长期常驻的累积
+                if newPhase == .active {
+                    messageStore.pruneStaleSnapshots()
+                    hasPairedDevice = DeviceStore.hasPairedDevice()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .deviceStoreDidChange)) { _ in
+                hasPairedDevice = DeviceStore.hasPairedDevice()
+            }
             .onAppear {
                 // 注册 Nerd Font
                 FontLoader.registerFonts()
 
                 // 注入 approvalManager 到 messageStore
                 messageStore.approvalManager = approvalManager
+                approvalManager.loadPolicy()
 
                 // 连接消息管道：relay 收到消息 → messageStore 处理
                 relayConnection.onMessage = { [weak messageStore] data in
@@ -58,18 +82,20 @@ struct cmuxMobileApp: App {
 
                 // Claude 推送事件：MessageStore → RelayConnection → ClaudeChatView
                 messageStore.onClaudeUpdate = { [weak relayConnection] payload in
-                    relayConnection?.onClaudeUpdate?(payload)
+                    relayConnection?.dispatchClaudeUpdate(payload)
                 }
 
                 // 初始化推送通知
                 PushNotificationManager.shared.relayConnection = relayConnection
-                PushNotificationManager.shared.requestAuthorization()
-
-                // Live Activity token 上报
-                LiveActivityManager.shared.onPushTokenUpdate = { token in
-                    Task { @MainActor in
-                        PushNotificationManager.shared.reportLiveActivityToken(token)
+                if AppFeatureFlags.notificationsEnabled {
+                    PushNotificationManager.shared.requestAuthorization()
+                    LiveActivityManager.shared.onPushTokenUpdate = { token in
+                        Task { @MainActor in
+                            PushNotificationManager.shared.reportLiveActivityToken(token)
+                        }
                     }
+                } else {
+                    LiveActivityManager.shared.onPushTokenUpdate = nil
                 }
 
                 // 如果已配对，自动连接
@@ -133,6 +159,8 @@ struct cmuxMobileApp: App {
                 // 设置 Tab
                 SettingsView()
                     .environmentObject(relayConnection)
+                    .environmentObject(messageStore)
+                    .environmentObject(approvalManager)
                     .tabItem {
                         Label(
                             String(localized: "tab.settings", defaultValue: "设置"),
@@ -288,10 +316,13 @@ private struct iPadSplitViewContent: View {
         case .files:
             FileExplorerView()
                 .environmentObject(relayConnection)
+                .environmentObject(messageStore)
 
         case .settings:
             SettingsView()
                 .environmentObject(relayConnection)
+                .environmentObject(messageStore)
+                .environmentObject(approvalManager)
 
         case nil:
             // 未选中时的占位视图

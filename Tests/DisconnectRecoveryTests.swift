@@ -1,5 +1,9 @@
 import Testing
+#if canImport(cmux_mobile)
 @testable import cmux_mobile
+#elseif canImport(cmux_core)
+@testable import cmux_core
+#endif
 
 @MainActor
 struct DisconnectRecoveryTests {

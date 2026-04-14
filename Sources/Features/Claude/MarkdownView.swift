@@ -165,6 +165,8 @@ struct MarkdownView: View, Equatable {
                         .foregroundStyle(.white.opacity(0.3))
                         .padding(6)
                 }
+                .accessibilityLabel(String(localized: "markdown.copy_code", defaultValue: "复制代码"))
+                .accessibilityHint(String(localized: "markdown.copy_code_hint", defaultValue: "将当前代码块复制到剪贴板"))
             }
 
         case .horizontalRule:

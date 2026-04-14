@@ -3,6 +3,7 @@ import SwiftUI
 /// 已配对设备列表视图：展示所有配对的 Mac 设备，支持切换、删除和添加
 struct DeviceListView: View {
     @EnvironmentObject var relayConnection: RelayConnection
+    var startScanningOnAppear: Bool = false
 
     // MARK: - 状态
 
@@ -13,6 +14,9 @@ struct DeviceListView: View {
     @State private var deviceToDelete: PairedDevice?
     @State private var feedbackMessage: String?
     @State private var isSwitching: Bool = false
+    @State private var didAutoStartScanner = false
+    @State private var pendingPairingQRCode: QRCodeData?
+    @State private var pairingRecoveryError: String?
 
     /// 配对管理器
     @StateObject private var pairingManager = PairingManager()
@@ -26,6 +30,16 @@ struct DeviceListView: View {
             }
         }
         .onAppear { reloadDevices() }
+        .onAppear {
+            guard startScanningOnAppear,
+                  !didAutoStartScanner,
+                  devices.isEmpty else { return }
+            didAutoStartScanner = true
+            showScanner = true
+        }
+        .onChange(of: relayConnection.status) { _, newStatus in
+            isSwitching = newStatus == .connecting
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -33,6 +47,7 @@ struct DeviceListView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel(String(localized: "device_list.scan_button", defaultValue: "扫码配对"))
             }
         }
         .alert(
@@ -69,21 +84,30 @@ struct DeviceListView: View {
             .ignoresSafeArea()
         }
         .safeAreaInset(edge: .bottom) {
-            if let msg = feedbackMessage {
-                Text(msg)
-                    .font(.caption)
-                    .foregroundStyle(.green)
-                    .padding(8)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .padding()
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            VStack(spacing: 8) {
+                if let error = pairingRecoveryError {
+                    pairingRecoveryBanner(error)
+                }
+
+                if let msg = feedbackMessage {
+                    Text(msg)
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                        .padding(8)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.horizontal)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
         }
         .animation(.easeInOut, value: feedbackMessage)
+        .animation(.easeInOut, value: pairingRecoveryError)
         .onChange(of: pairingManager.pairedDevice) { _, result in
             guard let result else { return }
             DeviceStore.addFromPairResult(result)
+            pendingPairingQRCode = nil
+            pairingRecoveryError = nil
             reloadDevices()
             connectToDevice(result.deviceID)
             showScanner = false
@@ -92,7 +116,7 @@ struct DeviceListView: View {
         .onChange(of: pairingManager.error) { _, error in
             guard let error else { return }
             showScanner = false
-            showFeedback("⚠️ \(error)")
+            pairingRecoveryError = error
         }
     }
 
@@ -126,6 +150,65 @@ struct DeviceListView: View {
 
     private var deviceList: some View {
         List {
+            if needsManualDeviceSelection {
+                Section {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "hand.tap.fill")
+                            .foregroundStyle(.blue)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(String(
+                                localized: "device_list.choose_device_title",
+                                defaultValue: "请选择要连接的设备"
+                            ))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            Text(String(
+                                localized: "device_list.choose_device_desc",
+                                defaultValue: "你有多台已配对的 Mac。点按下方任意一台，明确选择本次要连接的设备。"
+                            ))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+
+            // 连接诊断：当前活跃设备断线且有错误时显示具体原因 + 重试
+            if let error = relayConnection.lastConnectionError,
+               relayConnection.status != .connected,
+               activeDeviceID != nil {
+                Section {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(String(
+                                localized: "device_list.connection_error_title",
+                                defaultValue: "连接失败"
+                            ))
+                            .font(.subheadline).fontWeight(.semibold)
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 8)
+                        Button {
+                            if let id = activeDeviceID { connectToDevice(id) }
+                        } label: {
+                            Text(String(localized: "common.retry", defaultValue: "重试"))
+                                .font(.caption).fontWeight(.semibold)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.orange)
+                        .controlSize(.small)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+
             ForEach(devices) { device in
                 DeviceRow(
                     device: device,
@@ -178,12 +261,15 @@ struct DeviceListView: View {
     /// 重新加载设备列表
     private func reloadDevices() {
         devices = DeviceStore.getDevices()
-        activeDeviceID = DeviceStore.getActiveDeviceID()
+        activeDeviceID = DeviceStore.resolveActiveDevice(
+            in: devices,
+            activeDeviceID: DeviceStore.getActiveDeviceID()
+        )?.id
 
-        // 如果没有活跃设备但有设备列表，设置第一个为活跃
-        if activeDeviceID == nil, let first = devices.first {
-            activeDeviceID = first.id
+        // 仅在单设备场景下自动设为活跃，避免多设备时猜错用户想连接哪台 Mac
+        if activeDeviceID == nil, devices.count == 1, let first = devices.first {
             DeviceStore.setActiveDevice(id: first.id)
+            activeDeviceID = first.id
         }
     }
 
@@ -194,7 +280,6 @@ struct DeviceListView: View {
         activeDeviceID = device.id
         DeviceStore.setActiveDevice(id: device.id)
         connectToDevice(device.id)
-        isSwitching = false
         showFeedback(String(
             localized: "device_list.switched",
             defaultValue: "已切换到「\(device.name)」"
@@ -237,15 +322,21 @@ struct DeviceListView: View {
     private func handleQRScanned(_ text: String) {
         guard let qrData = PairingManager.parseQRCode(text) else {
             showScanner = false
-            showFeedback("⚠️ " + String(
+            pendingPairingQRCode = nil
+            pairingRecoveryError = String(
                 localized: "device_list.invalid_qr",
                 defaultValue: "无效的配对二维码"
-            ))
+            )
             return
         }
 
+        pendingPairingQRCode = qrData
+        pairingRecoveryError = nil
         showScanner = false
+        beginPairing(with: qrData)
+    }
 
+    private func beginPairing(with qrData: QRCodeData) {
         let phoneID = getOrCreatePhoneID()
         let phoneName = UIDevice.current.name
 
@@ -255,16 +346,18 @@ struct DeviceListView: View {
                 phoneID: phoneID,
                 phoneName: phoneName
             )
-
-            if let result = pairingManager.pairedDevice {
-                DeviceStore.addFromPairResult(result)
-                reloadDevices()
-                connectToDevice(result.deviceID)
-                showFeedback(String(localized: "device_list.paired_success", defaultValue: "配对成功！"))
-            } else if let error = pairingManager.error {
-                showFeedback("⚠️ \(error)")
-            }
         }
+    }
+
+    private func retryPendingPairing() {
+        guard let qrData = pendingPairingQRCode else {
+            pairingRecoveryError = nil
+            showScanner = true
+            return
+        }
+
+        pairingRecoveryError = nil
+        beginPairing(with: qrData)
     }
 
     /// 获取或创建手机 ID
@@ -288,6 +381,53 @@ struct DeviceListView: View {
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             feedbackMessage = nil
         }
+    }
+
+    @ViewBuilder
+    private func pairingRecoveryBanner(_ error: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack(spacing: 8) {
+                if pendingPairingQRCode != nil {
+                    Button {
+                        retryPendingPairing()
+                    } label: {
+                        Text(String(localized: "common.retry", defaultValue: "重试"))
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                }
+
+                Button {
+                    pairingRecoveryError = nil
+                    showScanner = true
+                } label: {
+                    Text(String(localized: "device_list.scan_button", defaultValue: "扫码配对"))
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+        }
+        .padding(12)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal)
+    }
+
+    private var needsManualDeviceSelection: Bool {
+        activeDeviceID == nil && devices.count > 1
     }
 }
 

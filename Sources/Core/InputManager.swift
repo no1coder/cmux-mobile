@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// 按键输入模型，携带按键和修饰符信息

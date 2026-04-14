@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// 推送通知设置视图
 struct NotificationSettingsView: View {
@@ -9,6 +12,24 @@ struct NotificationSettingsView: View {
     @AppStorage("push_terminal_exit") private var pushTerminalExit = false
 
     var body: some View {
+        Group {
+            if AppFeatureFlags.notificationsEnabled {
+                notificationList
+            } else {
+                ContentUnavailableView(
+                    String(localized: "settings.notifications.unavailable_title", defaultValue: "通知功能暂未开放"),
+                    systemImage: "bell.slash",
+                    description: Text(String(localized: "settings.notifications.unavailable_desc", defaultValue: "当前版本不会请求推送权限，也不会发送推送通知。"))
+                )
+            }
+        }
+        .navigationTitle(String(localized: "settings.notifications.nav_title", defaultValue: "通知设置"))
+        .onAppear {
+            pushManager.refreshAuthorizationStatus()
+        }
+    }
+
+    private var notificationList: some View {
         List {
             // 推送权限状态
             Section {
@@ -75,10 +96,6 @@ struct NotificationSettingsView: View {
         #else
         .listStyle(.inset)
         #endif
-        .navigationTitle(String(localized: "settings.notifications.nav_title", defaultValue: "通知设置"))
-        .onAppear {
-            pushManager.refreshAuthorizationStatus()
-        }
     }
 
     // MARK: - 状态显示

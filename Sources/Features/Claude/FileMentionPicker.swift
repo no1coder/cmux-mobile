@@ -11,10 +11,13 @@ struct FileMentionPicker: View {
     @Binding var inputText: String
     @Binding var showFilePicker: Bool
     @Binding var fileList: [MentionFileEntry]
+    @Binding var isLoading: Bool
+    @Binding var errorMessage: String?
     @Binding var mentionQuery: String
     @Binding var mentionBasePath: String
-    let projectPath: String
+    let rootPath: String
     @EnvironmentObject var relayConnection: RelayConnection
+    @StateObject private var requestGate = LatestOnlyRequestGate()
 
     /// 根据 mentionQuery 模糊过滤的文件列表
     private var filteredFileList: [MentionFileEntry] {
@@ -23,18 +26,21 @@ struct FileMentionPicker: View {
         return fileList.filter { fuzzyMatch(query: query, target: $0.name.lowercased()) }
     }
 
+    private var currentDisplayPath: String {
+        guard !mentionBasePath.isEmpty else { return rootPath }
+        let trimmedBasePath = mentionBasePath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !trimmedBasePath.isEmpty else { return rootPath }
+        return rootPath + "/" + trimmedBasePath
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Image(systemName: "doc.text").font(.system(size: 12)).foregroundStyle(.blue)
-                if mentionBasePath.isEmpty {
-                    Text("选择文件").font(.system(size: 12, weight: .medium)).foregroundStyle(CMColors.textSecondary)
-                } else {
-                    Text(mentionBasePath)
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.blue.opacity(0.6))
-                        .lineLimit(1)
-                }
+                Text(currentDisplayPath)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.blue.opacity(0.6))
+                    .lineLimit(1)
                 Spacer()
                 if !mentionQuery.isEmpty {
                     Text("\(filteredFileList.count) 个结果")
@@ -44,13 +50,49 @@ struct FileMentionPicker: View {
                 Button { dismissMentionPicker() } label: {
                     Image(systemName: "xmark").font(.system(size: 10)).foregroundStyle(CMColors.textTertiary)
                 }
+                .frame(width: 28, height: 28)
+                .accessibilityLabel(String(localized: "chat.mention.close", defaultValue: "关闭文件选择器"))
             }.padding(.horizontal, 16).padding(.vertical, 8)
 
-            if fileList.isEmpty {
+            if isLoading {
                 HStack {
                     ProgressView().scaleEffect(0.6).tint(.blue)
                     Text("加载…").font(.system(size: 12)).foregroundStyle(CMColors.textTertiary)
                 }.padding(.horizontal, 16).padding(.vertical, 12)
+            } else if let errorMessage {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.orange)
+                        Text(errorMessage)
+                            .font(.system(size: 12))
+                            .foregroundStyle(CMColors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Button {
+                        loadFileList(subpath: mentionBasePath)
+                    } label: {
+                        Label(String(localized: "common.retry", defaultValue: "重试"), systemImage: "arrow.clockwise")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            } else if fileList.isEmpty {
+                HStack {
+                    Image(systemName: "folder")
+                        .font(.system(size: 11))
+                        .foregroundStyle(CMColors.textTertiary)
+                    Text("当前目录为空")
+                        .font(.system(size: 12))
+                        .foregroundStyle(CMColors.textTertiary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             } else if filteredFileList.isEmpty {
                 HStack {
                     Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(CMColors.textTertiary)
@@ -118,6 +160,8 @@ struct FileMentionPicker: View {
     /// 关闭提及选择器并重置状态
     func dismissMentionPicker() {
         showFilePicker = false
+        isLoading = false
+        errorMessage = nil
         mentionQuery = ""
         mentionBasePath = ""
     }
@@ -136,9 +180,14 @@ struct FileMentionPicker: View {
 
     /// 加载文件列表
     func loadFileList(subpath: String = "") {
-        let basePath = projectPath.isEmpty ? "~" : projectPath
-        let fullPath = subpath.isEmpty ? basePath : basePath + "/" + subpath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let trimmedSubpath = subpath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let fullPath = trimmedSubpath.isEmpty ? rootPath : rootPath + "/" + trimmedSubpath
+        let token = requestGate.begin("mention-file-list")
+        isLoading = true
+        errorMessage = nil
         relayConnection.sendWithResponse(["method": "file.list", "params": ["path": fullPath]]) { result in
+            guard requestGate.isLatest(token, for: "mention-file-list") else { return }
+            isLoading = false
             let resultDict = result["result"] as? [String: Any] ?? result
             if let entries = resultDict["entries"] as? [[String: Any]] {
                 fileList = entries.compactMap {
@@ -148,7 +197,17 @@ struct FileMentionPicker: View {
                     if a.isDirectory != b.isDirectory { return a.isDirectory }
                     return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
                 }
+                return
             }
+
+            let fallbackMessage: String
+            if trimmedSubpath.isEmpty {
+                fallbackMessage = String(localized: "chat.mention.load_failed", defaultValue: "无法加载文件列表，请稍后重试。")
+            } else {
+                fallbackMessage = String(localized: "chat.mention.load_failed_subpath", defaultValue: "无法加载这个目录，请稍后重试。")
+            }
+            fileList = []
+            errorMessage = FileExplorerView.extractErrorMessage(from: result) ?? fallbackMessage
         }
     }
 }

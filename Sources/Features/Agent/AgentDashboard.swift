@@ -11,6 +11,10 @@ struct AgentDashboard: View {
     /// 本次会话全部自动批准
     @AppStorage("approvalApproveAll") private var approveAll = false
 
+    /// 最近一次审批操作的反馈（1.2s 自动消失）
+    @State private var actionFeedback: String?
+    @State private var feedbackTask: Task<Void, Never>?
+
     var body: some View {
         NavigationStack {
             Group {
@@ -24,23 +28,42 @@ struct AgentDashboard: View {
             }
             .navigationTitle(String(localized: "agent.dashboard.title", defaultValue: "Agent"))
             .navigationBarTitleDisplayMode(.inline)
+            .overlay(alignment: .top) {
+                if let text = actionFeedback {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text(text)
+                            .font(.system(size: 13, weight: .medium))
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 10)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+        }
+        .onDisappear { feedbackTask?.cancel() }
+    }
+
+    private func showFeedback(_ text: String) {
+        feedbackTask?.cancel()
+        withAnimation(.easeInOut(duration: 0.2)) { actionFeedback = text }
+        feedbackTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.2)) { actionFeedback = nil }
         }
     }
 
     /// 未连接提示
     private var notConnectedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "wifi.slash")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text(String(localized: "agent.not_connected", defaultValue: "未连接到设备"))
-                .font(.title3)
-                .fontWeight(.medium)
-            Text(String(localized: "agent.not_connected_desc", defaultValue: "请先在设置中扫码配对 Mac"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        PairMacOnboardingView(
+            title: String(localized: "agent.not_connected", defaultValue: "未连接到设备"),
+            message: String(localized: "agent.not_connected_desc", defaultValue: "重新配对或切换 Mac 后，即可继续处理审批请求与 Agent 活动。")
+        )
+        .environmentObject(relayConnection)
     }
 
     /// 连接状态指示器，显示已连接的 Mac 信息
@@ -49,9 +72,9 @@ struct AgentDashboard: View {
             Circle()
                 .fill(.green)
                 .frame(width: 8, height: 8)
-            let deviceName = KeychainHelper.load(key: "pairedDeviceID").flatMap {
-                KeychainHelper.load(key: "deviceName_\($0)")
-            } ?? String(localized: "agent.connected_device.unknown", defaultValue: "Mac")
+            let deviceName = DeviceStore.getActiveDevice()?.name
+                ?? DeviceStore.getDevices().first?.name
+                ?? String(localized: "agent.connected_device.unknown", defaultValue: "Mac")
             Text(String(localized: "agent.connected_to", defaultValue: "已连接：\(deviceName)"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -352,15 +375,25 @@ struct AgentDashboard: View {
     // MARK: - 辅助方法
 
     private func handleApprove(_ request: ApprovalRequest) {
+        Haptics.light()
         let payload = approvalManager.buildApprovePayload(requestID: request.requestID)
         relayConnection.send(payload)
         approvalManager.markResolved(requestID: request.requestID, resolution: .approved)
+        showFeedback(String(
+            localized: "agent.feedback.approved",
+            defaultValue: "已批准 \(request.action)"
+        ))
     }
 
     private func handleReject(_ request: ApprovalRequest) {
+        Haptics.rigid()
         let payload = approvalManager.buildRejectPayload(requestID: request.requestID)
         relayConnection.send(payload)
         approvalManager.markResolved(requestID: request.requestID, resolution: .rejected)
+        showFeedback(String(
+            localized: "agent.feedback.rejected",
+            defaultValue: "已拒绝 \(request.action)"
+        ))
     }
 
     private func resolutionIcon(_ resolution: ApprovalResolution) -> String {

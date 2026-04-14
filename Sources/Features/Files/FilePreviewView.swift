@@ -16,6 +16,11 @@ struct FilePreviewView: View {
     // MARK: - 状态
 
     @State private var previewState: PreviewState = .loading
+    /// Mac 端是否截断了文件内容（过大文件只返回前 N 字节）
+    @State private var isTruncated = false
+    /// 服务端汇报的文件大小
+    @State private var reportedSize: Int64 = 0
+    @StateObject private var requestGate = LatestOnlyRequestGate()
 
     // MARK: - 预览状态枚举
 
@@ -38,6 +43,14 @@ struct FilePreviewView: View {
     #else
     typealias PlatformImage = NSImage
     #endif
+
+    /// 人类可读的文件大小
+    private var sizeLabel: String {
+        let bcf = ByteCountFormatter()
+        bcf.allowedUnits = [.useKB, .useMB, .useGB]
+        bcf.countStyle = .file
+        return bcf.string(fromByteCount: reportedSize)
+    }
 
     var body: some View {
         Group {
@@ -74,6 +87,26 @@ struct FilePreviewView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        .overlay(alignment: .top) {
+            // 文件被服务端截断时显示警示横幅，避免用户误以为内容完整
+            if isTruncated {
+                HStack(spacing: 6) {
+                    Image(systemName: "scissors")
+                        .font(.system(size: 11))
+                    Text(String(
+                        localized: "files.preview.truncated",
+                        defaultValue: "文件过大（\(sizeLabel)），仅显示开头部分"
+                    ))
+                    .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundStyle(.orange)
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(Color.orange.opacity(0.12))
+                .clipShape(Capsule())
+                .padding(.top, 4)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .onAppear { loadFile() }
     }
 
@@ -186,12 +219,19 @@ struct FilePreviewView: View {
     /// 发送 file.read 命令，使用回调接收响应
     private func loadFile() {
         previewState = .loading
+        let token = requestGate.begin("file")
         // C4: 使用 sendWithResponse 注册响应回调
         connection.sendWithResponse([
             "method": "file.read",
             "params": ["path": filePath]
         ]) { result in
             DispatchQueue.main.async {
+                guard requestGate.isLatest(token, for: "file") else { return }
+                // 先看是否明确返回错误；统一四种错误格式
+                if let msg = FileExplorerView.extractErrorMessage(from: result) {
+                    previewState = .error(msg)
+                    return
+                }
                 let resultDict = result["result"] as? [String: Any] ?? result
                 handleResponse(resultDict)
             }
@@ -203,6 +243,9 @@ struct FilePreviewView: View {
     func handleResponse(_ result: [String: Any]) {
         let mimeType = result["mimeType"] as? String ?? ""
         let fileSize = result["size"] as? Int64 ?? 0
+        // 记录服务端是否截断内容（用于顶部横幅提示）
+        isTruncated = (result["truncated"] as? Bool) ?? false
+        reportedSize = fileSize
 
         // base64 编码的二进制文件
         if let encoding = result["encoding"] as? String,

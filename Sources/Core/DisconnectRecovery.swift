@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// 管理断线恢复逻辑：追踪最后接收的序列号，判断是否需要读屏回退

@@ -10,6 +10,8 @@ struct SessionListView: View {
 
     /// 是否展开归档区域
     @State private var showArchived = false
+    /// 清空归档二次确认
+    @State private var confirmClearArchived = false
 
     var body: some View {
         let grouped = sessionManager.groupedActiveSessions()
@@ -100,28 +102,68 @@ struct SessionListView: View {
                         }
                     }
                 } header: {
-                    Button {
-                        withAnimation { showArchived.toggle() }
-                    } label: {
-                        HStack {
-                            Image(systemName: "archivebox")
+                    HStack(spacing: 8) {
+                        Button {
+                            withAnimation { showArchived.toggle() }
+                        } label: {
+                            HStack {
+                                Image(systemName: "archivebox")
+                                    .font(.caption)
+                                Text(String(
+                                    localized: "session.archived_section",
+                                    defaultValue: "已归档 (\(archived.count))"
+                                ))
                                 .font(.caption)
-                            Text(String(
-                                localized: "session.archived_section",
-                                defaultValue: "已归档 (\(archived.count))"
-                            ))
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            Spacer()
-                            Image(systemName: showArchived ? "chevron.up" : "chevron.down")
-                                .font(.caption2)
+                                .fontWeight(.medium)
+                                Spacer()
+                                Image(systemName: showArchived ? "chevron.up" : "chevron.down")
+                                    .font(.caption2)
+                            }
+                            .foregroundStyle(.secondary)
                         }
-                        .foregroundStyle(.secondary)
+                        if showArchived && archived.count > 1 {
+                            Button(role: .destructive) {
+                                confirmClearArchived = true
+                            } label: {
+                                Text(String(
+                                    localized: "session.clear_archived",
+                                    defaultValue: "清空"
+                                ))
+                                .font(.caption2)
+                            }
+                            .buttonStyle(.borderless)
+                        }
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
+        .confirmationDialog(
+            String(localized: "session.clear_archived_confirm_title",
+                   defaultValue: "清空所有归档会话？"),
+            isPresented: $confirmClearArchived,
+            titleVisibility: .visible
+        ) {
+            Button(role: .destructive) {
+                withAnimation {
+                    let n = sessionManager.deleteAllArchived()
+                    Haptics.rigid()
+                    print("[session] 清空 \(n) 个归档会话")
+                }
+            } label: {
+                Text(String(
+                    localized: "session.clear_archived_action",
+                    defaultValue: "清空 \(archived.count) 个会话"
+                ))
+            }
+            Button(String(localized: "common.cancel", defaultValue: "取消"),
+                   role: .cancel) {}
+        } message: {
+            Text(String(
+                localized: "session.clear_archived_desc",
+                defaultValue: "此操作不可撤销，但不会影响 Mac 端的实际终端"
+            ))
+        }
     }
 
     // MARK: - 项目分组头

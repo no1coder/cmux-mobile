@@ -1,12 +1,29 @@
 import Testing
 import Foundation
+#if canImport(cmux_mobile)
 @testable import cmux_mobile
+#elseif canImport(cmux_core)
+@testable import cmux_core
+import cmux_models
+#endif
 
 @Suite("SessionManager Tests")
 @MainActor
 struct SessionManagerTests {
 
     // MARK: - 辅助方法
+
+    private func makeManager() -> SessionManager {
+        let url = sessionStorageURL()
+        try? FileManager.default.removeItem(at: url)
+        return SessionManager()
+    }
+
+    private func sessionStorageURL() -> URL {
+        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return dir.appendingPathComponent("claude-sessions.json")
+    }
 
     private func makeSurface(
         id: String = "surf-001",
@@ -27,7 +44,7 @@ struct SessionManagerTests {
 
     @Test("从 Surface 列表创建会话")
     func syncCreatesSession() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/my-project")
         manager.syncFromSurfaces([surface])
 
@@ -37,7 +54,7 @@ struct SessionManagerTests {
 
     @Test("非 Claude 标题的 Surface 不创建会话")
     func syncIgnoresNonClaude() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Terminal — bash")
         manager.syncFromSurfaces([surface])
 
@@ -46,7 +63,7 @@ struct SessionManagerTests {
 
     @Test("重复 sync 不创建重复会话")
     func syncDeduplicates() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
 
         manager.syncFromSurfaces([surface])
@@ -57,11 +74,58 @@ struct SessionManagerTests {
         #expect(matchingSessions.count == 1)
     }
 
+    @Test("surface 列表刷新不会伪造最近活跃时间")
+    func syncPreservesLastActiveAt() {
+        let manager = makeManager()
+        let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
+        manager.syncFromSurfaces([surface])
+
+        let baseDate = manager.sessions.first!.lastActiveAt
+        let originalDate = baseDate.addingTimeInterval(60)
+        manager.touchActivity(surfaceID: "s1", at: originalDate)
+        manager.syncFromSurfaces([surface])
+
+        let session = manager.sessions.first { $0.surfaceID == "s1" }
+        #expect(session?.lastActiveAt == originalDate)
+    }
+
+    @Test("markAsClaudeSession 只修正元数据，不刷新最近活跃时间")
+    func markAsClaudeSessionPreservesLastActiveAt() {
+        let manager = makeManager()
+        let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
+        manager.syncFromSurfaces([surface])
+
+        let baseDate = manager.sessions.first!.lastActiveAt
+        let originalDate = baseDate.addingTimeInterval(60)
+        manager.touchActivity(surfaceID: "s1", at: originalDate)
+        manager.markAsClaudeSession(surfaceID: "s1", title: "Fix build issue", cwd: "~/project")
+
+        let session = manager.sessions.first { $0.surfaceID == "s1" }
+        #expect(session?.lastActiveAt == originalDate)
+        #expect(session?.title == "Fix build issue")
+    }
+
+    @Test("touchActivity 只在真实活动时刷新最近活跃时间")
+    func touchActivityUpdatesLastActiveAt() {
+        let manager = makeManager()
+        let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
+        manager.syncFromSurfaces([surface])
+
+        let baseDate = manager.sessions.first!.lastActiveAt
+        let originalDate = baseDate.addingTimeInterval(60)
+        let newerDate = baseDate.addingTimeInterval(123)
+        manager.touchActivity(surfaceID: "s1", at: originalDate)
+        manager.touchActivity(surfaceID: "s1", at: newerDate)
+
+        let session = manager.sessions.first { $0.surfaceID == "s1" }
+        #expect(session?.lastActiveAt == newerDate)
+    }
+
     // MARK: - archive / restore / delete 测试
 
     @Test("归档会话")
     func archiveSession() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
         manager.syncFromSurfaces([surface])
 
@@ -73,7 +137,7 @@ struct SessionManagerTests {
 
     @Test("恢复归档会话")
     func restoreSession() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
         manager.syncFromSurfaces([surface])
 
@@ -87,7 +151,7 @@ struct SessionManagerTests {
 
     @Test("删除会话")
     func deleteSession() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
         manager.syncFromSurfaces([surface])
 
@@ -99,7 +163,7 @@ struct SessionManagerTests {
 
     @Test("删除不存在的 ID 无副作用")
     func deleteNonExistentID() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
         manager.syncFromSurfaces([surface])
 
@@ -111,7 +175,7 @@ struct SessionManagerTests {
 
     @Test("更新模型名称")
     func updateModel() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
         manager.syncFromSurfaces([surface])
 
@@ -123,7 +187,7 @@ struct SessionManagerTests {
 
     @Test("空模型名称不更新")
     func updateModelEmptyNoOp() {
-        let manager = SessionManager()
+        let manager = makeManager()
         let surface = makeSurface(id: "s1", title: "Claude Code — ~/project")
         manager.syncFromSurfaces([surface])
 
@@ -138,7 +202,7 @@ struct SessionManagerTests {
 
     @Test("按项目名分组")
     func groupedSessions() {
-        let manager = SessionManager()
+        let manager = makeManager()
         manager.syncFromSurfaces([
             makeSurface(id: "s1", title: "Claude Code — ~/project-a"),
             makeSurface(id: "s2", title: "Claude Code — ~/project-a"),

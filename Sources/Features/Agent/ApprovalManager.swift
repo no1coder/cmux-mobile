@@ -1,4 +1,8 @@
+import Combine
 import Foundation
+#if SWIFT_PACKAGE
+import cmux_models
+#endif
 
 // MARK: - 枚举和模型
 
@@ -71,8 +75,9 @@ final class ApprovalManager: ObservableObject {
 
     /// 从 UserDefaults 加载审批策略
     func loadPolicy() {
-        let autoReadOnly = UserDefaults.standard.bool(forKey: "approvalAutoReadOnly")
-        let approveAll = UserDefaults.standard.bool(forKey: "approvalApproveAll")
+        let defaults = UserDefaults.standard
+        let autoReadOnly = defaults.object(forKey: "approvalAutoReadOnly") as? Bool ?? true
+        let approveAll = defaults.object(forKey: "approvalApproveAll") as? Bool ?? false
         var newPolicy = ApprovalPolicy.default
         if !autoReadOnly {
             newPolicy.autoApproveTools = []

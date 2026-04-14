@@ -6,6 +6,7 @@ import UIKit
 
 /// 聊天输入栏视图（支持文字 + 图片混合输入）
 struct ChatInputBar: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Binding var inputText: String
     @FocusState.Binding var isInputFocused: Bool
     let hasPastedImage: Bool
@@ -42,12 +43,26 @@ struct ChatInputBar: View {
                 HStack(spacing: 6) {
                     chip("@", color: .blue) { onAtTap() }
                     chip("/", color: .orange) { onSlashTap() }
-                    Rectangle().fill(CMColors.separator).frame(width: 1, height: 16)
-                    chip("^C", color: .red) { onCtrlC() }
-                    chip("Esc", color: .gray) { onEsc() }
-                    chip("/compact", color: .purple) { onCompact() }
-                    chip("/status", color: .green) { onStatus() }
                     chip(isInPlanMode ? "退出Plan" : "Plan", color: isInPlanMode ? .red : .cyan) { onPlan() }
+                    if isCompactLayout {
+                        Menu {
+                            Button("^C", action: onCtrlC)
+                            Button("Esc", action: onEsc)
+                            Button("/compact", action: onCompact)
+                            Button("/status", action: onStatus)
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .font(.system(size: 18))
+                                .frame(width: 36, height: 36)
+                        }
+                        .accessibilityLabel(String(localized: "chat.input.more_actions", defaultValue: "更多聊天快捷操作"))
+                    } else {
+                        Rectangle().fill(CMColors.separator).frame(width: 1, height: 16)
+                        chip("^C", color: .red) { onCtrlC() }
+                        chip("Esc", color: .gray) { onEsc() }
+                        chip("/compact", color: .purple) { onCompact() }
+                        chip("/status", color: .green) { onStatus() }
+                    }
                 }.padding(.horizontal, 12).padding(.vertical, 6)
             }
             // 粘贴板图片提示
@@ -62,6 +77,8 @@ struct ChatInputBar: View {
                     } label: {
                         Image(systemName: "xmark").font(.system(size: 9)).foregroundStyle(CMColors.textTertiary)
                     }
+                    .frame(width: 28, height: 28)
+                    .accessibilityLabel(String(localized: "chat.clipboard.dismiss", defaultValue: "关闭粘贴板图片提示"))
                 }
                 .padding(.horizontal, 16).padding(.vertical, 4)
                 .background(Color.blue.opacity(0.06))
@@ -106,7 +123,11 @@ struct ChatInputBar: View {
                 Button(action: handleSend) {
                     Image(systemName: "arrow.up.circle.fill").font(.system(size: 30))
                         .foregroundStyle(canSend ? .purple : .gray.opacity(0.3))
-                }.disabled(!canSend)
+                }
+                .frame(width: 44, height: 44)
+                .disabled(!canSend)
+                .accessibilityLabel(String(localized: "chat.send", defaultValue: "发送消息"))
+                .accessibilityHint(String(localized: "chat.send.hint", defaultValue: "发送当前输入内容"))
             }.padding(.horizontal, 12).padding(.bottom, 8)
         }
         .background(CMColors.inputBarBackground)
@@ -125,8 +146,9 @@ struct ChatInputBar: View {
                 Image(systemName: "photo")
                     .font(.system(size: 16))
                     .foregroundStyle(CMColors.textSecondary)
-                    .frame(width: 28, height: 28)
+                    .frame(width: 36, height: 36)
             }
+            .accessibilityLabel(String(localized: "chat.attach.photo", defaultValue: "添加图片"))
             .onChange(of: selectedPhotoItems) { _, items in
                 guard !items.isEmpty else { return }
                 handlePhotoSelection(items)
@@ -172,6 +194,8 @@ struct ChatInputBar: View {
                     .foregroundStyle(.white)
                     .background(Circle().fill(.black.opacity(0.5)))
             }
+            .frame(width: 28, height: 28)
+            .accessibilityLabel(String(localized: "chat.attach.remove_image", defaultValue: "移除图片"))
             .offset(x: 4, y: -4)
         }
         .overlay(alignment: .bottom) {
@@ -236,8 +260,13 @@ struct ChatInputBar: View {
     private func chip(_ label: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label).font(.system(size: 11, weight: .medium, design: .monospaced))
-                .padding(.horizontal, 8).padding(.vertical, 8)
+                .frame(minWidth: 36, minHeight: 36)
+                .padding(.horizontal, 8)
                 .background(color.opacity(0.1)).foregroundStyle(color.opacity(0.7)).clipShape(Capsule())
         }
+    }
+
+    private var isCompactLayout: Bool {
+        horizontalSizeClass == .compact
     }
 }

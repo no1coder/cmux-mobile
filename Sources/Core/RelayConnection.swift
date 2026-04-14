@@ -1,5 +1,9 @@
-import Foundation
 import CryptoKit
+import Combine
+import Foundation
+#if SWIFT_PACKAGE
+import cmux_models
+#endif
 
 /// 管理与 Relay 服务器的 WebSocket 连接，包含认证、心跳和自动重连
 @MainActor
@@ -9,6 +13,11 @@ final class RelayConnection: NSObject, ObservableObject {
 
     @Published var status: ConnectionStatus = .disconnected
     @Published var latencyMs: Int?
+    /// 最近一次连接失败原因（认证失败 / WebSocket 错误 / URL 无效等）
+    /// 成功连接后会清空；UI 层可用它给配对诊断页提示用户
+    @Published var lastConnectionError: String?
+    /// 最近一次 surface.list 拉取失败原因；用于终端列表显式展示错误态而非误报“没有终端”
+    @Published var lastSurfaceListError: String?
 
     // MARK: - 配置
 
@@ -44,10 +53,18 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// C4: 响应回调注册表，key 为请求 id
     private var responseHandlers: [Int: ([String: Any]) -> Void] = [:]
+    /// handler 元数据：method 名 + 注册时间，用于超时日志和 LRU 淘汰
+    private var handlerMeta: [Int: (method: String, createdAt: Date)] = [:]
+    /// responseHandlers 上限；超过时按创建时间淘汰最旧 handler，防止内存无界增长
+    private static let maxPendingHandlers = 500
+    /// 连接建立中的短暂缓冲窗口：避免页面在即将连上时收到误判的 offline
+    private static let connectingRequestGracePeriod: TimeInterval = 5
+    private static let connectingPollIntervalNs: UInt64 = 250_000_000
     /// 自增请求 ID 计数器，避免时间戳碰撞
     private var nextRequestID: Int = 1
     /// RPC 请求去重缓存
     let rpcDedup = RpcDedupCache()
+    private var watchedClaudeSurfaceCounts: [String: Int] = [:]
 
     // MARK: - 连接管理
 
@@ -108,6 +125,7 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// 发送 RPC 请求消息（断线时自动入队，重连后批量发送）
     func send(_ payload: [String: Any]) {
+        let payload = normalizedPayload(payload)
         // 离线时入队，等待重连后发送
         guard status == .connected else {
             offlineQueue.enqueue(payload)
@@ -138,8 +156,26 @@ final class RelayConnection: NSObject, ObservableObject {
     }
 
     /// C4: 发送 RPC 请求并注册响应回调，响应到达时在主线程调用 handler
-    /// 30 秒超时自动移除 handler，防止内存泄漏
+    /// 默认 30 秒超时；调用方可通过 `client_timeout_seconds` 覆盖。
     func sendWithResponse(_ payload: [String: Any], handler: @escaping ([String: Any]) -> Void) {
+        let payload = normalizedPayload(payload)
+        let method = (payload["method"] as? String) ?? "unknown"
+        let timeoutSeconds = max(1, payload["client_timeout_seconds"] as? Double ?? 30)
+
+        if status == .connecting {
+            deferResponseRequestWhileConnecting(payload, method: method, handler: handler)
+            return
+        }
+
+        guard status == .connected else {
+            handler([
+                "error": "offline",
+                "message": "当前离线，请恢复连接后重试（\(method)）",
+                "method": method,
+            ])
+            return
+        }
+
         // 去重检查
         if let requestId = payload["request_id"] as? String {
             guard rpcDedup.shouldSend(requestId) else {
@@ -153,17 +189,67 @@ final class RelayConnection: NSObject, ObservableObject {
             nextRequestID += 1
             return current
         }()
+
+        // 上限保护：超过 maxPendingHandlers 时按注册时间淘汰最旧
+        if responseHandlers.count >= Self.maxPendingHandlers {
+            if let oldestId = handlerMeta.min(by: { $0.value.createdAt < $1.value.createdAt })?.key {
+                let evicted = responseHandlers.removeValue(forKey: oldestId)
+                let evictedMeta = handlerMeta.removeValue(forKey: oldestId)
+                evicted?([
+                    "error": "overflow",
+                    "message": "pending handler 队列溢出，已丢弃 \(evictedMeta?.method ?? "unknown")",
+                ])
+            }
+        }
+
         responseHandlers[id] = handler
+        handlerMeta[id] = (method, Date())
         var payloadWithID = payload
         payloadWithID["id"] = id
-        send(payloadWithID)
+        payloadWithID.removeValue(forKey: "client_timeout_seconds")
+        sendPayload(payloadWithID)
 
-        // 30 秒超时：自动清除未响应的 handler
+        // 超时后自动清除未响应的 handler，并回传具体 method 便于定位
         Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 30_000_000_000)
+            try? await Task.sleep(nanoseconds: UInt64(timeoutSeconds * 1_000_000_000))
             guard let self else { return }
             if let expiredHandler = self.responseHandlers.removeValue(forKey: id) {
-                expiredHandler(["error": "timeout", "message": "响应超时（30秒）"])
+                self.handlerMeta.removeValue(forKey: id)
+                expiredHandler([
+                    "error": "timeout",
+                    "message": "\(method) 响应超时（\(Int(timeoutSeconds))秒）",
+                    "method": method,
+                ])
+            }
+        }
+    }
+
+    private func deferResponseRequestWhileConnecting(
+        _ payload: [String: Any],
+        method: String,
+        handler: @escaping ([String: Any]) -> Void
+    ) {
+        Task { [weak self] in
+            let deadline = Date().addingTimeInterval(Self.connectingRequestGracePeriod)
+
+            while let self,
+                  self.status == .connecting,
+                  Date() < deadline {
+                try? await Task.sleep(nanoseconds: Self.connectingPollIntervalNs)
+            }
+
+            await MainActor.run {
+                guard let self else { return }
+                if self.status == .connected {
+                    self.sendWithResponse(payload, handler: handler)
+                    return
+                }
+
+                handler([
+                    "error": "offline",
+                    "message": "当前仍在建立连接，请稍后重试（\(method)）",
+                    "method": method,
+                ])
             }
         }
     }
@@ -173,20 +259,73 @@ final class RelayConnection: NSObject, ObservableObject {
     var onSurfacesUpdated: (([[String: Any]]) -> Void)?
 
     /// Claude 消息推送回调（Mac 端 JSONL 文件变化时触发）
-    var onClaudeUpdate: (([String: Any]) -> Void)?
+    private var claudeUpdateObservers: [UUID: ([String: Any]) -> Void] = [:]
+
+    @discardableResult
+    func addClaudeUpdateObserver(_ observer: @escaping ([String: Any]) -> Void) -> UUID {
+        let id = UUID()
+        claudeUpdateObservers[id] = observer
+        return id
+    }
+
+    func removeClaudeUpdateObserver(_ id: UUID) {
+        claudeUpdateObservers.removeValue(forKey: id)
+    }
+
+    func dispatchClaudeUpdate(_ payload: [String: Any]) {
+        for observer in claudeUpdateObservers.values {
+            observer(payload)
+        }
+    }
+
+    func beginClaudeWatch(surfaceID: String) {
+        let nextCount = (watchedClaudeSurfaceCounts[surfaceID] ?? 0) + 1
+        watchedClaudeSurfaceCounts[surfaceID] = nextCount
+        guard nextCount == 1 else { return }
+        guard status == .connected else { return }
+        send([
+            "method": "claude.watch",
+            "params": ["surface_id": surfaceID],
+        ])
+    }
+
+    func endClaudeWatch(surfaceID: String) {
+        let currentCount = watchedClaudeSurfaceCounts[surfaceID] ?? 0
+        guard currentCount > 0 else { return }
+
+        if currentCount == 1 {
+            watchedClaudeSurfaceCounts.removeValue(forKey: surfaceID)
+            guard status == .connected else { return }
+            send([
+                "method": "claude.unwatch",
+                "params": ["surface_id": surfaceID],
+            ])
+        } else {
+            watchedClaudeSurfaceCounts[surfaceID] = currentCount - 1
+        }
+    }
 
     func requestSurfaceList() {
         sendWithResponse([
             "method": "surface.list",
         ]) { [weak self] result in
             print("[relay] surface.list 回调, keys=\(result.keys.sorted())")
+            if let error = result["error"] as? String ?? (result["result"] as? [String: Any])?["error"] as? String {
+                let message = result["message"] as? String
+                    ?? (result["result"] as? [String: Any])?["message"] as? String
+                    ?? "unknown"
+                print("[relay] surface.list 失败: \(error) \(message)")
+                self?.lastSurfaceListError = message
+            }
             // 从响应中提取 surfaces 数组
             if let surfacesArr = result["surfaces"] as? [[String: Any]] {
                 print("[relay] 直接获取到 \(surfacesArr.count) 个 surface (dict)")
+                self?.lastSurfaceListError = nil
                 self?.onSurfacesUpdated?(surfacesArr)
             } else if let resultDict = result["result"] as? [String: Any],
                       let surfacesArr = resultDict["surfaces"] as? [[String: Any]] {
                 print("[relay] 从 result 获取到 \(surfacesArr.count) 个 surface")
+                self?.lastSurfaceListError = nil
                 self?.onSurfacesUpdated?(surfacesArr)
             }
         }
@@ -219,11 +358,22 @@ final class RelayConnection: NSObject, ObservableObject {
         }
     }
 
+    private func normalizedPayload(_ payload: [String: Any]) -> [String: Any] {
+        guard payload["method"] != nil else { return payload }
+        guard payload["params"] == nil else { return payload }
+
+        var normalized = payload
+        normalized["params"] = [String: Any]()
+        return normalized
+    }
+
     /// 持续接收 WebSocket 消息
     private func receiveNext() {
         webSocketTask?.receive { [weak self] result in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                // 已断开时不再继续递归 receive，避免在 disconnect 之后还吃到 stale 消息或空 handler
+                guard self.status != .disconnected, self.webSocketTask != nil else { return }
                 switch result {
                 case .success(let message):
                     print("[relay] 收到消息")
@@ -255,6 +405,7 @@ final class RelayConnection: NSObject, ObservableObject {
         // 尝试解析认证挑战或 rpc_response
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let msgType = json["type"] as? String {
+            updateSurfaceListErrorFromEvent(json)
             switch msgType {
             case "auth_challenge":
                 handleAuthChallenge(json)
@@ -262,6 +413,7 @@ final class RelayConnection: NSObject, ObservableObject {
             case "auth_ok":
                 // 认证成功，更新状态并启动心跳
                 status = .connected
+                lastConnectionError = nil
                 reconnectDelay = 1
                 startHeartbeat()
                 print("[relay] 认证成功，已连接")
@@ -274,7 +426,19 @@ final class RelayConnection: NSObject, ObservableObject {
                 }
                 // 重连后批量发送离线队列中的消息
                 offlineQueue.flush { [weak self] msg in
-                    self?.sendPayload(msg)
+                    guard let self,
+                          self.status == .connected,
+                          self.webSocketTask != nil else {
+                        return false
+                    }
+                    self.sendPayload(msg)
+                    return true
+                }
+                for surfaceID in watchedClaudeSurfaceCounts.keys.sorted() {
+                    send([
+                        "method": "claude.watch",
+                        "params": ["surface_id": surfaceID],
+                    ])
                 }
                 // 连接成功后，主动请求 surface 列表（带重试）
                 requestSurfaceList()
@@ -285,6 +449,11 @@ final class RelayConnection: NSObject, ObservableObject {
                 }
                 return
             case "auth_fail":
+                let reason = (json["reason"] as? String)
+                    ?? (json["message"] as? String)
+                    ?? String(localized: "relay.auth_fail",
+                              defaultValue: "配对密钥不匹配，请重新扫码")
+                lastConnectionError = reason
                 disconnect()
                 return
             case "pair_deleted":
@@ -312,6 +481,7 @@ final class RelayConnection: NSObject, ObservableObject {
                     return nil
                 }()
                 if let msgID, let handler = responseHandlers.removeValue(forKey: msgID) {
+                    handlerMeta.removeValue(forKey: msgID)
                     handler(payloadDict ?? json)
                     // 仍然转发给上层，供 MessageStore 更新状态
                 }
@@ -335,6 +505,24 @@ final class RelayConnection: NSObject, ObservableObject {
             }
         }
         onMessage?(data)
+    }
+
+    private func updateSurfaceListErrorFromEvent(_ json: [String: Any]) {
+        guard json["type"] as? String == "event",
+              let payload = json["payload"] as? [String: Any],
+              payload["event"] as? String == "surface.list_update" else {
+            return
+        }
+
+        if let error = payload["error"] as? String {
+            let message = payload["message"] as? String ?? error
+            lastSurfaceListError = message
+            return
+        }
+
+        if payload["surfaces"] != nil {
+            lastSurfaceListError = nil
+        }
     }
 
     /// 处理认证挑战，计算 HMAC-SHA256 并回复
@@ -395,6 +583,10 @@ final class RelayConnection: NSObject, ObservableObject {
     /// 处理连接断开，触发自动重连
     private func handleDisconnect(error: Error?) {
         guard status != .disconnected else { return }
+        // 记录失败原因（若尚未由 auth_fail 显式设置）
+        if lastConnectionError == nil, let err = error {
+            lastConnectionError = (err as NSError).localizedDescription
+        }
         status = .disconnected
         stopHeartbeat()
         clearPendingHandlers()
@@ -407,10 +599,17 @@ final class RelayConnection: NSObject, ObservableObject {
     /// 清除所有待响应的 handler，通知调用方连接已断开
     private func clearPendingHandlers() {
         let pending = responseHandlers
+        let pendingMeta = handlerMeta
         responseHandlers.removeAll()
+        handlerMeta.removeAll()
         rpcDedup.reset()
-        for (_, handler) in pending {
-            handler(["error": "disconnected", "message": "连接已断开"])
+        for (id, handler) in pending {
+            let method = pendingMeta[id]?.method ?? "unknown"
+            handler([
+                "error": "disconnected",
+                "message": "连接已断开（\(method)）",
+                "method": method,
+            ])
         }
     }
 

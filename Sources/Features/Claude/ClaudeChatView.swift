@@ -8,8 +8,12 @@ struct ClaudeChatView: View {
     @EnvironmentObject var messageStore: MessageStore
     @EnvironmentObject var relayConnection: RelayConnection
     @EnvironmentObject var approvalManager: ApprovalManager
+    @EnvironmentObject var sessionManager: SessionManager
+    @AppStorage("showTokenUsage") private var showTokenUsage = true
+    @AppStorage("autoScrollToBottom") private var autoScrollToBottom = true
 
     @StateObject private var composeViewModel = ComposeInputViewModel()
+    @StateObject private var requestGate = LatestOnlyRequestGate()
     @State private var inputText = ""
     @State private var isThinking = false
     @State private var activityLabel = ""
@@ -19,6 +23,9 @@ struct ClaudeChatView: View {
     @State private var streamingPreview = ""
     /// 流式预览轮询任务
     @State private var streamingTask: Task<Void, Never>?
+    /// 视图生命周期内派生的辅助任务（TUI 抓屏 / 模型切换 toast 自动隐藏 / 滚动修正）
+    /// 存在 @StateObject 里，视图销毁时统一取消，避免 Task 泄漏 + 持有已释放的 @State
+    @StateObject private var viewTaskBag = ViewTaskBag()
     @FocusState private var isInputFocused: Bool
     /// 已获取的最大消息序号（用于增量拉取）
     @State private var lastSeq = 0
@@ -29,6 +36,8 @@ struct ClaudeChatView: View {
     /// 是否显示 @ 文件选择器
     @State private var showFilePicker = false
     @State private var fileList: [MentionFileEntry] = []
+    @State private var isLoadingFileMentions = false
+    @State private var mentionLoadError: String?
     /// @ 提及过滤查询（@后输入的字符）
     @State private var mentionQuery = ""
     /// @ 提及当前路径前缀（支持路径遍历）
@@ -43,16 +52,30 @@ struct ClaudeChatView: View {
     @State private var showModelPicker = false
     /// 模型切换成功反馈（非 nil 时显示 toast）
     @State private var modelSwitchFeedback: String?
+    @State private var historyLoadState: HistoryLoadState = .idle
+    @State private var fullHistoryState: FullHistoryState = .idle
+    @State private var claudeUpdateObserverID: UUID?
+    @State private var activeHistoryFetchMode: HistoryFetchMode?
+    @State private var queuedHistoryFetchMode: HistoryFetchMode?
+    @State private var hasMoreRemoteHistory = false
+    @State private var nextBeforeSeq: Int?
+    @State private var pagingState = ClaudeHistoryPagingState()
     /// 每页消息数量
     private static let pageSize = 200
     /// 当前显示消息上限（向上滚动时递增）
     @State private var displayLimit = 200
-    /// 展开的 Turn ID 集合
-    @State private var expandedTurnIds: Set<String> = []
+    @State private var isLoadingMoreMessages = false
+    @State private var canAutoLoadMore = false
+    /// 加载更早消息期间临时抑制"自动滚到底部"（避免与 loadMoreMessages 的锚点竞争）
+    @State private var suppressAutoScroll = false
+    /// 用户最近一次手动拖动聊天的时间：3 秒内的自动滚到底部会被抑制，
+    /// 避免用户在上翻看历史时被新消息/流式预览强行拉回底部
+    @State private var lastUserScrollAt: Date = .distantPast
     // MARK: - 发送状态
 
     private enum SendStage: Equatable {
         case sending
+        case queued
         case delivered
         case thinking
         case failed(String)
@@ -62,27 +85,119 @@ struct ClaudeChatView: View {
         let id: String
         var stage: SendStage
     }
+
+    private struct PendingLocalEcho: Equatable {
+        let localID: String
+        let content: String
+    }
+
+    private enum HistoryLoadState: Equatable {
+        case idle
+        case loading
+        case loaded
+        case failed(String)
+    }
+
+    private enum FullHistoryState: Equatable {
+        case idle
+        case loading
+        case loaded
+        case failed(String)
+    }
+
+    private enum HistoryFetchMode: Equatable {
+        case incremental
+        case recentPage
+        case pageBefore(Int)
+        case fullRefreshLegacy
+
+        var coreKind: ClaudeHistoryFetchKind {
+            switch self {
+            case .incremental:
+                return .incremental
+            case .recentPage:
+                return .recentPage
+            case .pageBefore(let beforeSeq):
+                return .pageBefore(beforeSeq)
+            case .fullRefreshLegacy:
+                return .fullRefreshLegacy
+            }
+        }
+
+        var requestGateKey: String {
+            switch self {
+            case .incremental:
+                return "claude-history-incremental"
+            case .recentPage, .pageBefore:
+                return "claude-history-page"
+            case .fullRefreshLegacy:
+                return "claude-history-full"
+            }
+        }
+
+        var priority: Int {
+            switch self {
+            case .incremental:
+                return 0
+            case .recentPage, .pageBefore:
+                return 1
+            case .fullRefreshLegacy:
+                return 2
+            }
+        }
+
+        var timeoutSeconds: Double {
+            switch self {
+            case .incremental:
+                return 45
+            case .recentPage:
+                return 60
+            case .pageBefore:
+                return 90
+            case .fullRefreshLegacy:
+                return 150
+            }
+        }
+    }
     @State private var pendingSend: PendingSend?
     @State private var lastSendText = ""
+    @State private var pendingLocalEchoes: [PendingLocalEcho] = []
 
     /// 是否还有更早的消息可加载
     private var hasMoreMessages: Bool {
         let all = messageStore.claudeChats[surfaceID] ?? []
+        return all.count > displayLimit || hasMoreRemoteHistory
+    }
+
+    private var localHasMoreMessages: Bool {
+        let all = messageStore.claudeChats[surfaceID] ?? []
         return all.count > displayLimit
     }
 
-    private var chatMessages: [ClaudeChatItem] {
-        let all = messageStore.claudeChats[surfaceID] ?? []
-        if all.count > displayLimit {
-            return Array(all.suffix(displayLimit))
-        }
-        return all
+    private var oldestLoadedSeq: Int? {
+        (messageStore.claudeChats[surfaceID] ?? []).compactMap(\.seq).min()
     }
 
-    /// 将平铺消息分组为对话轮次
-    private var chatTurns: [ConversationTurn] {
-        ConversationTurn.group(chatMessages)
+    private var chatMessages: [ClaudeChatItem] {
+        let raw = messageStore.claudeChats[surfaceID] ?? []
+        // 历史消息以 Mac 端返回顺序为准；不要再按本地 timestamp 重排，
+        // 否则全量历史 / 增量推送 / 流式替换交错时会把旧消息“洗牌”。
+        if raw.count > displayLimit {
+            return Array(raw.suffix(displayLimit))
+        }
+        return raw
     }
+
+    private var shouldShowHistoryBackfillBanner: Bool {
+        guard !(messageStore.claudeChats[surfaceID] ?? []).isEmpty else { return false }
+        switch fullHistoryState {
+        case .loading, .failed:
+            return true
+        case .idle, .loaded:
+            return false
+        }
+    }
+
 
     var body: some View {
         VStack(spacing: 0) {
@@ -113,9 +228,11 @@ struct ClaudeChatView: View {
                     inputText: $inputText,
                     showFilePicker: $showFilePicker,
                     fileList: $fileList,
+                    isLoading: $isLoadingFileMentions,
+                    errorMessage: $mentionLoadError,
                     mentionQuery: $mentionQuery,
                     mentionBasePath: $mentionBasePath,
-                    projectPath: sessionInfo.project
+                    rootPath: mentionRootPath
                 )
             }
             ChatInputBar(
@@ -199,12 +316,61 @@ struct ClaudeChatView: View {
             Text(String(localized: "model.picker.desc", defaultValue: "切换后应用于当前及未来的 Claude Code 会话"))
         }
         .onAppear {
-            // 保留已有消息避免闪烁，仅首次加载时重置序号
-            if chatMessages.isEmpty {
+            let cachedMessages = messageStore.claudeChats[surfaceID] ?? []
+            let cachedSeq = messageStore.claudeChatSequence(for: surfaceID)
+            let normalizedCachedMessages = ClaudeChatItem.normalizeRunningTools(in: cachedMessages)
+
+            if normalizedCachedMessages != cachedMessages {
+                messageStore.setClaudeChat(surfaceID, messages: normalizedCachedMessages, totalSeq: cachedSeq > 0 ? cachedSeq : nil)
+            }
+
+            if cachedMessages.isEmpty {
                 lastSeq = 0
+                historyLoadState = .loading
+                fullHistoryState = .loading
+            } else {
+                if cachedSeq > 0 {
+                    lastSeq = cachedSeq
+                }
+                historyLoadState = .loaded
+                fullHistoryState = .idle
+                updatePlanModeState(cachedMessages)
+                pagingState.bootstrapFromCache(
+                    hasCompleteHistory: messageStore.hasCompleteClaudeChatHistory(for: surfaceID),
+                    cachedHasSeqMetadata: cachedMessages.contains { $0.seq != nil },
+                    oldestLoadedSeq: oldestLoadedSeq
+                )
+                hasMoreRemoteHistory = pagingState.hasMoreRemoteHistory
+                nextBeforeSeq = pagingState.nextBeforeSeq
             }
             hasPastedImage = UIPasteboard.general.hasImages
-            fetchMessages()
+            let hasCompleteCachedHistory = messageStore.hasCompleteClaudeChatHistory(for: surfaceID)
+            if cachedMessages.isEmpty {
+                requestHistoryFetch(mode: .recentPage)
+            } else {
+                requestHistoryFetch(mode: .incremental)
+                let cachedHasSeqMetadata = cachedMessages.contains { $0.seq != nil }
+                if hasCompleteCachedHistory {
+                    pagingState.bootstrapFromCache(
+                        hasCompleteHistory: true,
+                        cachedHasSeqMetadata: cachedHasSeqMetadata,
+                        oldestLoadedSeq: oldestLoadedSeq
+                    )
+                    fullHistoryState = .loaded
+                    hasMoreRemoteHistory = pagingState.hasMoreRemoteHistory
+                    nextBeforeSeq = pagingState.nextBeforeSeq
+                } else if cachedHasSeqMetadata {
+                    pagingState.bootstrapFromCache(
+                        hasCompleteHistory: false,
+                        cachedHasSeqMetadata: true,
+                        oldestLoadedSeq: oldestLoadedSeq
+                    )
+                    hasMoreRemoteHistory = pagingState.hasMoreRemoteHistory
+                    nextBeforeSeq = pagingState.nextBeforeSeq
+                } else {
+                    requestHistoryFetch(mode: .fullRefreshLegacy)
+                }
+            }
             // 订阅 Mac 端推送（文件监听），保留低频轮询作为降级
             startWatching()
             startPolling()
@@ -213,6 +379,7 @@ struct ClaudeChatView: View {
             stopPolling()
             stopWatching()
             stopStreamingPreview()
+            viewTaskBag.cancelAll()
         }
         .onChange(of: isThinking) { _, thinking in
             if thinking {
@@ -234,13 +401,24 @@ struct ClaudeChatView: View {
             ScrollView {
                 LazyVStack(spacing: 6) {
                     sessionHeader.padding(.bottom, 8)
-                    // 滚动到顶部时自动加载更早的消息
+                    if hasMoreMessages {
+                        Color.clear
+                            .frame(height: 1)
+                            .onAppear {
+                                guard canAutoLoadMore else { return }
+                                loadMoreMessages(proxy: proxy)
+                            }
+                    }
+                    // 手动点击加载更早的消息
+                    // 不再用 .onAppear 自动触发：按钮首屏就在顶部，初次进入会与"滚到底部"抢锚点，
+                    // 导致用户看到视图被拉到中间的历史消息。改为用户主动点按。
                     if hasMoreMessages {
                         Button {
                             loadMoreMessages(proxy: proxy)
                         } label: {
                             HStack(spacing: 6) {
-                                ProgressView().controlSize(.small)
+                                Image(systemName: "arrow.up.circle")
+                                    .font(.system(size: 12))
                                 Text(String(localized: "chat.load_more", defaultValue: "加载更早的消息"))
                                     .font(.system(size: 13))
                                     .foregroundStyle(CMColors.textTertiary)
@@ -248,25 +426,16 @@ struct ClaudeChatView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                         }
-                        .onAppear {
-                            // 滚到顶部自动触发加载
-                            loadMoreMessages(proxy: proxy)
-                        }
+                    }
+                    if shouldShowHistoryBackfillBanner {
+                        historyBackfillBanner
                     }
                     if chatMessages.isEmpty && !isThinking {
-                        Text("向 Claude 发送消息开始对话")
-                            .font(.system(size: 13))
-                            .foregroundStyle(CMColors.textTertiary)
-                            .padding(.top, 20)
+                        emptyChatState
                     }
-                    ForEach(chatTurns) { turn in
-                        TurnView(
-                            turn: turn,
-                            isExpanded: expandedTurnIds.contains(turn.id),
-                            onToggle: { toggleTurn(turn.id) },
-                            onToolTap: { tool in selectedTool = tool }
-                        )
-                        .id(turn.id)
+                    ForEach(chatMessages) { msg in
+                        ChatMessageRow(msg: msg, onToolTap: { tool in selectedTool = tool })
+                            .id(msg.id)
                     }
                     // 内嵌审批请求（当前 surface 的待处理请求）
                     ForEach(pendingApprovalsForSurface) { request in
@@ -289,31 +458,30 @@ struct ClaudeChatView: View {
                 // 点击聊天区域收起键盘
                 isInputFocused = false
             }
+            // 监听用户手动拖动：短期内抑制自动滚到底部，允许用户安心上翻阅读历史
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 12)
+                    .onChanged { _ in
+                        lastUserScrollAt = Date()
+                        canAutoLoadMore = true
+                    }
+            )
             .onAppear {
-                // 进入页面时：已有消息则立即滚动到底部
-                if !chatMessages.isEmpty {
-                    // 延迟一帧等 LazyVStack 完成布局
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        proxy.scrollTo("end", anchor: .bottom)
-                    }
-                }
+                // 进入页面时：已有消息则立即滚动到底部（分多帧确保 LazyVStack 完成估算→实测修正）
+                guard autoScrollToBottom else { return }
+                scrollToLatest(proxy: proxy, animated: false)
             }
-            .onChange(of: chatMessages.count) { oldCount, newCount in
-                if oldCount == 0 && newCount > 0 {
-                    // 首次加载消息，无动画直接跳到底部
-                    autoExpandLastTurn()
-                    proxy.scrollTo("end", anchor: .bottom)
-                } else if newCount > oldCount {
-                    // 新增消息，平滑滚动到底部
-                    autoExpandLastTurn()
-                    withAnimation(.easeOut(duration: 0.15)) {
-                        proxy.scrollTo("end", anchor: .bottom)
-                    }
+            // ③ 用"最后一条消息的 id"替代 count；loadMoreMessages 往头部追加不会触发
+            .onChange(of: chatMessages.last?.id) { _, newId in
+                guard shouldAutoScroll, newId != nil else { return }
+                withAnimation(.easeOut(duration: 0.15)) {
+                    scrollToLatest(proxy: proxy, animated: false)
                 }
             }
             .onChange(of: streamingPreview) { _, _ in
+                guard shouldAutoScroll else { return }
                 // 流式预览内容更新时保持在底部
-                proxy.scrollTo("end", anchor: .bottom)
+                scrollToLatest(proxy: proxy, animated: false)
             }
         }
     }
@@ -338,7 +506,7 @@ struct ClaudeChatView: View {
                 Text(sessionInfo.project).font(.system(size: 11, design: .monospaced)).foregroundStyle(CMColors.textTertiary)
             }
             // Token 用量
-            if !tokenUsage.isEmpty {
+            if showTokenUsage && !tokenUsage.isEmpty {
                 TokenUsageView(
                     inputTokens: tokenUsage["input"] ?? 0,
                     outputTokens: tokenUsage["output"] ?? 0,
@@ -348,6 +516,71 @@ struct ClaudeChatView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 4)
             }
+        }
+    }
+
+    private var emptyChatState: some View {
+        VStack(spacing: 10) {
+            switch historyLoadState {
+            case .loading:
+                ProgressView()
+                    .controlSize(.small)
+                Text(String(localized: "chat.loading_history", defaultValue: "正在加载历史消息…"))
+                    .font(.system(size: 13))
+                    .foregroundStyle(CMColors.textTertiary)
+            case .failed(let message):
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.orange)
+                Text(message)
+                    .font(.system(size: 13))
+                    .foregroundStyle(CMColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                Button(String(localized: "common.retry", defaultValue: "重试")) {
+                    requestHistoryFetch()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            case .idle, .loaded:
+                Text(String(localized: "chat.empty_prompt", defaultValue: "向 Claude 发送消息开始对话"))
+                    .font(.system(size: 13))
+                    .foregroundStyle(CMColors.textTertiary)
+            }
+        }
+        .padding(.top, 20)
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private var historyBackfillBanner: some View {
+        switch fullHistoryState {
+        case .loading:
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text(String(localized: "chat.loading_more_history", defaultValue: "正在补全更早历史…"))
+                    .font(.system(size: 12))
+                    .foregroundStyle(CMColors.textTertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+        case .failed(let message):
+            VStack(spacing: 8) {
+                Text(message)
+                    .font(.system(size: 12))
+                    .foregroundStyle(CMColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                Button(String(localized: "chat.retry_full_history", defaultValue: "重试加载完整历史")) {
+                    hydrateFullHistoryIfNeeded(force: true)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+        case .idle, .loaded:
+            EmptyView()
         }
     }
 
@@ -464,6 +697,7 @@ struct ClaudeChatView: View {
                     // 首次触发 @，加载文件列表
                     mentionBasePath = ""
                     mentionQuery = ""
+                    mentionLoadError = nil
                     loadFileList()
                     showFilePicker = true
                     showSlashMenu = false
@@ -499,11 +733,31 @@ struct ClaudeChatView: View {
         }
     }
 
+    private var mentionRootPath: String {
+        if !sessionInfo.project.isEmpty {
+            return sessionInfo.project
+        }
+        if let firstAllowedDirectory = messageStore.allowedDirectories.first, !firstAllowedDirectory.isEmpty {
+            return firstAllowedDirectory
+        }
+        return "~"
+    }
+
+    private func mentionFullPath(for subpath: String) -> String {
+        let trimmedSubpath = subpath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !trimmedSubpath.isEmpty else { return mentionRootPath }
+        return mentionRootPath + "/" + trimmedSubpath
+    }
+
     /// 委托给 FileMentionPicker 加载文件列表
     private func loadFileList(subpath: String = "") {
-        let basePath = sessionInfo.project.isEmpty ? "~" : sessionInfo.project
-        let fullPath = subpath.isEmpty ? basePath : basePath + "/" + subpath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let fullPath = mentionFullPath(for: subpath)
+        let token = requestGate.begin("mention-file-list")
+        isLoadingFileMentions = true
+        mentionLoadError = nil
         relayConnection.sendWithResponse(["method": "file.list", "params": ["path": fullPath]]) { result in
+            guard requestGate.isLatest(token, for: "mention-file-list") else { return }
+            isLoadingFileMentions = false
             let resultDict = result["result"] as? [String: Any] ?? result
             if let entries = resultDict["entries"] as? [[String: Any]] {
                 fileList = entries.compactMap {
@@ -513,12 +767,26 @@ struct ClaudeChatView: View {
                     if a.isDirectory != b.isDirectory { return a.isDirectory }
                     return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
                 }
+                mentionLoadError = nil
+                return
             }
+
+            let fallbackMessage: String
+            if subpath.isEmpty {
+                fallbackMessage = String(localized: "chat.mention.load_failed", defaultValue: "无法加载文件列表，请稍后重试。")
+            } else {
+                fallbackMessage = String(localized: "chat.mention.load_failed_subpath", defaultValue: "无法加载这个目录，请稍后重试。")
+            }
+            fileList = []
+            mentionLoadError = FileExplorerView.extractErrorMessage(from: result) ?? fallbackMessage
         }
     }
 
     private func dismissMentionPicker() {
         showFilePicker = false
+        fileList = []
+        isLoadingFileMentions = false
+        mentionLoadError = nil
         mentionQuery = ""
         mentionBasePath = ""
     }
@@ -529,21 +797,31 @@ struct ClaudeChatView: View {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         Haptics.rigid()
-        let messageId = UUID().uuidString
+        let messageId = "local-user-\(UUID().uuidString)"
         inputText = ""; showSlashMenu = false; showFilePicker = false
 
         appendMessage(ClaudeChatItem(id: messageId, role: .user, content: text, timestamp: Date()))
+        pendingLocalEchoes.append(PendingLocalEcho(localID: messageId, content: text))
+        lastSendText = text
+
+        if relayConnection.status != .connected {
+            relayConnection.send([
+                "method": "surface.send_text",
+                "params": ["surface_id": surfaceID, "text": text + "\n"],
+            ])
+            withAnimation { pendingSend = PendingSend(id: messageId, stage: .queued) }
+            return
+        }
 
         withAnimation { pendingSend = PendingSend(id: messageId, stage: .sending) }
-        lastSendText = text
 
         relayConnection.sendWithResponse([
             "method": "surface.send_text",
             "params": ["surface_id": surfaceID, "text": text + "\n"],
         ]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
-            if resultDict["error"] as? String != nil {
-                withAnimation { pendingSend = PendingSend(id: messageId, stage: .failed("发送失败")) }
+            if let error = FileExplorerView.extractErrorMessage(from: result) ?? resultDict["error"] as? String {
+                withAnimation { pendingSend = PendingSend(id: messageId, stage: .failed(error)) }
                 return
             }
             withAnimation { pendingSend = PendingSend(id: messageId, stage: .delivered) }
@@ -553,14 +831,24 @@ struct ClaudeChatView: View {
 
     private func retrySend() {
         guard let pending = pendingSend, case .failed = pending.stage else { return }
+
+        if relayConnection.status != .connected {
+            relayConnection.send([
+                "method": "surface.send_text",
+                "params": ["surface_id": surfaceID, "text": lastSendText + "\n"],
+            ])
+            withAnimation { pendingSend = PendingSend(id: pending.id, stage: .queued) }
+            return
+        }
+
         withAnimation { pendingSend = PendingSend(id: pending.id, stage: .sending) }
         relayConnection.sendWithResponse([
             "method": "surface.send_text",
             "params": ["surface_id": surfaceID, "text": lastSendText + "\n"],
         ]) { result in
             let resultDict = result["result"] as? [String: Any] ?? result
-            if resultDict["error"] as? String != nil {
-                withAnimation { pendingSend = PendingSend(id: pending.id, stage: .failed("发送失败")) }
+            if let error = FileExplorerView.extractErrorMessage(from: result) ?? resultDict["error"] as? String {
+                withAnimation { pendingSend = PendingSend(id: pending.id, stage: .failed(error)) }
                 return
             }
             withAnimation { pendingSend = PendingSend(id: pending.id, stage: .delivered) }
@@ -570,6 +858,164 @@ struct ClaudeChatView: View {
 
     private func sendDirect(_ text: String) {
         relayConnection.send(["method": "surface.send_text", "params": ["surface_id": surfaceID, "text": text]])
+
+        guard relayConnection.status == .connected else { return }
+
+        // 检测 TUI-only 命令：输出只在终端显示，不会写入 JSONL
+        // 发送后抓取屏幕内容，清洗后作为聊天气泡就地展示
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if Self.isTUIOnlyCommand(trimmed) {
+            let label = trimmed.components(separatedBy: .whitespaces).first ?? trimmed
+            captureTUIOutput(for: label)
+        }
+    }
+
+    /// 仅在终端 TUI 中渲染输出的斜杠命令集合
+    /// 这些命令执行后不会在 JSONL 中产生消息，聊天视图自然不会显示内容
+    private static let tuiOnlyCommands: Set<String> = [
+        "/status", "/help", "/cost", "/config", "/model", "/clear",
+        "/memory", "/doctor", "/bug", "/mcp", "/hooks", "/agents",
+        "/permissions", "/add-dir", "/ide", "/release-notes", "/vim",
+        "/terminal-setup", "/init", "/review", "/logout", "/login",
+        "/privacy-settings", "/upgrade", "/export", "/todos",
+    ]
+
+    private static func isTUIOnlyCommand(_ text: String) -> Bool {
+        guard text.hasPrefix("/") else { return false }
+        let head = text.components(separatedBy: .whitespaces).first ?? text
+        return tuiOnlyCommands.contains(head)
+    }
+
+    /// 发送 TUI-only 命令后从终端屏幕抓取输出，就地渲染为聊天气泡
+    /// 策略：轮询 read_screen，等画面稳定后抓取，清洗 ANSI/TUI 边框字符后展示
+    private func captureTUIOutput(for command: String) {
+        let placeholderId = "tui-\(UUID().uuidString)"
+        // 先插入占位气泡，表示正在读取
+        appendMessage(ClaudeChatItem(
+            id: placeholderId,
+            role: .tuiOutput(command: command),
+            content: String(localized: "claude.tui.reading", defaultValue: "读取终端输出中…"),
+            timestamp: Date()
+        ))
+
+        let task = Task { @MainActor in
+            // 等一会让 TUI 渲染完成；再多轮读取直到画面稳定
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard !Task.isCancelled else { return }
+            var lastHash = 0
+            var stableCount = 0
+            var finalLines: [String] = []
+            for attempt in 0..<8 {
+                let lines = await readScreenLinesAsync()
+                guard !Task.isCancelled else { return }
+                let hash = lines.joined(separator: "\n").hashValue
+                if hash == lastHash {
+                    stableCount += 1
+                } else {
+                    stableCount = 0
+                    lastHash = hash
+                }
+                finalLines = lines
+                // 连续 2 次相同即视为稳定
+                if stableCount >= 1 && attempt >= 1 { break }
+                try? await Task.sleep(nanoseconds: 400_000_000)
+                guard !Task.isCancelled else { return }
+            }
+
+            let cleaned = Self.cleanTUIOutput(finalLines, command: command)
+            replaceTUIOutput(
+                id: placeholderId,
+                command: command,
+                content: cleaned.isEmpty
+                    ? String(localized: "claude.tui.empty",
+                             defaultValue: "未能抓到 \(command) 的输出，点击聊天右上角菜单 →「查看终端」可直接查看")
+                    : cleaned
+            )
+        }
+        viewTaskBag.add(task)
+    }
+
+    private func readScreenLinesAsync() async -> [String] {
+        guard relayConnection.status == .connected else { return [] }
+        return await withCheckedContinuation { cont in
+            relayConnection.sendWithResponse([
+                "method": "read_screen",
+                "params": ["surface_id": surfaceID],
+            ]) { result in
+                let dict = result["result"] as? [String: Any] ?? result
+                let lines = dict["lines"] as? [String] ?? []
+                cont.resume(returning: lines)
+            }
+        }
+    }
+
+    /// 清洗终端屏幕文本：去除 ANSI 转义、TUI 边框字符、多余空白；
+    /// 尽量剔除 Claude Code 聊天 UI 本身的装饰（输入框、快捷键提示），
+    /// 只保留 /status 等命令真正输出的内容
+    private static func cleanTUIOutput(_ lines: [String], command: String) -> String {
+        // 去 ANSI 转义
+        let ansi = try? NSRegularExpression(pattern: "\u{1b}\\[[0-9;?]*[a-zA-Z]")
+        // 边框/盒线/半格字符
+        let boxChars = Set<Character>(
+            "─│┌┐└┘├┤┬┴┼━┃┏┓┗┛┣┫┳┻╋═║╔╗╚╝╠╣╦╩╬▌▐▀▄╭╮╰╯▲▼◀▶"
+        )
+        // 装饰性/状态栏字符：角标、✳、⏵、❯、›、 ⎿ 等
+        let decoPrefixes: [String] = ["✳", "⏵", "❯", "›", "⎿", "▸", "▲", "▼"]
+        // 明显属于输入框或快捷键提示的行
+        let noisePatterns: [String] = [
+            "Esc to cancel", "Tab to amend", "ctrl+e to explain",
+            "to approve", "to reject", "to exit", "Shift+Tab",
+            "? for shortcuts", "input?", "Type your message",
+        ]
+
+        var result: [String] = []
+        for raw in lines {
+            var s = raw
+            if let regex = ansi {
+                let range = NSRange(s.startIndex..., in: s)
+                s = regex.stringByReplacingMatches(in: s, range: range, withTemplate: "")
+            }
+            // 去边框字符
+            s = String(s.filter { !boxChars.contains($0) })
+            s = s.trimmingCharacters(in: .whitespaces)
+            guard !s.isEmpty else {
+                // 保留单个空行分隔
+                if result.last?.isEmpty == false { result.append("") }
+                continue
+            }
+            if decoPrefixes.contains(where: { s.hasPrefix($0) }) {
+                s = String(s.dropFirst()).trimmingCharacters(in: .whitespaces)
+                if s.isEmpty { continue }
+            }
+            // 过滤噪声提示
+            if noisePatterns.contains(where: { s.localizedCaseInsensitiveContains($0) }) {
+                continue
+            }
+            result.append(s)
+        }
+        // 折叠末尾空行
+        while result.last?.isEmpty == true { result.removeLast() }
+        // 折叠头部空行
+        while result.first?.isEmpty == true { result.removeFirst() }
+        // 去重：连续相同行合并
+        var deduped: [String] = []
+        for line in result {
+            if deduped.last != line { deduped.append(line) }
+        }
+        return deduped.joined(separator: "\n")
+    }
+
+    /// 替换先前插入的占位 TUI 气泡
+    private func replaceTUIOutput(id: String, command: String, content: String) {
+        var msgs = messageStore.claudeChats[surfaceID] ?? []
+        guard let index = msgs.firstIndex(where: { $0.id == id }) else { return }
+        msgs[index] = ClaudeChatItem(
+            id: id,
+            role: .tuiOutput(command: command),
+            content: content,
+            timestamp: msgs[index].timestamp
+        )
+        messageStore.setClaudeChat(surfaceID, messages: msgs)
     }
 
     /// 发送混合消息（文字 + 图片）到终端
@@ -590,10 +1036,16 @@ struct ClaudeChatView: View {
                                     defaultValue: "[\(imageCount) 张图片]")
             displayText = displayText.isEmpty ? imageLabel : displayText + "\n" + imageLabel
         }
-        appendMessage(ClaudeChatItem(id: UUID().uuidString, role: .user, content: displayText, timestamp: Date()))
+        let localMessageID = "local-user-\(UUID().uuidString)"
+        appendMessage(ClaudeChatItem(id: localMessageID, role: .user, content: displayText, timestamp: Date()))
+        pendingLocalEchoes.append(PendingLocalEcho(localID: localMessageID, content: displayText))
 
         let composedMsgId = UUID().uuidString
-        withAnimation { pendingSend = PendingSend(id: composedMsgId, stage: .sending) }
+        if relayConnection.status == .connected {
+            withAnimation { pendingSend = PendingSend(id: composedMsgId, stage: .sending) }
+        } else {
+            withAnimation { pendingSend = PendingSend(id: composedMsgId, stage: .queued) }
+        }
         lastSendText = displayText
         Task {
             try? await Task.sleep(for: .seconds(1.0))
@@ -605,7 +1057,9 @@ struct ClaudeChatView: View {
         // 通过 composed_msg 协议发送
         let sender = ComposedMessageSender(relayConnection: relayConnection)
         sender.send(correctedMessage)
-        isThinking = true
+        if relayConnection.status == .connected {
+            isThinking = true
+        }
     }
 
     // MARK: - 内嵌审批
@@ -665,54 +1119,174 @@ struct ClaudeChatView: View {
     private func appendMessage(_ msg: ClaudeChatItem) {
         var msgs = messageStore.claudeChats[surfaceID] ?? []
         msgs.append(msg)
-        messageStore.claudeChats[surfaceID] = msgs
+        messageStore.setClaudeChat(surfaceID, messages: msgs)
+        sessionManager.touchActivity(surfaceID: surfaceID, at: msg.timestamp)
     }
 
-    // MARK: - Turn 折叠管理
-
-    private func toggleTurn(_ turnId: String) {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            if expandedTurnIds.contains(turnId) {
-                expandedTurnIds.remove(turnId)
-            } else {
-                expandedTurnIds.insert(turnId)
-            }
-        }
-    }
-
-    private func autoExpandLastTurn() {
-        let turns = chatTurns
-        guard let lastTurn = turns.last else { return }
-        expandedTurnIds = [lastTurn.id]
-    }
 
     // MARK: - 分页加载
 
     /// 加载更早的消息（向上滚动时触发）
     private func loadMoreMessages(proxy: ScrollViewProxy) {
-        // 记住当前第一条消息的 ID，加载后保持滚动位置
-        let firstVisibleId = chatMessages.first?.id
-        displayLimit += Self.pageSize
-        // 加载后保持在原位置（不跳到底部）
-        if let id = firstVisibleId {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                proxy.scrollTo(id, anchor: .top)
+        guard hasMoreMessages, !isLoadingMoreMessages else { return }
+        if localHasMoreMessages {
+            isLoadingMoreMessages = true
+            let firstVisibleId = chatMessages.first?.id
+            suppressAutoScroll = true
+            displayLimit += Self.pageSize
+            if let id = firstVisibleId {
+                viewTaskBag.runAfter(0.05) {
+                    proxy.scrollTo(id, anchor: .top)
+                    viewTaskBag.runAfter(0.3) {
+                        suppressAutoScroll = false
+                        isLoadingMoreMessages = false
+                    }
+                }
+            } else {
+                suppressAutoScroll = false
+                isLoadingMoreMessages = false
+            }
+            return
+        }
+
+        let fallbackCursor = oldestLoadedSeq
+        guard let cursor = pagingState.nextPageCursor(fallbackOldestLoadedSeq: fallbackCursor), cursor > 1 else {
+            if !messageStore.hasCompleteClaudeChatHistory(for: surfaceID) {
+                requestHistoryFetch(mode: .fullRefreshLegacy)
+            }
+            return
+        }
+
+        isLoadingMoreMessages = true
+        suppressAutoScroll = true
+        requestHistoryFetch(mode: .pageBefore(cursor))
+    }
+
+    /// 是否允许自动滚到最新：排除分页期抑制 + 用户近 3 秒内刚手动滑动
+    private var shouldAutoScroll: Bool {
+        if !autoScrollToBottom { return false }
+        if suppressAutoScroll { return false }
+        if Date().timeIntervalSince(lastUserScrollAt) < 3 { return false }
+        return true
+    }
+
+    /// ① 可靠的"滚动到最新消息"：优先定位真实最后一条消息的 id，anchor .bottom；
+    /// 分两帧调用兼容 LazyVStack 的估算→实测高度过程
+    private func scrollToLatest(proxy: ScrollViewProxy, animated: Bool) {
+        let targetId: String = {
+            // 流式预览优先（isThinking 时 streamingPreviewView 在最下）
+            if isThinking { return "thinking" }
+            if let last = chatMessages.last { return last.id }
+            return "end"
+        }()
+        let doScroll = {
+            if animated {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    proxy.scrollTo(targetId, anchor: .bottom)
+                }
+            } else {
+                proxy.scrollTo(targetId, anchor: .bottom)
             }
         }
+        // 第 1 帧：触发 LazyVStack 把目标附近 item 渲染出来
+        viewTaskBag.runAfter(0) { doScroll() }
+        // 第 2 帧：等真实高度测量完再补一次，修正估算误差
+        viewTaskBag.runAfter(0.08) { doScroll() }
+        // 第 3 帧：兜底一次（超长列表场景）
+        viewTaskBag.runAfter(0.25) { doScroll() }
     }
 
     // MARK: - 从 JSONL 拉取消息（跟 happy 的 sessionScanner 一样）
 
-    private func fetchMessages() {
+    private func requestHistoryFetch(mode: HistoryFetchMode = .incremental) {
+        if let activeHistoryFetchMode {
+            if activeHistoryFetchMode.priority >= mode.priority {
+                return
+            }
+            queuedHistoryFetchMode = mode
+            return
+        }
+
+        fetchMessages(mode: mode)
+    }
+
+    private func finishHistoryFetch(_ mode: HistoryFetchMode) {
+        guard activeHistoryFetchMode == mode else { return }
+        activeHistoryFetchMode = nil
+
+        guard let queuedHistoryFetchMode else { return }
+        self.queuedHistoryFetchMode = nil
+        fetchMessages(mode: queuedHistoryFetchMode)
+    }
+
+    private func fetchMessages(mode: HistoryFetchMode = .incremental) {
+        activeHistoryFetchMode = mode
+        let startedAt = Date()
+        let token = requestGate.begin(mode.requestGateKey)
+        let hadCachedMessages = !(messageStore.claudeChats[surfaceID] ?? []).isEmpty
+        let previousCachedCount = messageStore.claudeChats[surfaceID]?.count ?? 0
+        if mode != .incremental {
+            fullHistoryState = .loading
+            if !hadCachedMessages {
+                historyLoadState = .loading
+            }
+        } else if !hadCachedMessages {
+            historyLoadState = .loading
+        }
+
+        var params: [String: Any] = ["surface_id": surfaceID]
+        switch mode {
+        case .incremental:
+            params["after_seq"] = lastSeq
+        case .recentPage:
+            params["limit"] = Self.pageSize
+        case .pageBefore(let beforeSeq):
+            params["before_seq"] = beforeSeq
+            params["limit"] = Self.pageSize
+        case .fullRefreshLegacy:
+            params["after_seq"] = 0
+        }
+
         relayConnection.sendWithResponse([
             "method": "claude.messages",
-            "params": ["surface_id": surfaceID, "after_seq": lastSeq],
+            "params": params,
+            "client_timeout_seconds": mode.timeoutSeconds,
         ]) { result in
+            defer { finishHistoryFetch(mode) }
+            guard requestGate.isLatest(token, for: mode.requestGateKey) else { return }
             let resultDict = result["result"] as? [String: Any] ?? result
-            guard let messages = resultDict["messages"] as? [[String: Any]] else { return }
+
+            if let error = resultDict["error"] as? String {
+                let message = (resultDict["message"] as? String)
+                    ?? String(localized: "chat.history_load_failed", defaultValue: "加载历史消息失败，请稍后重试。")
+                if mode != .incremental {
+                    if !hadCachedMessages && chatMessages.isEmpty {
+                        historyLoadState = .failed(message)
+                    }
+                    fullHistoryState = .failed(message)
+                } else if !hadCachedMessages && chatMessages.isEmpty {
+                    historyLoadState = .failed(message)
+                } else {
+                    historyLoadState = .loaded
+                }
+                #if DEBUG
+                print("[claude] claude.messages 失败: \(error) \(message)")
+                #endif
+                return
+            }
 
             if let totalSeq = resultDict["total_seq"] as? Int {
+                if mode == .fullRefreshLegacy && totalSeq < lastSeq {
+                    // 说明全量回填返回时，本地已经收到了更新的增量；
+                    // 不要用较旧快照覆盖当前聊天，再发起一次全量回填。
+                    fullHistoryState = .idle
+                    viewTaskBag.runAfter(0.2) {
+                        requestHistoryFetch(mode: .fullRefreshLegacy)
+                    }
+                    return
+                }
                 lastSeq = totalSeq
+                messageStore.setClaudeChatSequence(surfaceID, totalSeq: totalSeq)
             }
 
             // 更新整体状态
@@ -725,23 +1299,132 @@ struct ClaudeChatView: View {
                 tokenUsage = usage
             }
 
-            processJsonlMessages(messages)
+            pagingState.applyResponse(
+                fetchKind: mode.coreKind,
+                hasMore: resultDict["has_more"] as? Bool,
+                serverNextBeforeSeq: resultDict["next_before_seq"] as? Int,
+                fallbackOldestLoadedSeq: oldestLoadedSeq
+            )
+            hasMoreRemoteHistory = pagingState.hasMoreRemoteHistory
+            nextBeforeSeq = pagingState.nextBeforeSeq
+
+            guard let messages = resultDict["messages"] as? [[String: Any]] else {
+                let existingMessages = messageStore.claudeChats[surfaceID] ?? []
+                let normalizedMessages = ClaudeChatItem.normalizeRunningTools(
+                    in: existingMessages,
+                    allowTrailingRunningTools: status == "tool_running"
+                )
+                if normalizedMessages != existingMessages {
+                    messageStore.setClaudeChat(surfaceID, messages: normalizedMessages, totalSeq: lastSeq > 0 ? lastSeq : nil)
+                }
+                if mode != .incremental {
+                    if !hadCachedMessages && chatMessages.isEmpty {
+                        historyLoadState = .failed(String(
+                            localized: "chat.history_missing_payload",
+                            defaultValue: "未收到会话历史数据，请稍后重试。"
+                        ))
+                    }
+                    fullHistoryState = .failed(String(
+                        localized: "chat.history_missing_payload",
+                        defaultValue: "未收到会话历史数据，请稍后重试。"
+                    ))
+                } else if !hadCachedMessages && chatMessages.isEmpty {
+                    historyLoadState = .failed(String(
+                        localized: "chat.history_missing_payload",
+                        defaultValue: "未收到会话历史数据，请稍后重试。"
+                    ))
+                } else {
+                    historyLoadState = .loaded
+                }
+                return
+            }
+
+            #if DEBUG
+            let elapsedMs = Int(Date().timeIntervalSince(startedAt) * 1000)
+            print("[claude] history \(String(describing: mode)) loaded in \(elapsedMs)ms messages=\(messages.count) totalSeq=\(lastSeq) hasMore=\(hasMoreRemoteHistory) nextBefore=\(nextBeforeSeq.map(String.init) ?? "nil") cachedBefore=\(previousCachedCount)")
+            #endif
+
+            let prependOlderMessages: Bool = {
+                if case .pageBefore = mode { return true }
+                return false
+            }()
+
+            processJsonlMessages(
+                messages,
+                resetExisting: mode == .fullRefreshLegacy,
+                prependOlderMessages: prependOlderMessages
+            )
+            if mode != .incremental {
+                let refreshedCount = messageStore.claudeChats[surfaceID]?.count ?? 0
+                if prependOlderMessages {
+                    preserveExpandedHistoryWindowAfterPrepend(
+                        previousCount: previousCachedCount,
+                        refreshedCount: refreshedCount
+                    )
+                } else {
+                    preserveExpandedHistoryWindowAfterFullRefresh(
+                        previousCount: previousCachedCount,
+                        refreshedCount: refreshedCount
+                    )
+                }
+                messageStore.setClaudeChatHistoryCompleteness(surfaceID, hasCompleteHistory: !hasMoreRemoteHistory)
+                fullHistoryState = .loaded
+            }
+            historyLoadState = .loaded
             if !isThinking && pendingSend != nil {
                 withAnimation { pendingSend = nil }
+            }
+            if prependOlderMessages {
+                viewTaskBag.runAfter(0.3) {
+                    suppressAutoScroll = false
+                    isLoadingMoreMessages = false
+                }
             }
         }
     }
 
+    private func preserveExpandedHistoryWindowAfterFullRefresh(previousCount: Int, refreshedCount: Int) {
+        guard displayLimit > Self.pageSize else { return }
+        guard refreshedCount > previousCount else { return }
+
+        let insertedOlderCount = refreshedCount - previousCount
+        displayLimit = min(refreshedCount, displayLimit + insertedOlderCount)
+    }
+
+    private func preserveExpandedHistoryWindowAfterPrepend(previousCount: Int, refreshedCount: Int) {
+        guard refreshedCount > previousCount else { return }
+        let insertedOlderCount = refreshedCount - previousCount
+        displayLimit = min(refreshedCount, displayLimit + insertedOlderCount)
+    }
+
     /// 将 JSONL 结构化消息转换为 UI 消息
-    private func processJsonlMessages(_ messages: [[String: Any]]) {
+    private func processJsonlMessages(
+        _ messages: [[String: Any]],
+        resetExisting: Bool = false,
+        prependOlderMessages: Bool = false
+    ) {
         var newItems: [ClaudeChatItem] = []
+        var newItemIndexes: [String: Int] = [:]
         // 收集 tool_result，用于关联到 tool_use
         var toolResults: [String: (content: String, isError: Bool)] = [:]
 
         // HIGH 修复：预构建去重集合，O(1) 查找替代 O(n) contains
-        let existingIDs = Set(chatMessages.map { $0.id })
-        let existingUserTexts = Set(chatMessages.filter { $0.role == .user }.map { $0.content })
-        let existingToolIds = Set(chatMessages.compactMap { $0.toolUseId })
+        var existingMessages = resetExisting ? [] : (messageStore.claudeChats[surfaceID] ?? [])
+        let previousMessageCount = existingMessages.count
+        if resetExisting && messages.isEmpty {
+            if !(messageStore.claudeChats[surfaceID] ?? []).isEmpty {
+                messageStore.setClaudeChat(surfaceID, messages: [], totalSeq: lastSeq > 0 ? lastSeq : nil)
+            }
+            updatePlanModeState([])
+            return
+        }
+
+        var existingIDs = Set(existingMessages.map(\.id))
+        let existingToolIds = Set(existingMessages.compactMap(\.toolUseId))
+        var seenMessageIDs = existingIDs
+        var seenToolUseIDs = existingToolIds
+        var reconciledLocalEcho = false
+        var updatedExistingMessages = false
 
         // 第一遍：收集所有 tool_result
         for msg in messages {
@@ -756,13 +1439,12 @@ struct ClaudeChatView: View {
             }
         }
 
-        // 用于跟踪本批次内的新用户消息文本（防止批次内重复）
-        var newUserTexts = Set<String>()
 
         // 第二遍：构建消息列表
         for msg in messages {
             let type = msg["type"] as? String ?? ""
             let uuid = msg["uuid"] as? String ?? UUID().uuidString
+            let seq = msg["seq"] as? Int
             let blocks = msg["content"] as? [[String: Any]] ?? []
             let stopReason = msg["stop_reason"] as? String
 
@@ -787,13 +1469,26 @@ struct ClaudeChatView: View {
                             || trimmed.hasPrefix("<system-reminder>") {
                             continue
                         }
-                        // O(1) 去重：匹配 ID 或内容
-                        let exists = existingIDs.contains(uuid)
-                            || existingUserTexts.contains(text)
-                            || newUserTexts.contains(text)
-                        if !exists {
-                            newItems.append(ClaudeChatItem(id: uuid, role: .user, content: text, timestamp: Date()))
-                            newUserTexts.insert(text)
+                        if !resetExisting,
+                           reconcilePendingLocalEcho(
+                            remoteID: uuid,
+                            text: text,
+                            existingMessages: &existingMessages,
+                            existingIDs: &existingIDs,
+                            seenMessageIDs: &seenMessageIDs
+                           ) {
+                            reconciledLocalEcho = true
+                            continue
+                        }
+
+                        if !seenMessageIDs.contains(uuid) {
+                            upsertNewItem(
+                                ClaudeChatItem(id: uuid, seq: seq, role: .user, content: text, timestamp: Date()),
+                                key: uuid,
+                                into: &newItems,
+                                indexes: &newItemIndexes
+                            )
+                            seenMessageIDs.insert(uuid)
                         }
                     }
                 }
@@ -811,28 +1506,43 @@ struct ClaudeChatView: View {
                             let msgID = "\(uuid)-text"
                             // 已有同 ID 消息 → 内容可能更新（流式追加），就地替换
                             if existingIDs.contains(msgID) {
-                                updateOrAppendStreamingMessage(
-                                    &newItems, existingIDs: existingIDs,
+                                updatedExistingMessages = updateOrAppendStreamingMessage(
+                                    &newItems,
+                                    newItemIndexes: &newItemIndexes,
+                                    existingMessages: &existingMessages,
+                                    existingIDs: existingIDs,
                                     id: msgID, role: .assistant,
                                     content: text, modelName: displayModel
+                                ) || updatedExistingMessages
+                            } else if !seenMessageIDs.contains(msgID) {
+                                upsertNewItem(
+                                    ClaudeChatItem(
+                                        id: msgID, seq: seq, role: .assistant,
+                                        content: text, timestamp: Date(),
+                                        modelName: displayModel
+                                    ),
+                                    key: msgID,
+                                    into: &newItems,
+                                    indexes: &newItemIndexes
                                 )
-                            } else {
-                                newItems.append(ClaudeChatItem(
-                                    id: msgID, role: .assistant,
-                                    content: text, timestamp: Date(),
-                                    modelName: displayModel
-                                ))
+                                seenMessageIDs.insert(msgID)
                             }
                         }
                     case "thinking":
                         // 思考过程（extended thinking）
                         if let thinking = block["thinking"] as? String, !thinking.isEmpty {
                             let thinkingID = "\(uuid)-thinking"
-                            if !existingIDs.contains(thinkingID) {
-                                newItems.append(ClaudeChatItem(
-                                    id: thinkingID, role: .thinking,
-                                    content: thinking, timestamp: Date()
-                                ))
+                            if !seenMessageIDs.contains(thinkingID) {
+                                upsertNewItem(
+                                    ClaudeChatItem(
+                                        id: thinkingID, seq: seq, role: .thinking,
+                                        content: thinking, timestamp: Date()
+                                    ),
+                                    key: thinkingID,
+                                    into: &newItems,
+                                    indexes: &newItemIndexes
+                                )
+                                seenMessageIDs.insert(thinkingID)
                             }
                         }
                     case "tool_use":
@@ -853,17 +1563,24 @@ struct ClaudeChatView: View {
                         }
 
                         // O(1) 去重
-                        if !existingToolIds.contains(toolUseId) {
-                            newItems.append(ClaudeChatItem(
-                                id: "\(uuid)-tool-\(toolUseId.prefix(8))",
-                                role: .tool(name: toolName),
-                                content: summary,
-                                timestamp: Date(),
-                                toolResult: result?.content,
-                                toolState: toolState,
-                                toolUseId: toolUseId,
-                                completedAt: result != nil ? Date() : nil
-                            ))
+                        if !seenToolUseIDs.contains(toolUseId) {
+                            upsertNewItem(
+                                ClaudeChatItem(
+                                    id: "\(uuid)-tool-\(toolUseId.prefix(8))",
+                                    seq: seq,
+                                    role: .tool(name: toolName),
+                                    content: summary,
+                                    timestamp: Date(),
+                                    toolResult: result?.content,
+                                    toolState: toolState,
+                                    toolUseId: toolUseId,
+                                    completedAt: result != nil ? Date() : nil
+                                ),
+                                key: "tool-\(toolUseId)",
+                                into: &newItems,
+                                indexes: &newItemIndexes
+                            )
+                            seenToolUseIDs.insert(toolUseId)
                         }
                     default:
                         break
@@ -882,15 +1599,15 @@ struct ClaudeChatView: View {
         }
 
         // 更新已有消息（工具状态更新）
-        let existing = messageStore.claudeChats[surfaceID] ?? []
         var all: [ClaudeChatItem] = []
-        var updated = false
-        for item in existing {
+        var updated = reconciledLocalEcho || updatedExistingMessages
+        for item in existingMessages {
             if let toolId = item.toolUseId, item.toolState == .running,
                let result = toolResults[toolId] {
                 // 创建新实例替代就地修改
                 let updatedItem = ClaudeChatItem(
                     id: item.id,
+                    seq: item.seq,
                     role: item.role,
                     content: item.content,
                     timestamp: item.timestamp,
@@ -907,12 +1624,35 @@ struct ClaudeChatView: View {
         }
 
         if !newItems.isEmpty {
-            all.append(contentsOf: newItems)
+            if prependOlderMessages {
+                all = newItems + all
+            } else {
+                all.append(contentsOf: newItems)
+            }
+            updated = true
+        }
+
+        let normalizedAll = ClaudeChatItem.normalizeRunningTools(
+            in: all,
+            allowTrailingRunningTools: activityLabel == "tool_running"
+        )
+        if normalizedAll != all {
+            all = normalizedAll
             updated = true
         }
 
         if updated {
-            messageStore.claudeChats[surfaceID] = all
+            if !prependOlderMessages {
+                preserveVisibleWindowForIncrementalAppend(
+                    previousCount: previousMessageCount,
+                    newCount: all.count,
+                    resetExisting: resetExisting
+                )
+            }
+            messageStore.setClaudeChat(surfaceID, messages: all)
+            if let latestActivityAt = newItems.map(\.timestamp).max() {
+                sessionManager.touchActivity(surfaceID: surfaceID, at: latestActivityAt)
+            }
             // 有新消息到达时清空流式预览（已被结构化消息替代）
             if !newItems.isEmpty { streamingPreview = "" }
 
@@ -921,33 +1661,99 @@ struct ClaudeChatView: View {
         }
     }
 
+    private func preserveVisibleWindowForIncrementalAppend(
+        previousCount: Int,
+        newCount: Int,
+        resetExisting: Bool
+    ) {
+        guard !resetExisting else { return }
+        guard newCount > previousCount else { return }
+        guard displayLimit > Self.pageSize || !shouldAutoScroll else { return }
+
+        let appendedCount = newCount - previousCount
+        displayLimit = min(newCount, displayLimit + appendedCount)
+    }
+
+    private func upsertNewItem(
+        _ item: ClaudeChatItem,
+        key: String,
+        into newItems: inout [ClaudeChatItem],
+        indexes: inout [String: Int]
+    ) {
+        if let index = indexes[key] {
+            newItems[index] = item
+        } else {
+            indexes[key] = newItems.count
+            newItems.append(item)
+        }
+    }
+
+    private func reconcilePendingLocalEcho(
+        remoteID: String,
+        text: String,
+        existingMessages: inout [ClaudeChatItem],
+        existingIDs: inout Set<String>,
+        seenMessageIDs: inout Set<String>
+    ) -> Bool {
+        guard let pendingIndex = pendingLocalEchoes.firstIndex(where: { $0.content == text }) else {
+            return false
+        }
+
+        let localEcho = pendingLocalEchoes[pendingIndex]
+        guard let existingIndex = existingMessages.firstIndex(where: { $0.id == localEcho.localID }) else {
+            pendingLocalEchoes.remove(at: pendingIndex)
+            return false
+        }
+
+        let existingMessage = existingMessages[existingIndex]
+        existingMessages[existingIndex] = ClaudeChatItem(
+            id: remoteID,
+            role: .user,
+            content: text,
+            timestamp: existingMessage.timestamp
+        )
+        existingIDs.remove(localEcho.localID)
+        seenMessageIDs.remove(localEcho.localID)
+        existingIDs.insert(remoteID)
+        seenMessageIDs.insert(remoteID)
+        pendingLocalEchoes.remove(at: pendingIndex)
+        return true
+    }
+
     /// 流式消息：更新已有的同 ID 消息内容，或追加新消息
     private func updateOrAppendStreamingMessage(
         _ newItems: inout [ClaudeChatItem],
+        newItemIndexes: inout [String: Int],
+        existingMessages: inout [ClaudeChatItem],
         existingIDs: Set<String>,
         id: String, role: ClaudeChatItem.Role,
         content: String, modelName: String?
-    ) {
+    ) -> Bool {
         // 检查已有消息中是否有同 ID 的流式消息
-        if let existing = messageStore.claudeChats[surfaceID],
-           let idx = existing.firstIndex(where: { $0.id == id }) {
+        if let idx = existingMessages.firstIndex(where: { $0.id == id }) {
             // 内容不变则跳过
-            guard existing[idx].content != content else { return }
+            guard existingMessages[idx].content != content else { return false }
             // 替换为新内容（不可变：创建新实例）
-            var msgs = existing
-            msgs[idx] = ClaudeChatItem(
+            existingMessages[idx] = ClaudeChatItem(
                 id: id, role: role,
-                content: content, timestamp: Date(),
+                content: content, timestamp: existingMessages[idx].timestamp,
                 modelName: modelName
             )
-            messageStore.claudeChats[surfaceID] = msgs
+            return true
         } else if !existingIDs.contains(id) {
-            newItems.append(ClaudeChatItem(
-                id: id, role: role,
-                content: content, timestamp: Date(),
-                modelName: modelName
-            ))
+            upsertNewItem(
+                ClaudeChatItem(
+                    id: id, role: role,
+                    content: content, timestamp: Date(),
+                    modelName: modelName
+                ),
+                key: id,
+                into: &newItems,
+                indexes: &newItemIndexes
+            )
+            return true
         }
+        return false
     }
 
     /// 将原始模型 ID 格式化为可读名称
@@ -1008,16 +1814,12 @@ struct ClaudeChatView: View {
 
     /// 订阅 Mac 端 JSONL 文件监听推送
     private func startWatching() {
-        // 发送 claude.watch 让 Mac 端开始监听文件变化
-        relayConnection.send([
-            "method": "claude.watch",
-            "params": ["surface_id": surfaceID],
-        ])
+        if claudeUpdateObserverID != nil { return }
+        relayConnection.beginClaudeWatch(surfaceID: surfaceID)
 
         // 监听推送事件
         let sid = surfaceID
-        relayConnection.onClaudeUpdate = { [weak relayConnection] payload in
-            _ = relayConnection  // 保持 weak 引用以避免循环引用
+        claudeUpdateObserverID = relayConnection.addClaudeUpdateObserver { payload in
             // 模型切换事件（不含 surface_id 过滤，因为是全局事件）
             if let event = payload["event"] as? String {
                 switch event {
@@ -1034,7 +1836,7 @@ struct ClaudeChatView: View {
                         let error = payload["error"] as? String ?? "切换失败"
                         withAnimation { modelSwitchFeedback = "⚠️ \(error)" }
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    viewTaskBag.runAfter(2.5) {
                         withAnimation { modelSwitchFeedback = nil }
                     }
                     return
@@ -1044,10 +1846,17 @@ struct ClaudeChatView: View {
                     guard payloadSid == sid else { return }
                     lastSeq = 0
                     displayLimit = Self.pageSize
+                    pagingState.hasMoreRemoteHistory = true
+                    pagingState.nextBeforeSeq = nil
+                    hasMoreRemoteHistory = pagingState.hasMoreRemoteHistory
+                    nextBeforeSeq = pagingState.nextBeforeSeq
                     tokenUsage = [:]
                     isThinking = false
                     activityLabel = ""
-                    fetchMessages()
+                    historyLoadState = .loading
+                    fullHistoryState = .loading
+                    messageStore.setClaudeChatHistoryCompleteness(surfaceID, hasCompleteHistory: false)
+                    requestHistoryFetch(mode: .recentPage)
                     return
                 default:
                     break
@@ -1061,6 +1870,7 @@ struct ClaudeChatView: View {
                 let status = payload["status"] as? String ?? "idle"
                 activityLabel = status
                 isThinking = (status == "thinking" || status == "tool_running")
+                historyLoadState = .loaded
 
                 // 提取 token 用量
                 if let usage = payload["usage"] as? [String: Int] {
@@ -1071,13 +1881,13 @@ struct ClaudeChatView: View {
 
                 // 更新发送状态
                 if let pending = pendingSend,
-                   pending.stage == .delivered || pending.stage == .sending {
+                   pending.stage == .delivered || pending.stage == .sending || pending.stage == .queued {
                     let hasResponse = messages.contains { ($0["type"] as? String) == "assistant" }
                     if hasResponse || status == "thinking" || status == "tool_running" {
                         withAnimation { pendingSend = PendingSend(id: pending.id, stage: .thinking) }
                     }
                 }
-                if !isThinking && pendingSend != nil {
+                if !isThinking, let pending = pendingSend, pending.stage == .thinking {
                     withAnimation { pendingSend = nil }
                 }
             }
@@ -1085,11 +1895,11 @@ struct ClaudeChatView: View {
     }
 
     private func stopWatching() {
-        relayConnection.send([
-            "method": "claude.unwatch",
-            "params": ["surface_id": surfaceID],
-        ])
-        relayConnection.onClaudeUpdate = nil
+        relayConnection.endClaudeWatch(surfaceID: surfaceID)
+        if let claudeUpdateObserverID {
+            relayConnection.removeClaudeUpdateObserver(claudeUpdateObserverID)
+            self.claudeUpdateObserverID = nil
+        }
     }
 
     // MARK: - 降级轮询（15秒兜底）
@@ -1101,7 +1911,8 @@ struct ClaudeChatView: View {
                 // HIGH 修复：推送通道存在时，轮询间隔从 5 秒提升到 15 秒
                 try? await Task.sleep(nanoseconds: 15_000_000_000)
                 guard !Task.isCancelled else { break }
-                fetchMessages()
+                guard relayConnection.status == .connected else { continue }
+                requestHistoryFetch(mode: .incremental)
             }
         }
     }
@@ -1121,11 +1932,16 @@ struct ClaudeChatView: View {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 guard !Task.isCancelled else { break }
 
+                let token = await MainActor.run { requestGate.begin("streaming-preview") }
                 await withCheckedContinuation { continuation in
                     relayConnection.sendWithResponse([
                         "method": "read_screen",
                         "params": ["surface_id": sid],
                     ]) { result in
+                        guard requestGate.isLatest(token, for: "streaming-preview") else {
+                            continuation.resume()
+                            return
+                        }
                         let resultDict = result["result"] as? [String: Any] ?? result
                         if let lines = resultDict["lines"] as? [String] {
                             let extracted = Self.extractClaudeOutput(from: lines)
@@ -1210,7 +2026,12 @@ struct ClaudeChatView: View {
                     ProgressView()
                         .scaleEffect(0.5)
                         .frame(width: 12, height: 12)
-                    Text(String(localized: "chat.status.sending", defaultValue: "发送中..."))
+                    Text(String(localized: "chat.status.sending", defaultValue: "发送中…"))
+                case .queued:
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.orange)
+                    Text(String(localized: "chat.status.queued", defaultValue: "离线排队中…"))
                 case .delivered:
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .semibold))
@@ -1218,7 +2039,7 @@ struct ClaudeChatView: View {
                     Text(String(localized: "chat.status.delivered", defaultValue: "已送达"))
                 case .thinking:
                     ThinkingDotsView()
-                    Text(String(localized: "chat.status.thinking", defaultValue: "Claude 正在思考..."))
+                    Text(String(localized: "chat.status.thinking", defaultValue: "Claude 正在思考…"))
                 case .failed(let error):
                     Image(systemName: "exclamationmark.circle")
                         .font(.system(size: 10))
@@ -1263,5 +2084,74 @@ struct ClaudeChatView: View {
                 }
             }
         }
+    }
+}
+
+/// 辅助任务袋：聊天视图生命周期内派生的 Task 统一登记，视图销毁时 deinit 自动取消
+/// 用于替代 DispatchQueue.main.asyncAfter（闭包强引用 self 且无法取消）
+@MainActor
+final class ViewTaskBag: ObservableObject {
+    private var tasks: Set<UUID> = []
+    private var store: [UUID: Task<Void, Never>] = [:]
+
+    /// 注册一个异步任务；返回句柄 id 以便外部取消
+    @discardableResult
+    func add(_ task: Task<Void, Never>) -> UUID {
+        let id = UUID()
+        tasks.insert(id)
+        store[id] = task
+        return id
+    }
+
+    /// 延迟执行（带自动取消），替代 DispatchQueue.main.asyncAfter
+    func runAfter(_ seconds: Double, _ action: @escaping @MainActor () -> Void) {
+        let t = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            action()
+        }
+        add(t)
+    }
+
+    func cancel(_ id: UUID) {
+        store[id]?.cancel()
+        store.removeValue(forKey: id)
+        tasks.remove(id)
+    }
+
+    func cancelAll() {
+        for (_, t) in store { t.cancel() }
+        store.removeAll()
+        tasks.removeAll()
+    }
+
+    deinit {
+        for (_, t) in store { t.cancel() }
+    }
+}
+
+private extension Array where Element == ClaudeChatItem {
+    /// 按 timestamp 升序稳定排序：时间戳相同的消息保持原有相对顺序
+    /// 用于合并 WS 推送 / 轮询 / 文件监听多路数据源时，避免末尾不是最新
+    /// 快路径：若数组已按 timestamp 非递减，直接返回 self 避免 O(n log n) 成本
+    func sortedByTimestampStable() -> [ClaudeChatItem] {
+        if count < 2 { return self }
+        var alreadySorted = true
+        for i in 1..<count {
+            if self[i - 1].timestamp > self[i].timestamp {
+                alreadySorted = false
+                break
+            }
+        }
+        if alreadySorted { return self }
+        // 慢路径：有乱序，稳定排序
+        return enumerated()
+            .sorted { lhs, rhs in
+                if lhs.element.timestamp == rhs.element.timestamp {
+                    return lhs.offset < rhs.offset
+                }
+                return lhs.element.timestamp < rhs.element.timestamp
+            }
+            .map(\.element)
     }
 }

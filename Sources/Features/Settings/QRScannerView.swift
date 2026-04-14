@@ -35,7 +35,97 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        setupCamera()
+        // 关闭按钮始终先挂上，权限流程中用户也能随时退出
+        addCloseButton()
+        checkCameraPermissionAndSetup()
+    }
+
+    /// 检查相机权限后再初始化相机；权限被拒时给出明确引导
+    private func checkCameraPermissionAndSetup() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            setupCamera()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if granted {
+                        self.setupCamera()
+                    } else {
+                        self.showPermissionDenied()
+                    }
+                }
+            }
+        case .denied, .restricted:
+            showPermissionDenied()
+        @unknown default:
+            showPermissionDenied()
+        }
+    }
+
+    /// 权限被拒：居中提示 + 引导到设置
+    private func showPermissionDenied() {
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(container)
+
+        let icon = UIImageView(image: UIImage(systemName: "camera.slash.fill"))
+        icon.tintColor = .white
+        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 44, weight: .regular)
+        icon.translatesAutoresizingMaskIntoConstraints = false
+
+        let title = UILabel()
+        title.text = "未授权使用相机"
+        title.textColor = .white
+        title.font = .systemFont(ofSize: 17, weight: .semibold)
+        title.translatesAutoresizingMaskIntoConstraints = false
+
+        let desc = UILabel()
+        desc.text = "扫码配对需要相机权限\n请前往系统设置开启"
+        desc.textColor = UIColor.white.withAlphaComponent(0.75)
+        desc.font = .systemFont(ofSize: 14)
+        desc.numberOfLines = 0
+        desc.textAlignment = .center
+        desc.translatesAutoresizingMaskIntoConstraints = false
+
+        let settingsBtn = UIButton(type: .system)
+        settingsBtn.setTitle("去设置", for: .normal)
+        settingsBtn.setTitleColor(.white, for: .normal)
+        settingsBtn.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        settingsBtn.backgroundColor = .systemBlue
+        settingsBtn.layer.cornerRadius = 8
+        settingsBtn.contentEdgeInsets = UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20)
+        settingsBtn.addTarget(self, action: #selector(openSettingsTapped), for: .touchUpInside)
+        settingsBtn.translatesAutoresizingMaskIntoConstraints = false
+
+        for sub in [icon, title, desc, settingsBtn] { container.addSubview(sub) }
+
+        NSLayoutConstraint.activate([
+            container.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            container.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            container.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 32),
+            container.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -32),
+
+            icon.topAnchor.constraint(equalTo: container.topAnchor),
+            icon.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+
+            title.topAnchor.constraint(equalTo: icon.bottomAnchor, constant: 16),
+            title.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+
+            desc.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8),
+            desc.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            desc.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+
+            settingsBtn.topAnchor.constraint(equalTo: desc.bottomAnchor, constant: 20),
+            settingsBtn.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            settingsBtn.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+    }
+
+    @objc private func openSettingsTapped() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -94,11 +184,8 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
         view.layer.addSublayer(preview)
         previewLayer = preview
 
-        // 添加扫描框指示
+        // 添加扫描框指示（关闭按钮已由 viewDidLoad 添加）
         addScanOverlay()
-
-        // 关闭按钮
-        addCloseButton()
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.captureSession.startRunning()

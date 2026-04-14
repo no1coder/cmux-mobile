@@ -1,10 +1,17 @@
 import Testing
 import Foundation
+#if canImport(cmux_mobile)
 @testable import cmux_mobile
+#elseif canImport(cmux_core)
+@testable import cmux_core
+import cmux_models
+#endif
 
 @Suite("ApprovalManager Tests")
 @MainActor
 struct ApprovalManagerTests {
+    private let readOnlyKey = "approvalAutoReadOnly"
+    private let approveAllKey = "approvalApproveAll"
 
     // MARK: - 测试辅助方法
 
@@ -147,5 +154,55 @@ struct ApprovalManagerTests {
         ]
         let request = ApprovalRequest.from(eventPayload: payload)
         #expect(request == nil)
+    }
+
+    @Test("loadPolicy 在未配置时保留默认策略")
+    func loadPolicyUsesDefaultsWhenUnset() {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: readOnlyKey)
+        defaults.removeObject(forKey: approveAllKey)
+        defer {
+            defaults.removeObject(forKey: readOnlyKey)
+            defaults.removeObject(forKey: approveAllKey)
+        }
+
+        let manager = ApprovalManager()
+        manager.loadPolicy()
+
+        #expect(manager.policy.autoApproveTools == ApprovalPolicy.readOnlyTools)
+        #expect(manager.policy.approveAllForSession == false)
+    }
+
+    @Test("loadPolicy 读取统一的审批设置键")
+    func loadPolicyReadsUnifiedKeys() {
+        let defaults = UserDefaults.standard
+        defaults.set(false, forKey: readOnlyKey)
+        defaults.set(true, forKey: approveAllKey)
+        defer {
+            defaults.removeObject(forKey: readOnlyKey)
+            defaults.removeObject(forKey: approveAllKey)
+        }
+
+        let manager = ApprovalManager()
+        manager.loadPolicy()
+
+        #expect(manager.policy.autoApproveTools.isEmpty)
+        #expect(manager.policy.approveAllForSession == true)
+    }
+
+    @Test("savePolicy 写入统一的审批设置键")
+    func savePolicyWritesUnifiedKeys() {
+        let defaults = UserDefaults.standard
+        defer {
+            defaults.removeObject(forKey: readOnlyKey)
+            defaults.removeObject(forKey: approveAllKey)
+        }
+
+        let manager = ApprovalManager()
+        manager.policy = ApprovalPolicy(autoApproveTools: [], approveAllForSession: true)
+        manager.savePolicy()
+
+        #expect(defaults.object(forKey: readOnlyKey) as? Bool == false)
+        #expect(defaults.object(forKey: approveAllKey) as? Bool == true)
     }
 }

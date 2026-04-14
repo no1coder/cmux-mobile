@@ -1,6 +1,10 @@
 import Testing
 import Foundation
+#if canImport(cmux_mobile)
 @testable import cmux_mobile
+#elseif canImport(cmux_core)
+@testable import cmux_core
+#endif
 
 @Suite("E2ECryptoManager Tests")
 struct E2ECryptoManagerTests {

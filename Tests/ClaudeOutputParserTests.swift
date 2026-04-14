@@ -1,6 +1,12 @@
 import Testing
 import Foundation
+#if canImport(cmux_mobile)
 @testable import cmux_mobile
+#elseif canImport(cmuxClaudeCore)
+@testable import cmuxClaudeCore
+#elseif canImport(cmux_core)
+@testable import cmux_core
+#endif
 
 @Suite("ClaudeOutputParser Tests")
 struct ClaudeOutputParserTests {

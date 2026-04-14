@@ -1,30 +1,30 @@
 import Foundation
 
 /// Claude Code 会话模型，用于会话管理和项目分组
-struct ClaudeSession: Identifiable, Codable, Equatable {
+public struct ClaudeSession: Identifiable, Codable, Equatable {
     /// 会话唯一 ID（来自 JSONL session ID 或 surface ID）
-    let id: String
+    public let id: String
     /// 关联的终端 surface ID
-    let surfaceID: String
+    public let surfaceID: String
     /// 会话标题（通常为项目路径）
-    var title: String
+    public var title: String
     /// 项目完整路径（如 ~/code/myproject）
-    var projectPath: String
+    public var projectPath: String
     /// 使用的模型（如 claude-sonnet-4-20250514）
-    var model: String
+    public var model: String
     /// 创建时间
-    let createdAt: Date
+    public let createdAt: Date
     /// 最后活跃时间
-    var lastActiveAt: Date
+    public var lastActiveAt: Date
     /// 是否已归档
-    var isArchived: Bool
+    public var isArchived: Bool
 
     /// 从路径提取项目名（最后一段路径）
-    var projectName: String {
+    public var projectName: String {
         projectPath.split(separator: "/").last.map(String.init) ?? projectPath
     }
 
-    init(
+    public init(
         id: String,
         surfaceID: String,
         title: String,

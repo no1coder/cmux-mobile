@@ -8,6 +8,7 @@ struct TerminalDetailView: View {
     @EnvironmentObject var inputManager: InputManager
     @EnvironmentObject var relayConnection: RelayConnection
     @EnvironmentObject var approvalManager: ApprovalManager
+    @EnvironmentObject var sessionManager: SessionManager
 
     /// 是否在 Claude 模式
     @State private var isClaudeMode = false
@@ -26,6 +27,7 @@ struct TerminalDetailView: View {
     @State private var modeDetectTask: Task<Void, Never>?
     /// 用户手动退出后，暂停自动检测 10 秒（等 Claude 进程退出）
     @State private var suppressAutoDetectUntil: Date = .distantPast
+    @StateObject private var requestGate = LatestOnlyRequestGate()
 
     /// 从标题中提取项目名
     private var projectName: String {
@@ -35,6 +37,11 @@ struct TerminalDetailView: View {
             return String(last)
         }
         return title.isEmpty ? "终端" : title
+    }
+
+    private var pathSubtitle: String? {
+        guard !surfaceTitle.isEmpty, surfaceTitle != projectName else { return nil }
+        return surfaceTitle
     }
 
     var body: some View {
@@ -56,6 +63,36 @@ struct TerminalDetailView: View {
         .navigationTitle(projectName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+        .overlay(alignment: .top) {
+            // 模式检测连续失败时给明确反馈，不让用户盯着空白或错误模式的界面
+            if readScreenState.failCount >= 3 && !isClaudeMode {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(String(
+                        localized: "terminal.mode_detect_failed",
+                        defaultValue: "Claude 模式检测失败，可手动重试或保留终端视图"
+                    ))
+                    .font(.system(size: 12, weight: .medium))
+                    Button {
+                        readScreenState.failCount = 0
+                        detectMode()
+                    } label: {
+                        Text(String(localized: "common.retry", defaultValue: "重试"))
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.orange)
+                    .controlSize(.mini)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(Color.orange.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(.top, 4)
+                .padding(.horizontal, 10)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 if relayConnection.status == .connected, let latency = relayConnection.latencyMs {
@@ -66,6 +103,19 @@ struct TerminalDetailView: View {
                         Text("\(latency)ms")
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 2) {
+                    Text(projectName)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    if let pathSubtitle {
+                        Text(pathSubtitle)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                 }
             }
@@ -99,6 +149,10 @@ struct TerminalDetailView: View {
                         .font(.system(size: 16))
                         .foregroundStyle(.gray)
                 }
+                .accessibilityLabel(String(
+                    localized: "common.more_actions",
+                    defaultValue: "更多操作"
+                ))
             }
         }
         .sheet(isPresented: $showTerminalSheet) {
@@ -132,6 +186,12 @@ struct TerminalDetailView: View {
             modeDetectTask?.cancel()
             modeDetectTask = nil
         }
+        // 接收 ClaudeChatView 发来的"打开终端 Sheet"请求（TUI-only 命令输出）
+        .onReceive(NotificationCenter.default.publisher(for: .cmuxOpenTerminalSheet)) { note in
+            guard let target = note.userInfo?["surfaceID"] as? String,
+                  target == surfaceID else { return }
+            showTerminalSheet = true
+        }
     }
 
     // MARK: - 周期性模式检测
@@ -159,15 +219,21 @@ struct TerminalDetailView: View {
         // 已在 Claude 模式时：只检查标题是否仍然有效（轻量检测）
         // 不再用 read_screen 重新检测，避免工具执行时 TUI 输出变化导致闪回终端
         if isClaudeMode {
-            // 标题仍然是 Claude → 保持
-            if detectModeFromTitle() { return }
+            // 标题仍然是 Claude → 保持，顺便补一次会话信息（菜单"会话信息"区块需要）
+            if detectModeFromTitle() {
+                if sessionModel.isEmpty { fetchSessionInfo() }
+                registerClaudeSession()
+                return
+            }
             // 标题不再是 Claude（进程已退出，标题恢复为 shell 目录）→ 退出 Claude 模式
             // 但给一个缓冲期：Claude 退出后标题可能有延迟更新
             // 用 read_screen 二次确认
+            let token = requestGate.begin("mode-detect")
             relayConnection.sendWithResponse([
                 "method": "read_screen",
                 "params": ["surface_id": surfaceID],
             ]) { result in
+                guard requestGate.isLatest(token, for: "mode-detect") else { return }
                 let resultDict = result["result"] as? [String: Any] ?? result
                 if let lines = resultDict["lines"] as? [String] {
                     let stillClaude = ClaudeOutputParser.isClaudeSession(lines)
@@ -187,14 +253,19 @@ struct TerminalDetailView: View {
             withAnimation(.easeInOut(duration: 0.2)) {
                 isClaudeMode = true
             }
+            // 快路径不包含模型/上下文，异步补一次（菜单"会话信息"区块需要）
+            fetchSessionInfo()
+            registerClaudeSession()
             return
         }
 
         // 标题未检测到时，尝试 read_screen（兼容旧版）
+        let token = requestGate.begin("mode-detect")
         relayConnection.sendWithResponse([
             "method": "read_screen",
             "params": ["surface_id": surfaceID],
         ]) { result in
+            guard requestGate.isLatest(token, for: "mode-detect") else { return }
             let resultDict = result["result"] as? [String: Any] ?? result
             if let lines = resultDict["lines"] as? [String] {
                 readScreenState.failCount = 0
@@ -206,10 +277,41 @@ struct TerminalDetailView: View {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isClaudeMode = true
                     }
+                    registerClaudeSession()
                 }
             } else {
                 readScreenState.failCount += 1
             }
+        }
+    }
+
+    /// 在 SessionManager 中登记/刷新当前 Claude 会话
+    /// 由于 Claude 运行时会把标题临时改成摘要文本（如 "Fix..."），
+    /// 单靠 SessionManager.syncFromSurfaces 的标题匹配无法稳定识别，
+    /// 这里由已确认 Claude 模式的 TerminalDetailView 主动登记
+    private func registerClaudeSession() {
+        let surface = messageStore.surfaces.first { $0.id == surfaceID }
+        sessionManager.markAsClaudeSession(
+            surfaceID: surfaceID,
+            title: surface?.title ?? surfaceTitle,
+            cwd: surface?.cwd
+        )
+    }
+
+    /// 异步拉取 Claude 会话信息（模型 / 上下文），仅用于填充三点菜单"会话信息"区块
+    /// 快路径（标题检测）不会触发 read_screen，这里单独补一次
+    private func fetchSessionInfo() {
+        let token = requestGate.begin("session-info")
+        relayConnection.sendWithResponse([
+            "method": "read_screen",
+            "params": ["surface_id": surfaceID],
+        ]) { result in
+            guard requestGate.isLatest(token, for: "session-info") else { return }
+            let resultDict = result["result"] as? [String: Any] ?? result
+            guard let lines = resultDict["lines"] as? [String] else { return }
+            let info = ClaudeOutputParser.parseSessionInfo(lines)
+            if !info.model.isEmpty { sessionModel = info.model }
+            if !info.context.isEmpty { sessionContext = info.context }
         }
     }
 

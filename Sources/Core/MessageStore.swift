@@ -1,6 +1,24 @@
+import Combine
 import Foundation
 import UIKit
 import UserNotifications
+
+private struct ClaudeChatCacheFile: Codable {
+    let version: Int
+    let sessions: [String: ClaudeChatCacheRecord]
+
+    init(version: Int = 1, sessions: [String: ClaudeChatCacheRecord]) {
+        self.version = version
+        self.sessions = sessions
+    }
+}
+
+private struct ClaudeChatCacheRecord: Codable {
+    let messages: [ClaudeChatItem]
+    let totalSeq: Int
+    let updatedAt: Date
+    let hasCompleteHistory: Bool?
+}
 
 /// 处理并存储来自 Relay 的消息，维护 surface 列表和屏幕快照
 @MainActor
@@ -9,9 +27,112 @@ final class MessageStore: ObservableObject {
     @Published var surfaces: [Surface] = []
     @Published var snapshots: [String: ScreenSnapshot] = [:]
     @Published var lastSeq: UInt64 = 0
+    /// 累计解码失败计数（envelope / surface / claude 消息等），用于设置页"诊断"区块展示
+    /// 非 0 时提示用户"N 条消息解析失败"，帮助定位与 Mac 端协议漂移
+    @Published var decodeFailures: Int = 0
+    /// 最近一次解码失败的简短描述（前 120 字符），方便上报/排障
+    @Published var lastDecodeFailure: String?
 
     /// Claude 聊天消息（按 surfaceID 索引，跨视图持久化）
+    /// 写入请走 `setClaudeChat(_:messages:)` 以便自动裁剪到 maxClaudeChatSize
     @Published var claudeChats: [String: [ClaudeChatItem]] = [:]
+
+    /// Claude 聊天的最近同步序号（按 surfaceID 索引）
+    private var claudeChatSequences: [String: Int] = [:]
+
+    /// Claude 聊天缓存是否包含完整历史（未被本地裁剪）
+    private var claudeChatCompleteHistory: [String: Bool] = [:]
+
+    /// 单个 surface 最多缓存多少条 Claude 消息。
+    /// 这里采用更保守的裁剪策略，优先保证 Claude 聊天页能够回看更长历史，
+    /// 再配合 UI 层的分页展示控制首屏渲染成本。
+    static let maxClaudeChatSize = 16000
+
+    /// 最多持久化多少个 Claude 会话缓存，避免缓存文件无限增长
+    private static let maxPersistedClaudeSessions = 20
+
+    /// Claude 聊天缓存文件路径
+    private let claudeChatCacheURL: URL
+
+    /// Claude 聊天缓存保存任务（防抖）
+    private var claudeChatCacheSaveWorkItem: DispatchWorkItem?
+
+    /// 超过此时间未刷新的 snapshot 视为过期，`pruneStaleSnapshots` 时清理
+    /// 15 分钟是个保守阈值，足以覆盖用户切出去做别的事再回来的场景
+    static let snapshotStalenessInterval: TimeInterval = 15 * 60
+
+    /// 清理过期 snapshot，避免长期后台常驻时内存缓慢膨胀
+    /// 调用时机：App 从后台回到前台时执行一次即可
+    func pruneStaleSnapshots() {
+        let cutoff = Date().addingTimeInterval(-Self.snapshotStalenessInterval)
+        let fresh = snapshots.filter { $0.value.timestamp >= cutoff }
+        if fresh.count != snapshots.count {
+            print("[messageStore] 清理 \(snapshots.count - fresh.count) 条过期 snapshot")
+            snapshots = fresh
+        }
+    }
+
+    /// 写入指定 surface 的 Claude 聊天消息，自动裁剪到 maxClaudeChatSize
+    /// 按时间顺序保留末尾（最新）部分
+    func setClaudeChat(_ surfaceID: String, messages: [ClaudeChatItem], totalSeq: Int? = nil) {
+        let trimmed: [ClaudeChatItem]
+        if messages.count > Self.maxClaudeChatSize {
+            trimmed = Array(messages.suffix(Self.maxClaudeChatSize))
+        } else {
+            trimmed = messages
+        }
+
+        let previousMessages = claudeChats[surfaceID] ?? []
+        let previousSeq = claudeChatSequences[surfaceID]
+        let previousHistoryCompleteness = claudeChatCompleteHistory[surfaceID]
+        let nextSeq = totalSeq ?? previousSeq
+
+        if trimmed.isEmpty {
+            claudeChats.removeValue(forKey: surfaceID)
+        } else {
+            claudeChats[surfaceID] = trimmed
+        }
+
+        if let nextSeq {
+            claudeChatSequences[surfaceID] = nextSeq
+        } else if trimmed.isEmpty {
+            claudeChatSequences.removeValue(forKey: surfaceID)
+        }
+
+        if trimmed.isEmpty {
+            claudeChatCompleteHistory.removeValue(forKey: surfaceID)
+        } else if messages.count > Self.maxClaudeChatSize {
+            claudeChatCompleteHistory[surfaceID] = false
+        }
+
+        guard previousMessages != trimmed
+            || previousSeq != claudeChatSequences[surfaceID]
+            || previousHistoryCompleteness != claudeChatCompleteHistory[surfaceID] else { return }
+        scheduleClaudeChatCacheSave()
+    }
+
+    /// 仅更新某个 Claude 会话的增量序号，用于下次进入会话时只拉取差量
+    func setClaudeChatSequence(_ surfaceID: String, totalSeq: Int) {
+        guard totalSeq >= 0 else { return }
+        guard claudeChatSequences[surfaceID] != totalSeq else { return }
+        claudeChatSequences[surfaceID] = totalSeq
+        scheduleClaudeChatCacheSave()
+    }
+
+    /// 获取某个 Claude 会话最近一次持久化的总序号
+    func claudeChatSequence(for surfaceID: String) -> Int {
+        claudeChatSequences[surfaceID] ?? 0
+    }
+
+    func setClaudeChatHistoryCompleteness(_ surfaceID: String, hasCompleteHistory: Bool) {
+        guard claudeChatCompleteHistory[surfaceID] != hasCompleteHistory else { return }
+        claudeChatCompleteHistory[surfaceID] = hasCompleteHistory
+        scheduleClaudeChatCacheSave()
+    }
+
+    func hasCompleteClaudeChatHistory(for surfaceID: String) -> Bool {
+        claudeChatCompleteHistory[surfaceID] ?? false
+    }
 
     /// 上一次终端内容哈希（按 surfaceID 索引）
     var lastTerminalHash: [String: Int] = [:]
@@ -41,17 +162,32 @@ final class MessageStore: ObservableObject {
     @Published var lastScreenshotContent: String?
     @Published var lastScreenshotEncoding: String?
 
+    init() {
+        let cacheDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        claudeChatCacheURL = cacheDirectory.appendingPathComponent("claude-chat-cache.json")
+
+        let cache = Self.loadClaudeChatCache(from: claudeChatCacheURL)
+        claudeChats = cache.messages
+        claudeChatSequences = cache.sequences
+        claudeChatCompleteHistory = cache.completeHistory
+    }
+
     // MARK: - 消息处理
 
     /// 解析原始 JSON 数据，更新 seq 并按类型分发
     func processRawMessage(_ data: Data) {
         guard let envelope = try? JSONDecoder().decode(RelayEnvelope.self, from: data) else {
-            // 调试：打印解码失败的原始数据
-            #if DEBUG
+            // 计入解码失败计数并保留最近错误摘要，便于用户/诊断面板看到
+            decodeFailures += 1
             if let text = String(data: data, encoding: .utf8) {
+                lastDecodeFailure = String(text.prefix(120))
+                #if DEBUG
                 print("[messageStore] 解码失败: \(text.prefix(200))")
+                #endif
+            } else {
+                lastDecodeFailure = "<binary>"
             }
-            #endif
             return
         }
         #if DEBUG
@@ -205,6 +341,8 @@ final class MessageStore: ObservableObject {
                 let surface = try JSONDecoder().decode(Surface.self, from: data)
                 return surface
             } catch {
+                decodeFailures += 1
+                lastDecodeFailure = "surface: \(error.localizedDescription)"
                 print("[messageStore] surface 解码失败: \(error)")
                 print("[messageStore] surface dict keys: \(dict.keys.sorted())")
                 return nil
@@ -218,7 +356,6 @@ final class MessageStore: ObservableObject {
         snapshots = snapshots.filter { activeIDs.contains($0.key) }
         lastTerminalHash = lastTerminalHash.filter { activeIDs.contains($0.key) }
         lastCleanText = lastCleanText.filter { activeIDs.contains($0.key) }
-        claudeChats = claudeChats.filter { activeIDs.contains($0.key) }
     }
 
     /// 处理 Mac 推送的 workspace 列表更新
@@ -448,6 +585,7 @@ final class MessageStore: ObservableObject {
 
     /// 在应用后台时发送本地通知（前台时跳过，避免与活动日志重复）
     private func scheduleLocalNotification(title: String, body: String) {
+        guard AppFeatureFlags.notificationsEnabled else { return }
         // 前台时不弹本地通知，活动日志已展示
         guard UIApplication.shared.applicationState != .active else { return }
 
@@ -470,6 +608,79 @@ final class MessageStore: ObservableObject {
             if let error {
                 print("[notification] 本地通知发送失败: \(error.localizedDescription)")
             }
+        }
+    }
+
+    // MARK: - Claude 聊天缓存
+
+    private func scheduleClaudeChatCacheSave() {
+        claudeChatCacheSaveWorkItem?.cancel()
+
+        let snapshot = makeClaudeChatCacheFile()
+        let url = claudeChatCacheURL
+        let workItem = DispatchWorkItem {
+            do {
+                let encoder = JSONEncoder()
+                encoder.dateEncodingStrategy = .iso8601
+                let data = try encoder.encode(snapshot)
+                try data.write(to: url, options: .atomic)
+            } catch {
+                #if DEBUG
+                print("[messageStore] Claude 聊天缓存保存失败: \(error)")
+                #endif
+            }
+        }
+
+        claudeChatCacheSaveWorkItem = workItem
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.35, execute: workItem)
+    }
+
+    private func makeClaudeChatCacheFile() -> ClaudeChatCacheFile {
+        let sessions = claudeChats.map { key, messages in
+            let seq = claudeChatSequences[key] ?? 0
+            let updatedAt = messages.last?.timestamp ?? .distantPast
+            return (
+                key,
+                ClaudeChatCacheRecord(
+                    messages: messages,
+                    totalSeq: seq,
+                    updatedAt: updatedAt,
+                    hasCompleteHistory: claudeChatCompleteHistory[key]
+                )
+            )
+        }
+        .sorted { $0.1.updatedAt > $1.1.updatedAt }
+
+        let limited = Dictionary(uniqueKeysWithValues: sessions.prefix(Self.maxPersistedClaudeSessions))
+        return ClaudeChatCacheFile(sessions: limited)
+    }
+
+    private static func loadClaudeChatCache(from url: URL) -> (
+        messages: [String: [ClaudeChatItem]],
+        sequences: [String: Int],
+        completeHistory: [String: Bool]
+    ) {
+        guard let data = try? Data(contentsOf: url) else {
+            return ([:], [:], [:])
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let file = try decoder.decode(ClaudeChatCacheFile.self, from: data)
+            let messages = file.sessions.mapValues(\.messages)
+            let sequences = file.sessions.mapValues(\.totalSeq)
+            let completeHistory = file.sessions.reduce(into: [String: Bool]()) { partial, entry in
+                if let value = entry.value.hasCompleteHistory {
+                    partial[entry.key] = value
+                }
+            }
+            return (messages, sequences, completeHistory)
+        } catch {
+            #if DEBUG
+            print("[messageStore] Claude 聊天缓存加载失败: \(error)")
+            #endif
+            return ([:], [:], [:])
         }
     }
 }

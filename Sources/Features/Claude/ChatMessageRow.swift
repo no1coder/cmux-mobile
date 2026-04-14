@@ -64,6 +64,10 @@ struct ChatMessageRow: View {
                                     .foregroundStyle(CMColors.textTertiary).lineLimit(2)
                                     .multilineTextAlignment(.leading)
                             }
+                            // 工具执行 >60s 时显示"等待响应"提示，避免用户盯着 spinner 以为卡死
+                            if msg.toolState == .running {
+                                StaleToolBadge(startTime: msg.timestamp)
+                            }
                         }
                         Spacer(minLength: 8)
                         // 状态图标
@@ -81,6 +85,42 @@ struct ChatMessageRow: View {
                 Text(msg.content).font(.system(size: 11)).foregroundStyle(CMColors.textTertiary)
                 Spacer()
             }
+        case .tuiOutput(let command):
+            tuiOutputCard(command: command, content: msg.content)
+        }
+    }
+
+    // MARK: - TUI 命令输出卡片
+
+    @ViewBuilder
+    private func tuiOutputCard(command: String, content: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Color.clear.frame(width: 26)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "terminal")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.orange)
+                    Text(command)
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(CMColors.textSecondary)
+                    Spacer(minLength: 0)
+                }
+                Text(content)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(CMColors.textPrimary)
+                    .textSelection(.enabled)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(10)
+            .background(CMColors.tertiarySystemFill)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.orange.opacity(0.25), lineWidth: 0.5)
+            )
+            Spacer(minLength: 20)
         }
     }
 
@@ -137,6 +177,38 @@ struct ChatMessageRow: View {
         case "Glob": return "folder.badge.questionmark"
         case "Agent": return "person.2"
         default: return "terminal"
+        }
+    }
+}
+
+// MARK: - 超时警示
+
+/// 工具执行 >60 秒仍未完成时显示"等待响应"徽标，>180 秒升级为"无响应"
+private struct StaleToolBadge: View {
+    let startTime: Date
+
+    var body: some View {
+        TimelineView(.periodic(from: Date(), by: 5)) { _ in
+            let elapsed = Date().timeIntervalSince(startTime)
+            if elapsed > 180 {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 9))
+                    Text("无响应超过 3 分钟，可尝试 Ctrl+C 中止")
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .foregroundStyle(Color.red.opacity(0.85))
+                .padding(.top, 2)
+            } else if elapsed > 60 {
+                HStack(spacing: 4) {
+                    Image(systemName: "clock.badge.exclamationmark")
+                        .font(.system(size: 9))
+                    Text("等待响应中（\(Int(elapsed))s）")
+                        .font(.system(size: 10))
+                }
+                .foregroundStyle(Color.orange.opacity(0.75))
+                .padding(.top, 2)
+            }
         }
     }
 }

@@ -1,6 +1,12 @@
+import Combine
 import Foundation
 import UserNotifications
 import UIKit
+
+enum AppFeatureFlags {
+    /// Push / Live Activity remain disabled until the production APNs rollout is ready.
+    static let notificationsEnabled = false
+}
 
 /// 管理 APNs 推送通知的注册、token 生命周期和权限状态
 @MainActor
@@ -22,6 +28,7 @@ final class PushNotificationManager: NSObject, ObservableObject {
 
     /// 请求推送通知权限并注册 APNs
     func requestAuthorization() {
+        guard AppFeatureFlags.notificationsEnabled else { return }
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, error in
             if let error {
@@ -72,6 +79,7 @@ final class PushNotificationManager: NSObject, ObservableObject {
 
     /// 将 device token 上报到 relay server
     private func reportTokenToServer(_ token: String) {
+        guard AppFeatureFlags.notificationsEnabled else { return }
         guard let connection = relayConnection,
               !connection.serverURL.isEmpty else {
             print("[push] 无 relay 连接，跳过 token 上报")
@@ -175,6 +183,7 @@ final class PushNotificationManager: NSObject, ObservableObject {
 
     /// 上报 Live Activity push token 到 relay server
     func reportLiveActivityToken(_ token: String) {
+        guard AppFeatureFlags.notificationsEnabled else { return }
         guard let connection = relayConnection,
               !connection.serverURL.isEmpty else { return }
 
@@ -212,4 +221,7 @@ final class PushNotificationManager: NSObject, ObservableObject {
 extension Notification.Name {
     /// 从推送通知导航到指定 surface
     static let navigateToSurface = Notification.Name("navigateToSurface")
+    /// 请求打开 TerminalDetailView 的终端 Sheet（用于展示 TUI-only 命令输出）
+    /// userInfo: ["surfaceID": String]
+    static let cmuxOpenTerminalSheet = Notification.Name("cmuxOpenTerminalSheet")
 }

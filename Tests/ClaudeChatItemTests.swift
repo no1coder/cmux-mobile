@@ -176,4 +176,77 @@ struct ClaudeChatItemTests {
         )
         #expect(useItem.toolUseId == resultItem.toolUseId)
     }
+
+    @Test("被后续消息越过的 running 工具会自动收口为 completed")
+    func normalizeRunningToolsFinalizesEarlierRunningTools() {
+        let start = Date(timeIntervalSince1970: 100)
+        let runningTool = ClaudeChatItem(
+            id: "tool-1",
+            role: .tool(name: "Bash"),
+            content: "gh run view",
+            timestamp: start,
+            toolState: .running
+        )
+        let assistant = ClaudeChatItem(
+            id: "assistant-1",
+            role: .assistant,
+            content: "还在进行中，再等 3 分钟。",
+            timestamp: start.addingTimeInterval(12)
+        )
+
+        let normalized = ClaudeChatItem.normalizeRunningTools(in: [runningTool, assistant])
+        #expect(normalized[0].toolState == .completed)
+        #expect(normalized[0].completedAt == assistant.timestamp)
+    }
+
+    @Test("尾部连续 running 工具在 tool_running 状态下保留")
+    func normalizeRunningToolsKeepsTrailingRunningToolsWhenAllowed() {
+        let start = Date(timeIntervalSince1970: 200)
+        let assistant = ClaudeChatItem(
+            id: "assistant-1",
+            role: .assistant,
+            content: "我去检查部署状态",
+            timestamp: start
+        )
+        let tool1 = ClaudeChatItem(
+            id: "tool-1",
+            role: .tool(name: "Bash"),
+            content: "gh run view",
+            timestamp: start.addingTimeInterval(1),
+            toolState: .running
+        )
+        let tool2 = ClaudeChatItem(
+            id: "tool-2",
+            role: .tool(name: "Bash"),
+            content: "tail -f",
+            timestamp: start.addingTimeInterval(2),
+            toolState: .running
+        )
+
+        let normalized = ClaudeChatItem.normalizeRunningTools(
+            in: [assistant, tool1, tool2],
+            allowTrailingRunningTools: true
+        )
+        #expect(normalized[1].toolState == .running)
+        #expect(normalized[2].toolState == .running)
+    }
+
+    @Test("服务端已不在 tool_running 时尾部 running 工具会收口")
+    func normalizeRunningToolsFinalizesTrailingRunningToolsWhenDisallowed() {
+        let start = Date(timeIntervalSince1970: 300)
+        let tool = ClaudeChatItem(
+            id: "tool-1",
+            role: .tool(name: "Bash"),
+            content: "curl -I",
+            timestamp: start,
+            toolState: .running
+        )
+
+        let normalized = ClaudeChatItem.normalizeRunningTools(
+            in: [tool],
+            allowTrailingRunningTools: false
+        )
+        #expect(normalized[0].toolState == .completed)
+        #expect(normalized[0].completedAt == tool.timestamp)
+    }
 }

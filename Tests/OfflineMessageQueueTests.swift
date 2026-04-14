@@ -1,16 +1,26 @@
 import Testing
 import Foundation
+#if canImport(cmux_mobile)
 @testable import cmux_mobile
+#elseif canImport(cmux_core)
+@testable import cmux_core
+#endif
 
 @Suite("OfflineMessageQueue Tests")
 @MainActor
 struct OfflineMessageQueueTests {
 
+    private func makeQueue() -> OfflineMessageQueue {
+        let queue = OfflineMessageQueue()
+        queue.clear()
+        return queue
+    }
+
     // MARK: - 入队测试
 
     @Test("入队后 pendingCount 增加")
     func enqueueIncrementsCount() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         queue.enqueue(["msg": "hello"])
         #expect(queue.pendingCount == 1)
         #expect(queue.isEmpty == false)
@@ -18,7 +28,7 @@ struct OfflineMessageQueueTests {
 
     @Test("多次入队计数正确")
     func multipleEnqueue() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         for i in 0..<5 {
             queue.enqueue(["index": i])
         }
@@ -27,7 +37,7 @@ struct OfflineMessageQueueTests {
 
     @Test("超过 maxQueueSize 时静默丢弃")
     func enqueueOverflowDrops() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         for i in 0..<110 {
             queue.enqueue(["index": i])
         }
@@ -39,7 +49,7 @@ struct OfflineMessageQueueTests {
 
     @Test("flush 按顺序发送所有消息")
     func flushSendsInOrder() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         for i in 0..<3 {
             queue.enqueue(["index": i])
         }
@@ -47,6 +57,7 @@ struct OfflineMessageQueueTests {
         var received: [[String: Any]] = []
         queue.flush { msg in
             received.append(msg)
+            return true
         }
 
         #expect(received.count == 3)
@@ -59,17 +70,40 @@ struct OfflineMessageQueueTests {
 
     @Test("flush 空队列不调用回调")
     func flushEmptyQueueNoop() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         var callCount = 0
-        queue.flush { _ in callCount += 1 }
+        queue.flush { _ in
+            callCount += 1
+            return true
+        }
         #expect(callCount == 0)
+    }
+
+    @Test("flush 遇到发送失败时保留未发送消息")
+    func flushRetainsMessagesWhenSendFails() {
+        let queue = makeQueue()
+        for i in 0..<3 {
+            queue.enqueue(["index": i])
+        }
+
+        var received: [Int] = []
+        queue.flush { msg in
+            let index = msg["index"] as? Int ?? -1
+            guard index == 0 else { return false }
+            received.append(index)
+            return true
+        }
+
+        #expect(received == [0])
+        #expect(queue.pendingCount == 2)
+        #expect(queue.isEmpty == false)
     }
 
     // MARK: - clear 测试
 
     @Test("clear 清空队列")
     func clearResetsQueue() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         queue.enqueue(["a": 1])
         queue.enqueue(["b": 2])
         #expect(queue.pendingCount == 2)
@@ -81,7 +115,7 @@ struct OfflineMessageQueueTests {
 
     @Test("clear 后可重新入队")
     func clearThenReenqueue() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         queue.enqueue(["first": true])
         queue.clear()
         queue.enqueue(["second": true])
@@ -89,7 +123,10 @@ struct OfflineMessageQueueTests {
         #expect(queue.pendingCount == 1)
 
         var received: [[String: Any]] = []
-        queue.flush { msg in received.append(msg) }
+        queue.flush { msg in
+            received.append(msg)
+            return true
+        }
         #expect(received.count == 1)
         #expect(received[0]["second"] as? Bool == true)
     }
@@ -98,7 +135,7 @@ struct OfflineMessageQueueTests {
 
     @Test("新建队列为空")
     func newQueueIsEmpty() {
-        let queue = OfflineMessageQueue()
+        let queue = makeQueue()
         #expect(queue.isEmpty == true)
         #expect(queue.pendingCount == 0)
     }

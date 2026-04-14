@@ -68,19 +68,22 @@ enum DeviceStore {
         #endif
     }
 
+    static func hasPairedDevice() -> Bool {
+        !getDevices().isEmpty
+    }
+
+    static func resolveActiveDevice(in devices: [PairedDevice], activeDeviceID: String?) -> PairedDevice? {
+        guard !devices.isEmpty else { return nil }
+        if let activeDeviceID {
+            return devices.first { $0.id == activeDeviceID }
+        }
+        return devices.count == 1 ? devices.first : nil
+    }
+
     /// 获取当前活跃设备
     static func getActiveDevice() -> PairedDevice? {
         let devices = getDevices()
-        guard !devices.isEmpty else { return nil }
-
-        #if canImport(Security)
-        if let activeID = KeychainHelper.load(key: keyActiveDeviceID) {
-            return devices.first { $0.id == activeID }
-        }
-        #endif
-
-        // 没有指定活跃设备时，返回第一个
-        return devices.first
+        return resolveActiveDevice(in: devices, activeDeviceID: getActiveDeviceID())
     }
 
     /// 获取活跃设备 ID
@@ -110,6 +113,8 @@ enum DeviceStore {
         // 如果是第一个设备，自动设为活跃
         if devices.count == 1 {
             setActiveDevice(id: device.id)
+        } else {
+            notifyDidChange()
         }
     }
 
@@ -138,10 +143,11 @@ enum DeviceStore {
         KeychainHelper.delete(key: "serverURL_\(id)")
         KeychainHelper.delete(key: "deviceName_\(id)")
 
-        // 如果删除的是活跃设备，切换到第一个可用设备
+        // 如果删除的是活跃设备，仅在只剩一个设备时自动切换；
+        // 多设备场景下保留为空，交给用户显式选择
         if getActiveDeviceID() == id {
-            if let first = devices.first {
-                setActiveDevice(id: first.id)
+            if devices.count == 1, let only = devices.first {
+                setActiveDevice(id: only.id)
             } else {
                 KeychainHelper.delete(key: keyActiveDeviceID)
                 // 清理旧版单设备键
@@ -150,6 +156,7 @@ enum DeviceStore {
             }
         }
         #endif
+        notifyDidChange()
     }
 
     /// 设置活跃设备 ID
@@ -163,6 +170,7 @@ enum DeviceStore {
             try? KeychainHelper.save(key: legacyKeyServerURL, value: device.serverURL)
         }
         #endif
+        notifyDidChange()
     }
 
     /// 更新设备的最后连接时间
@@ -181,6 +189,7 @@ enum DeviceStore {
         )
         devices[index] = updated
         saveDevices(devices)
+        notifyDidChange()
     }
 
     // MARK: - 清空
@@ -202,6 +211,7 @@ enum DeviceStore {
         KeychainHelper.delete(key: legacyKeyDeviceID)
         KeychainHelper.delete(key: legacyKeyServerURL)
         #endif
+        notifyDidChange()
     }
 
     // MARK: - 私有方法
@@ -217,6 +227,10 @@ enum DeviceStore {
         }
         try? KeychainHelper.save(key: keyPairedDevices, value: json)
         #endif
+    }
+
+    private static func notifyDidChange() {
+        NotificationCenter.default.post(name: .deviceStoreDidChange, object: nil)
     }
 
     /// 从旧版单设备 Keychain 键迁移到多设备格式（仅执行一次）
@@ -249,4 +263,8 @@ enum DeviceStore {
         try? KeychainHelper.save(key: keyActiveDeviceID, value: deviceID)
         #endif
     }
+}
+
+extension Notification.Name {
+    static let deviceStoreDidChange = Notification.Name("deviceStoreDidChange")
 }

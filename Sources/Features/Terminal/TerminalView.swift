@@ -26,6 +26,7 @@ struct TerminalView: View {
     @State private var isLandscape = false
     /// 终端内容是否已加载完成（用于渐入动画）
     @State private var contentVisible = false
+    @StateObject private var requestGate = LatestOnlyRequestGate()
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -59,6 +60,7 @@ struct TerminalView: View {
                 }
                 .padding(.top, 8)
                 .padding(.leading, 8)
+                .accessibilityLabel(String(localized: "common.back", defaultValue: "返回"))
             }
         }
         .background(Color.black)
@@ -70,16 +72,19 @@ struct TerminalView: View {
                     Image(systemName: "textformat.size.smaller")
                         .font(.caption)
                 }
+                .accessibilityLabel(String(localized: "terminal.font_smaller", defaultValue: "字体缩小"))
                 // 字体放大
                 Button { fontSize = min(20.0, fontSize + 1.0) } label: {
                     Image(systemName: "textformat.size.larger")
                         .font(.caption)
                 }
+                .accessibilityLabel(String(localized: "terminal.font_larger", defaultValue: "字体放大"))
                 // 刷新屏幕
                 Button { requestScreenContent() } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.caption)
                 }
+                .accessibilityLabel(String(localized: "terminal.refresh", defaultValue: "刷新终端"))
             }
         }
         .onAppear {
@@ -177,10 +182,12 @@ struct TerminalView: View {
 
     /// 请求终端屏幕内容
     private func requestScreenContent() {
+        let token = requestGate.begin("read_screen")
         relayConnection.sendWithResponse([
             "method": "read_screen",
             "params": ["surface_id": surfaceID],
         ]) { result in
+            guard requestGate.isLatest(token, for: "read_screen") else { return }
             isLoading = false
 
             // 优先从 result 字典中提取

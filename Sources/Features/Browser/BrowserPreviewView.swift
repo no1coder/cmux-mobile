@@ -32,6 +32,7 @@ struct BrowserPreviewView: View {
     @State private var autoRefreshEnabled: Bool = false
     /// 自动刷新定时器任务
     @State private var autoRefreshTask: Task<Void, Never>?
+    @StateObject private var requestGate = LatestOnlyRequestGate()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -91,7 +92,24 @@ struct BrowserPreviewView: View {
             } else if let error = errorMessage, screenshot == nil {
                 errorView(message: error)
             } else if let image = screenshot {
-                screenshotScrollView(image: image)
+                ZStack(alignment: .topTrailing) {
+                    screenshotScrollView(image: image)
+                    // 有旧截图时新请求失败，悬浮提示但保留可见截图
+                    if let error = errorMessage {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 10))
+                            Text(error)
+                                .font(.system(size: 11, weight: .medium))
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(Color.orange.opacity(0.12))
+                        .clipShape(Capsule())
+                        .padding(8)
+                    }
+                }
             } else {
                 placeholderView
             }
@@ -198,12 +216,20 @@ struct BrowserPreviewView: View {
     func fetchScreenshot() {
         isLoading = true
         errorMessage = nil
+        let token = requestGate.begin("screenshot")
         // C4: 使用 sendWithResponse 注册响应回调
         connection.sendWithResponse([
             "method": "browser.screenshot",
             "params": ["surface_id": surfaceID]
         ]) { result in
             DispatchQueue.main.async {
+                guard requestGate.isLatest(token, for: "screenshot") else { return }
+                // 显式错误（超时 / 断线 / Mac 端拒绝）统一走 errorView
+                if let msg = FileExplorerView.extractErrorMessage(from: result) {
+                    errorMessage = msg
+                    isLoading = false
+                    return
+                }
                 let resultDict = result["result"] as? [String: Any] ?? result
                 handleScreenshotResponse(resultDict)
             }
@@ -212,12 +238,18 @@ struct BrowserPreviewView: View {
 
     /// 发送 browser.url.get 命令，使用回调接收响应
     func fetchURL() {
+        let token = requestGate.begin("url")
         // C4: 使用 sendWithResponse 注册响应回调
         connection.sendWithResponse([
             "method": "browser.url.get",
             "params": ["surface_id": surfaceID]
         ]) { result in
             DispatchQueue.main.async {
+                guard requestGate.isLatest(token, for: "url") else { return }
+                if let msg = FileExplorerView.extractErrorMessage(from: result) {
+                    errorMessage = msg
+                    return
+                }
                 let resultDict = result["result"] as? [String: Any] ?? result
                 handleURLResponse(resultDict)
             }
@@ -230,7 +262,10 @@ struct BrowserPreviewView: View {
             "method": "browser.back",
             "params": ["surface_id": surfaceID]
         ])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // 0.3s 后刷新 URL + 截图；Task 附带取消语义避免视图销毁后仍发 RPC
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard !Task.isCancelled else { return }
             fetchURL()
             fetchScreenshot()
         }
@@ -242,7 +277,10 @@ struct BrowserPreviewView: View {
             "method": "browser.forward",
             "params": ["surface_id": surfaceID]
         ])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // 0.3s 后刷新 URL + 截图；Task 附带取消语义避免视图销毁后仍发 RPC
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard !Task.isCancelled else { return }
             fetchURL()
             fetchScreenshot()
         }
