@@ -335,13 +335,7 @@ struct ClaudeChatView: View {
                 historyLoadState = .loaded
                 fullHistoryState = .idle
                 updatePlanModeState(cachedMessages)
-                pagingState.bootstrapFromCache(
-                    hasCompleteHistory: messageStore.hasCompleteClaudeChatHistory(for: surfaceID),
-                    cachedHasSeqMetadata: cachedMessages.contains { $0.seq != nil },
-                    oldestLoadedSeq: oldestLoadedSeq
-                )
-                hasMoreRemoteHistory = pagingState.hasMoreRemoteHistory
-                nextBeforeSeq = pagingState.nextBeforeSeq
+                // bootstrapFromCache 由下方 if-else 分支按 hasCompleteCachedHistory/cachedHasSeqMetadata 精确调用
             }
             hasPastedImage = UIPasteboard.general.hasImages
             let hasCompleteCachedHistory = messageStore.hasCompleteClaudeChatHistory(for: surfaceID)
@@ -572,7 +566,7 @@ struct ClaudeChatView: View {
                     .foregroundStyle(CMColors.textSecondary)
                     .multilineTextAlignment(.center)
                 Button(String(localized: "chat.retry_full_history", defaultValue: "重试加载完整历史")) {
-                    hydrateFullHistoryIfNeeded(force: true)
+                    requestHistoryFetch(mode: .fullRefreshLegacy)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

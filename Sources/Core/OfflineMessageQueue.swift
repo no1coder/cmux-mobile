@@ -15,6 +15,11 @@ final class OfflineMessageQueue: ObservableObject {
     /// 持久化文件路径
     private let storageURL: URL
 
+    /// 防抖写盘任务，短时间内多次 enqueue/flush/clear 仅触发一次磁盘写
+    private var saveWorkItem: DispatchWorkItem?
+    /// 防抖延迟（秒）：与 MessageStore 风格保持一致
+    private static let saveDebounceInterval: TimeInterval = 0.2
+
     init() {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
@@ -60,14 +65,31 @@ final class OfflineMessageQueue: ObservableObject {
     // MARK: - 持久化
 
     private func saveToDisk() {
-        // 仅序列化 JSON-safe 字典；过滤掉含 NSNull/NSDate 等非 JSON 类型的条目
+        // 在主线程先序列化一份 JSON-safe 快照，避免后台线程访问可变队列
         let safe = queue.filter { JSONSerialization.isValidJSONObject($0) }
+        let data: Data
         do {
-            let data = try JSONSerialization.data(withJSONObject: safe, options: [])
-            try data.write(to: storageURL, options: .atomic)
+            data = try JSONSerialization.data(withJSONObject: safe, options: [])
         } catch {
-            print("[offlineQueue] 持久化失败: \(error.localizedDescription)")
+            print("[offlineQueue] 序列化失败: \(error.localizedDescription)")
+            return
         }
+
+        // 防抖：短时间内多次调用只保留最后一次写盘
+        saveWorkItem?.cancel()
+        let url = storageURL
+        let workItem = DispatchWorkItem {
+            do {
+                try data.write(to: url, options: .atomic)
+            } catch {
+                print("[offlineQueue] 持久化失败: \(error.localizedDescription)")
+            }
+        }
+        saveWorkItem = workItem
+        DispatchQueue.global(qos: .utility).asyncAfter(
+            deadline: .now() + Self.saveDebounceInterval,
+            execute: workItem
+        )
     }
 
     private static func loadFromDisk(url: URL) -> [[String: Any]] {

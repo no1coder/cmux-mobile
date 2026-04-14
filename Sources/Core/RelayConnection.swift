@@ -210,7 +210,7 @@ final class RelayConnection: NSObject, ObservableObject {
         sendPayload(payloadWithID)
 
         // 超时后自动清除未响应的 handler，并回传具体 method 便于定位
-        Task { [weak self] in
+        Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(timeoutSeconds * 1_000_000_000))
             guard let self else { return }
             if let expiredHandler = self.responseHandlers.removeValue(forKey: id) {
@@ -229,7 +229,7 @@ final class RelayConnection: NSObject, ObservableObject {
         method: String,
         handler: @escaping ([String: Any]) -> Void
     ) {
-        Task { [weak self] in
+        Task { @MainActor [weak self] in
             let deadline = Date().addingTimeInterval(Self.connectingRequestGracePeriod)
 
             while let self,
@@ -238,19 +238,17 @@ final class RelayConnection: NSObject, ObservableObject {
                 try? await Task.sleep(nanoseconds: Self.connectingPollIntervalNs)
             }
 
-            await MainActor.run {
-                guard let self else { return }
-                if self.status == .connected {
-                    self.sendWithResponse(payload, handler: handler)
-                    return
-                }
-
-                handler([
-                    "error": "offline",
-                    "message": "当前仍在建立连接，请稍后重试（\(method)）",
-                    "method": method,
-                ])
+            guard let self else { return }
+            if self.status == .connected {
+                self.sendWithResponse(payload, handler: handler)
+                return
             }
+
+            handler([
+                "error": "offline",
+                "message": "当前仍在建立连接，请稍后重试（\(method)）",
+                "method": method,
+            ])
         }
     }
 
@@ -443,9 +441,9 @@ final class RelayConnection: NSObject, ObservableObject {
                 // 连接成功后，主动请求 surface 列表（带重试）
                 requestSurfaceList()
                 // 3 秒后再试一次（防止首次请求丢失）
-                Task {
+                Task { @MainActor [weak self] in
                     try? await Task.sleep(nanoseconds: 3_000_000_000)
-                    await MainActor.run { requestSurfaceList() }
+                    self?.requestSurfaceList()
                 }
                 return
             case "auth_fail":
@@ -618,7 +616,7 @@ final class RelayConnection: NSObject, ObservableObject {
     /// 每 30 秒发送 ping 并追踪延迟
     private func startHeartbeat() {
         stopHeartbeat()
-        heartbeatTask = Task { [weak self] in
+        heartbeatTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 30_000_000_000)
                 guard !Task.isCancelled else { break }
@@ -651,7 +649,7 @@ final class RelayConnection: NSObject, ObservableObject {
 
     /// 使用指数退避调度重连（1s → 60s 上限）
     private func scheduleReconnect() {
-        reconnectTask = Task { [weak self] in
+        reconnectTask = Task { @MainActor [weak self] in
             guard let self else { return }
             let delay = self.currentReconnectDelay()
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
