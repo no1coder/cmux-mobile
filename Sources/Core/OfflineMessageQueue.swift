@@ -23,9 +23,16 @@ final class OfflineMessageQueue: ObservableObject {
     init() {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
-        storageURL = dir.appendingPathComponent("offline-queue.json")
-        queue = Self.loadFromDisk(url: storageURL)
-        pendingCount = queue.count
+        self.storageURL = dir.appendingPathComponent("offline-queue.json")
+        self.queue = Self.loadFromDisk(url: storageURL)
+        self.pendingCount = queue.count
+    }
+
+    /// 注入式构造：允许测试为每个用例指定隔离的持久化文件路径
+    init(storageURL: URL) {
+        self.storageURL = storageURL
+        self.queue = Self.loadFromDisk(url: storageURL)
+        self.pendingCount = queue.count
     }
 
     /// 入队消息（断线时调用）

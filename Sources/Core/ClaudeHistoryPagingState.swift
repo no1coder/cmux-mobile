@@ -11,6 +11,13 @@ struct ClaudeHistoryPagingState: Equatable {
     var hasMoreRemoteHistory = false
     var nextBeforeSeq: Int?
 
+    /// 重置分页状态到「认为仍有更多远端历史、游标未知」的初始态
+    /// 通常在 claude.session.reset 事件处理中调用
+    mutating func reset() {
+        hasMoreRemoteHistory = true
+        nextBeforeSeq = nil
+    }
+
     mutating func bootstrapFromCache(
         hasCompleteHistory: Bool,
         cachedHasSeqMetadata: Bool,

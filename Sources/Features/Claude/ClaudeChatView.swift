@@ -62,6 +62,9 @@ struct ClaudeChatView: View {
     @State private var pagingState = ClaudeHistoryPagingState()
     /// 每页消息数量
     private static let pageSize = 200
+    /// 发送消息后等待多久将 pending 状态从 .sending 迁移到 .delivered
+    /// TODO: replace with server ACK callback from ComposedMessageSender
+    private static let kPendingDeliveryConfirmTimeout: TimeInterval = 1.0
     /// 当前显示消息上限（向上滚动时递增）
     @State private var displayLimit = 200
     @State private var isLoadingMoreMessages = false
@@ -1042,7 +1045,7 @@ struct ClaudeChatView: View {
         }
         lastSendText = displayText
         Task {
-            try? await Task.sleep(for: .seconds(1.0))
+            try? await Task.sleep(for: .seconds(Self.kPendingDeliveryConfirmTimeout))
             if pendingSend?.id == composedMsgId, pendingSend?.stage == .sending {
                 withAnimation { pendingSend = PendingSend(id: composedMsgId, stage: .delivered) }
             }
@@ -1840,8 +1843,7 @@ struct ClaudeChatView: View {
                     guard payloadSid == sid else { return }
                     lastSeq = 0
                     displayLimit = Self.pageSize
-                    pagingState.hasMoreRemoteHistory = true
-                    pagingState.nextBeforeSeq = nil
+                    pagingState.reset()
                     hasMoreRemoteHistory = pagingState.hasMoreRemoteHistory
                     nextBeforeSeq = pagingState.nextBeforeSeq
                     tokenUsage = [:]
