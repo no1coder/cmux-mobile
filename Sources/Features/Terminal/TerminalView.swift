@@ -18,6 +18,8 @@ struct TerminalView: View {
     @State private var isLoading = true
     /// 加载错误信息
     @State private var errorMessage: String?
+    /// 当前 surface 已被 Mac 判定为不存在（通常是 Mac 重启导致 UUID 变更）
+    @State private var surfaceInvalidated = false
     /// 终端字体大小（持久化到 UserDefaults）
     @AppStorage("terminalFontSize") private var fontSize: Double = 14
     /// 自动刷新定时器
@@ -136,9 +138,15 @@ struct TerminalView: View {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(.gray)
-                Button("重试") { requestScreenContent() }
-                    .buttonStyle(.bordered)
-                    .tint(.green)
+                if surfaceInvalidated {
+                    Button("返回列表") { dismiss() }
+                        .buttonStyle(.bordered)
+                        .tint(.green)
+                } else {
+                    Button("重试") { requestScreenContent() }
+                        .buttonStyle(.bordered)
+                        .tint(.green)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
@@ -205,7 +213,19 @@ struct TerminalView: View {
                 messageStore.snapshots = updated
                 errorMessage = nil
             } else if let error = resultDict["error"] as? String {
-                errorMessage = error
+                // Mac 端 surface 已被销毁（通常是重启/重连后 surface UUID 换了）
+                if error.lowercased().contains("surface not found") {
+                    errorMessage = "终端已关闭或 Mac 已重启"
+                    surfaceInvalidated = true
+                    relayConnection.requestSurfaceList()
+                    // 自动返回列表页（给用户 1.5 秒看清提示）
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 1_500_000_000)
+                        dismiss()
+                    }
+                } else {
+                    errorMessage = error
+                }
                 print("[terminal] read_screen 失败: \(error)")
             } else {
                 errorMessage = "未知响应格式"

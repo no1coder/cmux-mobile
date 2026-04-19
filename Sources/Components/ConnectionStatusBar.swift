@@ -4,8 +4,16 @@ import SwiftUI
 struct ConnectionStatusBar: View {
     @EnvironmentObject var relayConnection: RelayConnection
 
+    /// 有效状态：当 relay 已连接但 Mac 被判为离线时，对外表现为 macOffline
+    private var effectiveStatus: ConnectionStatus {
+        if relayConnection.status == .connected, !relayConnection.macOnline {
+            return .macOffline
+        }
+        return relayConnection.status
+    }
+
     var body: some View {
-        if relayConnection.status != .connected {
+        if effectiveStatus != .connected {
             HStack(spacing: 6) {
                 Circle()
                     .fill(statusColor)
@@ -23,7 +31,7 @@ struct ConnectionStatusBar: View {
     }
 
     private var statusColor: Color {
-        switch relayConnection.status {
+        switch effectiveStatus {
         case .connected: return .green
         case .connecting: return .yellow
         case .disconnected: return hasPairedCredentials ? .red : .gray
@@ -32,11 +40,11 @@ struct ConnectionStatusBar: View {
     }
 
     private var statusText: String {
-        switch relayConnection.status {
+        switch effectiveStatus {
         case .connected: return "已连接"
         case .connecting: return "连接中..."
         case .disconnected: return hasPairedCredentials ? "未连接" : "未配对"
-        case .macOffline: return "Mac 离线"
+        case .macOffline: return "Mac 离线，请检查 Mac 端 cmux"
         }
     }
 

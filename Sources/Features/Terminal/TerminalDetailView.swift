@@ -28,6 +28,10 @@ struct TerminalDetailView: View {
     /// 用户手动退出后，暂停自动检测 10 秒（等 Claude 进程退出）
     @State private var suppressAutoDetectUntil: Date = .distantPast
     @StateObject private var requestGate = LatestOnlyRequestGate()
+    @Environment(\.dismiss) private var dismiss
+    /// 宽限期结束时刻：首次进入视图后 5 秒内即使 surface 不在列表也不退出，
+    /// 避免因为 surface.list 还没回来就误把合法页面弹掉。
+    @State private var surfaceValidityGraceUntil: Date = .distantFuture
 
     /// 从标题中提取项目名
     private var projectName: String {
@@ -179,12 +183,23 @@ struct TerminalDetailView: View {
             Text("将发送 Ctrl+C 退出 Claude Code，回到终端")
         }
         .onAppear {
+            // 进入视图 5 秒内即便列表尚未刷新也不自动退出
+            surfaceValidityGraceUntil = Date().addingTimeInterval(5)
             detectMode()
             startModeDetection()
         }
         .onDisappear {
             modeDetectTask?.cancel()
             modeDetectTask = nil
+        }
+        .onChange(of: messageStore.surfaces) { _, new in
+            // Mac 重启后 surface UUID 会全部更新；若当前详情页的 surface 已不在列表，
+            // 且宽限期已过，自动回到列表页，避免用户卡在"加载失败"的壳里。
+            guard Date() > surfaceValidityGraceUntil else { return }
+            if !new.contains(where: { $0.id == surfaceID }) {
+                print("[terminal] surface \(surfaceID) 已失效，自动返回列表")
+                dismiss()
+            }
         }
         // 接收 ClaudeChatView 发来的"打开终端 Sheet"请求（TUI-only 命令输出）
         .onReceive(NotificationCenter.default.publisher(for: .cmuxOpenTerminalSheet)) { note in

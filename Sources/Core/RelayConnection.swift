@@ -18,6 +18,9 @@ final class RelayConnection: NSObject, ObservableObject {
     @Published var lastConnectionError: String?
     /// 最近一次 surface.list 拉取失败原因；用于终端列表显式展示错误态而非误报“没有终端”
     @Published var lastSurfaceListError: String?
+    /// Mac bridge 是否判定为在线：基于 RPC 连续失败次数。
+    /// relay 已连接不代表 Mac 在场，这里做更贴近真实可用性的细分态。
+    @Published var macOnline: Bool = true
 
     // MARK: - 配置
 
@@ -62,6 +65,16 @@ final class RelayConnection: NSObject, ObservableObject {
     private static let connectingPollIntervalNs: UInt64 = 250_000_000
     /// 自增请求 ID 计数器，避免时间戳碰撞
     private var nextRequestID: Int = 1
+    /// 最近一次收到 Mac 任何消息的时间（事件 / rpc_response / pong）
+    private var lastMacActivityAt: Date?
+    /// 连续 RPC 失败计数。≥ macOfflineThreshold 时把 macOnline 判为 false
+    private var consecutiveRpcFailures: Int = 0
+    private static let macOfflineThreshold = 2
+    /// 心跳 ping 超时：超过此时长未收到 pong 回调视为链路僵死
+    private static let heartbeatPongTimeout: TimeInterval = 15
+    /// surface.list_update 事件令牌：每次事件递增。
+    /// requestSurfaceList 的延迟错误暴露通过比较 token 判断期间有无事件补救。
+    private var surfaceListEventToken: Int = 0
     /// RPC 请求去重缓存
     let rpcDedup = RpcDedupCache()
     private var watchedClaudeSurfaceCounts: [String: Int] = [:]
@@ -136,7 +149,9 @@ final class RelayConnection: NSObject, ObservableObject {
     }
 
     /// 内部发送逻辑：加密 + 封装 envelope
-    private func sendPayload(_ payload: [String: Any]) {
+    /// - Parameter envelopeID: 可选的 id，会复制一份到 envelope 顶层（明文）。
+    ///   用于 rpc_request，让 relay 即便在 Mac 离线或 E2E 加密时也能拿到 id 构造响应。
+    private func sendPayload(_ payload: [String: Any], envelopeID: Int? = nil) {
         // E2E: 如果加密管理器已配置，加密内层载荷
         let finalPayload: [String: Any]
         if let crypto = e2eCrypto, let encrypted = crypto.encrypt(payload) {
@@ -145,13 +160,16 @@ final class RelayConnection: NSObject, ObservableObject {
             finalPayload = payload
         }
 
-        let envelope: [String: Any] = [
+        var envelope: [String: Any] = [
             "seq": 0,
             "ts": Int64(Date().timeIntervalSince1970 * 1000),
             "from": "phone",
             "type": "rpc_request",
             "payload": finalPayload
         ]
+        if let envelopeID {
+            envelope["id"] = envelopeID
+        }
         sendRaw(envelope)
     }
 
@@ -207,7 +225,9 @@ final class RelayConnection: NSObject, ObservableObject {
         var payloadWithID = payload
         payloadWithID["id"] = id
         payloadWithID.removeValue(forKey: "client_timeout_seconds")
-        sendPayload(payloadWithID)
+        // E2E 加密会把 id 藏进密文，导致 relay 合成错误响应时丢失 id。
+        // 把 id 同时挂在 envelope 顶层，让 relay 能始终路由回正确 handler。
+        sendPayload(payloadWithID, envelopeID: id)
 
         // 超时后自动清除未响应的 handler，并回传具体 method 便于定位
         Task { @MainActor [weak self] in
@@ -303,17 +323,56 @@ final class RelayConnection: NSObject, ObservableObject {
         }
     }
 
-    func requestSurfaceList() {
+    func requestSurfaceList(retry: Int = 1) {
         sendWithResponse([
             "method": "surface.list",
         ]) { [weak self] result in
-            print("[relay] surface.list 回调, keys=\(result.keys.sorted())")
-            if let error = result["error"] as? String ?? (result["result"] as? [String: Any])?["error"] as? String {
-                let message = result["message"] as? String
-                    ?? (result["result"] as? [String: Any])?["message"] as? String
-                    ?? "unknown"
-                print("[relay] surface.list 失败: \(error) \(message)")
-                self?.lastSurfaceListError = message
+            print("[relay] surface.list 回调, keys=\(result.keys.sorted()) raw=\(result)")
+            // 兼容 error 为 String 或 {code,message} 对象两种格式
+            let errorString: String? = {
+                if let s = result["error"] as? String { return s }
+                if let obj = result["error"] as? [String: Any] {
+                    return (obj["code"] as? String) ?? (obj["message"] as? String)
+                }
+                if let nested = result["result"] as? [String: Any] {
+                    if let s = nested["error"] as? String { return s }
+                    if let obj = nested["error"] as? [String: Any] {
+                        return (obj["code"] as? String) ?? (obj["message"] as? String)
+                    }
+                }
+                return nil
+            }()
+            if let errorString {
+                let rawMessage = (result["message"] as? String)
+                    ?? ((result["error"] as? [String: Any])?["message"] as? String)
+                    ?? ((result["result"] as? [String: Any])?["message"] as? String)
+                    ?? errorString
+                // 映射 relay 合成错误为面向用户的友好文案
+                let message = Self.humanizeRelayError(code: errorString, raw: rawMessage)
+                print("[relay] surface.list 失败: code=\(errorString) message=\(rawMessage)")
+                // 自动重试一次（仅 timeout / 网络类错误值得重试，避免对确定性失败反复发送）
+                if retry > 0 {
+                    let retryableCodes: Set<String> = ["timeout", "offline", "device_offline", "overflow"]
+                    if retryableCodes.contains(errorString.lowercased()) {
+                        print("[relay] surface.list 将在 2 秒后重试（剩余次数 \(retry)）")
+                        Task { @MainActor [weak self] in
+                            try? await Task.sleep(nanoseconds: 2_000_000_000)
+                            self?.requestSurfaceList(retry: retry - 1)
+                        }
+                        return
+                    }
+                }
+                // 错误态延迟 5 秒才暴露：等 surface.list_update 事件可能的补救
+                // 使用 token 机制：若期间有事件更新（会递增 surfaceListEventToken），取消暴露
+                let token = (self?.surfaceListEventToken ?? 0)
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    guard let self else { return }
+                    // 期间 token 变化，说明事件已补救，不再报错
+                    if self.surfaceListEventToken != token { return }
+                    self.lastSurfaceListError = message
+                }
+                return
             }
             // 从响应中提取 surfaces 数组
             if let surfacesArr = result["surfaces"] as? [[String: Any]] {
@@ -404,6 +463,14 @@ final class RelayConnection: NSObject, ObservableObject {
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let msgType = json["type"] as? String {
             updateSurfaceListErrorFromEvent(json)
+            // 来自 Mac 的业务事件（非认证类）说明 Mac 在线
+            if (msgType == "event" || msgType == "rpc_response"),
+               (json["from"] as? String) == "mac" {
+                lastMacActivityAt = Date()
+                if msgType == "event" {
+                    updateMacOnline(rpcFailed: false)
+                }
+            }
             switch msgType {
             case "auth_challenge":
                 handleAuthChallenge(json)
@@ -469,19 +536,48 @@ final class RelayConnection: NSObject, ObservableObject {
                     }
                     return raw
                 }()
-                print("[relay] rpc_response 到达, payload keys=\(payloadDict?.keys.sorted().joined(separator: ",") ?? "nil"), handlers=\(responseHandlers.count)")
-                // 支持 Int / Double / String 等多种 id 类型
+                // 打印 error/message 的值，消除诊断盲点
+                let errDesc: String = {
+                    guard let dict = payloadDict else { return "" }
+                    if let e = dict["error"] {
+                        let m = dict["message"] ?? "<no message>"
+                        return " error=\(e) message=\(m)"
+                    }
+                    return ""
+                }()
+                print("[relay] rpc_response 到达, payload keys=\(payloadDict?.keys.sorted().joined(separator: ",") ?? "nil"), handlers=\(responseHandlers.count)\(errDesc)")
+                // 支持 Int / Double / String / NSNumber 等多种 id 类型
                 let rawID = payloadDict?["id"] ?? json["id"]
                 let msgID: Int? = {
                     if let intID = rawID as? Int { return intID }
                     if let doubleID = rawID as? Double { return Int(doubleID) }
                     if let strID = rawID as? String { return Int(strID) }
+                    if let num = rawID as? NSNumber { return num.intValue }
                     return nil
                 }()
+                // 诊断日志：id 无法解析时打印类型信息，定位协议不一致
+                if msgID == nil, rawID != nil {
+                    let typeName = String(describing: type(of: rawID!))
+                    print("[relay] 警告：rpc_response id 无法解析为 Int，rawID=\(rawID!) type=\(typeName)")
+                }
                 if let msgID, let handler = responseHandlers.removeValue(forKey: msgID) {
                     handlerMeta.removeValue(forKey: msgID)
+                    // 根据 error 字段更新 macOnline 判定
+                    let isError = (payloadDict?["error"] != nil)
+                    updateMacOnline(rpcFailed: isError)
+                    lastMacActivityAt = Date()
+                    // 若错误是"surface not found"（Mac 重启导致 id 失效），
+                    // 自动触发一次 surface.list 刷新，驱动 SessionManager 归档陈旧会话。
+                    if let errStr = (payloadDict?["error"] as? String)?.lowercased(),
+                       errStr.contains("surface not found") {
+                        print("[relay] 检测到 surface not found，自动刷新 surface 列表")
+                        self.requestSurfaceList()
+                    }
                     handler(payloadDict ?? json)
                     // 仍然转发给上层，供 MessageStore 更新状态
+                } else if let msgID {
+                    // id 有效但没有匹配的 handler：可能已超时清理或 id 重复
+                    print("[relay] 警告：rpc_response id=\(msgID) 无匹配 handler（可能已超时，pending=\(responseHandlers.count)）")
                 }
             default:
                 break
@@ -520,6 +616,7 @@ final class RelayConnection: NSObject, ObservableObject {
 
         if payload["surfaces"] != nil {
             lastSurfaceListError = nil
+            surfaceListEventToken &+= 1
         }
     }
 
@@ -632,16 +729,62 @@ final class RelayConnection: NSObject, ObservableObject {
 
     @MainActor
     private func sendPing() {
-        pingStartTime = Date()
+        let start = Date()
+        pingStartTime = start
+        var didComplete = false
         webSocketTask?.sendPing { [weak self] error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                didComplete = true
                 if let error {
+                    print("[relay] 心跳 ping 失败: \(error.localizedDescription)")
                     self.handleDisconnect(error: error)
-                } else if let start = self.pingStartTime {
+                } else {
                     self.latencyMs = Int(Date().timeIntervalSince(start) * 1000)
                 }
             }
+        }
+        // ping 超时 watchdog：若 heartbeatPongTimeout 内回调未触发，强制重连
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(Self.heartbeatPongTimeout * 1_000_000_000))
+            guard let self, !didComplete, self.status == .connected else { return }
+            print("[relay] 心跳 ping 超时（\(Int(Self.heartbeatPongTimeout))s 无回调），强制重连")
+            let err = NSError(domain: "RelayConnection", code: -1001,
+                              userInfo: [NSLocalizedDescriptionKey: "heartbeat timeout"])
+            self.handleDisconnect(error: err)
+        }
+    }
+
+    /// 把 relay/Mac 的原始错误码映射为面向用户的中文提示。
+    /// 典型场景：
+    /// - device_offline：Mac bridge 未连接
+    /// - invalid_rpc + missing rpc id：Mac 离线 + E2E 加密导致 relay 合成错误时取不到 id
+    ///   两者本质都是 Mac 离线
+    static func humanizeRelayError(code: String, raw: String) -> String {
+        let c = code.lowercased()
+        if c == "device_offline" || c == "invalid_rpc" || c == "offline" {
+            return "Mac 端未运行或已离线，请确认 Mac 上的 cmux 在前台运行"
+        }
+        if c == "timeout" {
+            return "Mac 响应超时，请检查 Mac 网络或 cmux 是否卡住"
+        }
+        return raw
+    }
+
+    /// 根据 RPC 成败更新 macOnline 状态
+    private func updateMacOnline(rpcFailed: Bool) {
+        if rpcFailed {
+            consecutiveRpcFailures += 1
+            if consecutiveRpcFailures >= Self.macOfflineThreshold, macOnline {
+                macOnline = false
+                print("[relay] 连续 \(consecutiveRpcFailures) 次 RPC 失败，判定 Mac 离线")
+            }
+        } else {
+            if !macOnline {
+                print("[relay] RPC 恢复正常，判定 Mac 重新在线")
+            }
+            consecutiveRpcFailures = 0
+            macOnline = true
         }
     }
 
