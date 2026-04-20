@@ -560,8 +560,21 @@ final class RelayConnection: NSObject, ObservableObject {
                     let typeName = String(describing: type(of: rawID!))
                     print("[relay] 警告：rpc_response id 无法解析为 Int，rawID=\(rawID!) type=\(typeName)")
                 }
-                if let msgID, let handler = responseHandlers.removeValue(forKey: msgID) {
-                    handlerMeta.removeValue(forKey: msgID)
+                // relay 合成的 error response 在 E2E 加密下无法解析出 id，会带上 method 字段
+                // 兜底：按 method 名匹配最早的同方法 handler，避免用户干等 30 秒本地超时
+                var fallbackMsgID: Int? = nil
+                if msgID == nil,
+                   let dict = payloadDict,
+                   dict["error"] != nil,
+                   let method = dict["method"] as? String {
+                    if let candidate = handlerMeta.first(where: { $0.value.method == method })?.key {
+                        fallbackMsgID = candidate
+                        print("[relay] 按 method=\(method) 回填 id=\(candidate)，分发合成错误")
+                    }
+                }
+                let resolvedID = msgID ?? fallbackMsgID
+                if let resolvedID, let handler = responseHandlers.removeValue(forKey: resolvedID) {
+                    handlerMeta.removeValue(forKey: resolvedID)
                     // 根据 error 字段更新 macOnline 判定
                     let isError = (payloadDict?["error"] != nil)
                     updateMacOnline(rpcFailed: isError)
@@ -575,9 +588,9 @@ final class RelayConnection: NSObject, ObservableObject {
                     }
                     handler(payloadDict ?? json)
                     // 仍然转发给上层，供 MessageStore 更新状态
-                } else if let msgID {
+                } else if let resolvedID {
                     // id 有效但没有匹配的 handler：可能已超时清理或 id 重复
-                    print("[relay] 警告：rpc_response id=\(msgID) 无匹配 handler（可能已超时，pending=\(responseHandlers.count)）")
+                    print("[relay] 警告：rpc_response id=\(resolvedID) 无匹配 handler（可能已超时，pending=\(responseHandlers.count)）")
                 }
             default:
                 break
